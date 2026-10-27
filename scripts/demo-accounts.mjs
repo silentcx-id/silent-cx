@@ -1,6 +1,7 @@
 // Membuat akun demo untuk uji coba: 1 admin, 1 client, 1 shopper aktif, 1 shopper menunggu seleksi.
 // Jalankan: npm run demo:akun
 // Password dibuat acak dan hanya ditampilkan di terminal ini; simpan sendiri. Akun yang sudah ada dilewati.
+// Lupa password: npm run demo:akun -- --reset memberi password baru untuk keempat akun demo saja (akun lain tidak disentuh).
 import { createClient } from "@supabase/supabase-js";
 import { randomBytes } from "node:crypto";
 
@@ -29,10 +30,19 @@ if (listError) {
   process.exit(1);
 }
 
+const reset = process.argv.includes("--reset");
+
 const rows = [];
 for (const a of ACCOUNTS) {
-  if (list.users.some((u) => u.email === a.email)) {
-    rows.push({ email: a.email, password: "(sudah ada, tidak diubah)" });
+  const existing = list.users.find((u) => u.email === a.email);
+  if (existing && reset) {
+    const pw = password();
+    const { error } = await admin.auth.admin.updateUserById(existing.id, { password: pw });
+    rows.push({ email: a.email, password: error ? `GAGAL: ${error.message}` : pw });
+    continue;
+  }
+  if (existing) {
+    rows.push({ email: a.email, password: "(sudah ada, tidak diubah; pakai --reset untuk password baru)" });
     continue;
   }
   const pw = password();

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { dict } from "@/lib/i18n";
 import { passwordProblem } from "@/lib/password";
 import { getLang } from "@/lib/prefs";
-import { isRole, ROLE_HOME } from "@/lib/roles";
+import { isRole } from "@/lib/roles";
 import { homeAfterLogin } from "@/lib/session";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
@@ -73,7 +73,8 @@ export async function register(_prev: FormState, form: FormData): Promise<FormSt
   const pwProblem = passwordProblem(password, lang);
   if (pwProblem) return { error: pwProblem, values };
 
-  const home = ROLE_HOME[kind];
+  // Tujuan setelah daftar, misalnya paket yang dipilih di landing page.
+  const home = homeAfterLogin(kind, text(form, "next"));
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,

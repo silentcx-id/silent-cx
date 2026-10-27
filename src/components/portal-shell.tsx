@@ -8,7 +8,7 @@ import { ROLE_HOME } from "@/lib/roles";
 import type { Viewer } from "@/lib/session";
 
 // Kerangka semua dashboard: pita kuning-hitam, menu role, identitas akun, dan pilihan bahasa/tema.
-export function PortalShell({ viewer, lang, theme, children }: { viewer: Viewer; lang: Lang; theme: Theme; children: React.ReactNode }) {
+export function PortalShell({ viewer, lang, theme, entitlements, children }: { viewer: Viewer; lang: Lang; theme: Theme; entitlements?: string[]; children: React.ReactNode }) {
   const t = dict(lang);
   const locked = viewer.role === "shopper" && viewer.status !== "active";
   return (
@@ -20,7 +20,7 @@ export function PortalShell({ viewer, lang, theme, children }: { viewer: Viewer;
             <Logo href={ROLE_HOME[viewer.role]} />
             <span className="chip md:hidden">{t.roles[viewer.role]}</span>
           </div>
-          <PortalNav role={viewer.role} lang={lang} locked={locked} />
+          <PortalNav role={viewer.role} lang={lang} locked={locked} entitlements={entitlements} />
           <div className="hidden gap-3 border-t border-line pt-4 md:mt-auto md:grid">
             <div className="grid gap-0.5 text-sm">
               <span className="truncate font-semibold">{viewer.fullName}</span>

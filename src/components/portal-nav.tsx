@@ -8,7 +8,7 @@ import { ROLE_HOME, ROLE_MENU, type Role } from "@/lib/roles";
 
 // Menu samping (desktop) atau baris geser (HP). Menu dari fase berikutnya tetap tampil dengan label fasenya;
 // menu yang terkunci untuk shopper yang belum disetujui diberi gembok.
-export function PortalNav({ role, lang, locked }: { role: Role; lang: Lang; locked: boolean }) {
+export function PortalNav({ role, lang, locked, entitlements = [] }: { role: Role; lang: Lang; locked: boolean; entitlements?: string[] }) {
   const pathname = usePathname();
   const t = dict(lang).common;
   const home = ROLE_HOME[role];
@@ -18,7 +18,7 @@ export function PortalNav({ role, lang, locked }: { role: Role; lang: Lang; lock
         {ROLE_MENU[role].map((item) => {
           const href = item.slug ? `${home}/${item.slug}` : home;
           const active = item.slug ? pathname === href || pathname.startsWith(`${href}/`) : pathname === home;
-          const blocked = locked && item.activeOnly;
+          const blocked = (locked && item.activeOnly) || (item.entitlement !== undefined && !entitlements.includes(item.entitlement));
           return (
             <li key={item.slug} className="flex-none">
               <Link

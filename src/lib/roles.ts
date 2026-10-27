@@ -22,16 +22,19 @@ type Label = Record<Lang, string>;
 // Menu tiap role. `phase` = fase pembangunan yang mengisi halaman tersebut; menu yang belum dibangun
 // tetap tampil supaya alurnya terlihat, dengan keterangan fasenya.
 // `activeOnly` = shopper baru bisa membuka menu ini setelah lamaran disetujui.
-export type MenuItem = { slug: string; label: Label; icon: IconName; phase: number; activeOnly?: boolean };
+// `entitlement` = menu client yang hanya terbuka kalau paket atau add-on yang aktif memuat fitur itu.
+export type MenuItem = { slug: string; label: Label; icon: IconName; phase: number; activeOnly?: boolean; entitlement?: string };
 
 export const ROLE_MENU: Record<Role, MenuItem[]> = {
   client: [
     { slug: "", label: { id: "Beranda", en: "Home" }, icon: "home", phase: 0 },
     { slug: "paket", label: { id: "Paket & add-on", en: "Packages & add-ons" }, icon: "box", phase: 1 },
     { slug: "billing", label: { id: "Tagihan", en: "Billing" }, icon: "wallet", phase: 1 },
-    { slug: "outlets", label: { id: "Outlet", en: "Outlets" }, icon: "store", phase: 1 },
+    { slug: "outlets", label: { id: "Outlet & data", en: "Outlets & details" }, icon: "store", phase: 1 },
     { slug: "audits", label: { id: "Audit berjalan", en: "Audits" }, icon: "eye", phase: 3 },
     { slug: "reports", label: { id: "Laporan", en: "Reports" }, icon: "report", phase: 4 },
+    { slug: "benchmark", label: { id: "Benchmark outlet", en: "Outlet benchmark" }, icon: "layers", phase: 4, entitlement: "benchmarking" },
+    { slug: "competitor", label: { id: "Benchmark kompetitor", en: "Competitor benchmark" }, icon: "eye", phase: 4, entitlement: "competitor" },
     { slug: "consultation", label: { id: "Konsultasi", en: "Consultation" }, icon: "chat", phase: 5 },
   ],
   shopper: [

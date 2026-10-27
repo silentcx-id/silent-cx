@@ -44,7 +44,7 @@ export function LoginForm({ lang, next, initialError }: { lang: Lang; next?: str
   );
 }
 
-export function RegisterForm({ lang, kind }: { lang: Lang; kind: "client" | "shopper" }) {
+export function RegisterForm({ lang, kind, next }: { lang: Lang; kind: "client" | "shopper"; next?: string }) {
   const t = dict(lang);
   const [state, action, pending] = useActionState(register, {});
   if (state.notice) return <Alert state={state} />;
@@ -52,6 +52,7 @@ export function RegisterForm({ lang, kind }: { lang: Lang; kind: "client" | "sho
     <form action={action} className="grid gap-4" noValidate>
       <Alert state={state} />
       <input type="hidden" name="kind" value={kind} />
+      <input type="hidden" name="next" value={next ?? ""} />
       <div className="field">
         <label htmlFor="full_name">{t.common.fullName}</label>
         <input id="full_name" name="full_name" autoComplete="name" required maxLength={120} defaultValue={state.values?.full_name} />

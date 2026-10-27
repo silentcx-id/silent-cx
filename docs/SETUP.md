@@ -28,7 +28,7 @@ Panduan ini menyambungkan aplikasi ke Supabase supaya login dan database aktif, 
 npm run db:migrate
 ```
 
-Skrip ini memasang semua migrasi di `supabase/migrations` yang belum terpasang. Aman dijalankan berulang setiap ada pembaruan. Jangan jalankan lewat hotspot HP kalau koneksinya sering putus.
+Skrip ini memasang semua migrasi di `supabase/migrations` yang belum terpasang, lalu membuat bucket penyimpanan `payment-proofs` (privat, untuk bukti bayar) dan `site-assets` (publik, untuk gambar QRIS). Aman dijalankan berulang setiap ada pembaruan. Jangan jalankan lewat hotspot HP kalau koneksinya sering putus.
 
 ## 4. Atur login
 
@@ -58,7 +58,21 @@ Skrip membuat 4 akun dan menampilkan password-nya **hanya di terminal kamu**. Si
 
 Akun yang sudah ada dilewati, jadi skrip aman dijalankan ulang. Akun admin hanya bisa dibuat lewat skrip atau server; pendaftaran dari website selalu menjadi client atau shopper.
 
-## 6. Jalankan aplikasi
+Lupa password akun demo? Jalankan perintah di bawah. Keempat akun demo mendapat password acak baru yang tampil di terminal kamu. Akun lain dan semua data tidak berubah.
+
+```bash
+npm run demo:akun -- --reset
+```
+
+## 6. Isi katalog dan pembayaran
+
+Masuk sebagai admin, buka **Katalog**:
+
+1. Tab **Kota dilayani**: tambahkan kota tempat shopper tersedia. Pesanan untuk kota di luar daftar otomatis masuk antrian review.
+2. Tab **Pembayaran**: isi rekening bank dan unggah gambar QRIS statis. Tanpa ini client belum bisa membayar.
+3. Tab **Paket** dan **Add-on**: sesuaikan harga atau promo kalau perlu. Semua harga sudah termasuk PPN.
+
+## 7. Jalankan aplikasi
 
 ```bash
 npm run dev
@@ -66,7 +80,7 @@ npm run dev
 
 Buka `http://localhost:3000`.
 
-## 7. Project Vercel (boleh nanti)
+## 8. Project Vercel (boleh nanti)
 
 1. Buka [vercel.com](https://vercel.com) → **Add New > Project**, lalu impor repository GitHub silentCX setelah kode di-push.
 2. Di **Settings > Environment Variables**, isi kunci yang sama dengan `.env.local`, kecuali `SUPABASE_DB_URL` (hanya dipakai di laptop untuk migrasi).

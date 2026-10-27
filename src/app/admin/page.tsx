@@ -12,16 +12,19 @@ export default async function AdminHome() {
   const [, lang] = await Promise.all([requireRole("admin", "/admin"), getLang()]);
   const t = dict(lang);
   const supabase = await createClient();
-  const { count: pendingShoppers } = await supabase
-    .from("profiles")
-    .select("id", { count: "exact", head: true })
-    .eq("role", "shopper")
-    .eq("status", "pending");
+  await supabase.rpc("expire_overdue");
+  const count = (q: PromiseLike<{ count: number | null }>) => q.then((r) => r.count ?? 0);
+  const [pendingShoppers, reviews, payments] = await Promise.all([
+    count(supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "shopper").eq("status", "pending")),
+    count(supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "awaiting_review")),
+    count(supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "verifying")),
+  ]);
 
   // Antrian lain diisi oleh fase yang membangunnya.
   const queues = [
-    { label: t.admin.queues.shoppers, count: pendingShoppers ?? 0, href: "/admin/accounts?tab=pending", phase: 0 },
-    { label: t.admin.queues.payments, count: null, href: "/admin/projects", phase: 1 },
+    { label: t.admin.queues.shoppers, count: pendingShoppers, href: "/admin/accounts?tab=pending", phase: 0 },
+    { label: t.admin.queues.reviews, count: reviews, href: "/admin/projects?tab=review", phase: 1 },
+    { label: t.admin.queues.payments, count: payments, href: "/admin/projects?tab=verify", phase: 1 },
     { label: t.admin.queues.qc, count: null, href: "/admin/qc", phase: 4 },
     { label: t.admin.queues.payouts, count: null, href: "/admin/payouts", phase: 5 },
   ];
@@ -33,7 +36,7 @@ export default async function AdminHome() {
         <p className="text-lg text-muted">{t.admin.lede}</p>
       </section>
 
-      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {queues.map((q) => (
           <li key={q.label}>
             <Link

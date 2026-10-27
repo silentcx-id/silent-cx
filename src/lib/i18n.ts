@@ -98,11 +98,111 @@ const id = {
     lockedTitle: "Menu ini terbuka setelah lamaran disetujui",
     lockedBody: "Selama lamaran ditinjau, Anda hanya bisa melihat beranda dan profil.",
   },
+  orders: {
+    stageReviewTitle: "Pesanan sedang dikonfirmasi admin",
+    stageReviewLede: "Ada bagian pesanan yang perlu dicek dulu oleh tim SilentCX. Setelah dikonfirmasi, invoice bisa dibayar.",
+    stagePayTitle: "Selesaikan pembayaran",
+    stagePayLede: (due: string) => `Bayar sebelum ${due}, lalu unggah bukti transfer atau QRIS.`,
+    stageVerifyTitle: "Pembayaran sedang diverifikasi",
+    stageVerifyLede: "Tim SilentCX memeriksa bukti bayar Anda, paling lama 1x24 jam.",
+    stageDetailsTitle: "Lengkapi data outlet",
+    stageDetailsLede: "Pembayaran sudah diverifikasi. Isi nama dan alamat setiap outlet, data perusahaan, dan PIC supaya kunjungan bisa dijadwalkan.",
+    stageReadyTitle: "Audit sedang disiapkan",
+    stageReadyLede: "Data lengkap. Tim SilentCX akan menjadwalkan kunjungan rahasia ke outlet Anda.",
+    openBilling: "Buka tagihan",
+    completeDetails: "Lengkapi data",
+    yourPackage: "Paket Anda",
+    outlets: (n: number) => `${n} outlet`,
+    visits: (n: number) => `${n} kunjungan per outlet`,
+    closedExpired: "Pesanan sebelumnya kedaluwarsa karena belum dibayar dalam 2x24 jam. Silakan pesan lagi.",
+    closedCancelled: "Pesanan sebelumnya dibatalkan.",
+    reasons: {
+      quote: "Ada add-on yang harganya dikonfirmasi admin.",
+      city: "Ada outlet di kota yang belum rutin kami layani.",
+      addon: "Ada add-on yang perlu persetujuan admin.",
+    },
+    checkoutTitle: "Pilih paket audit",
+    checkoutLede: "Semua harga sudah termasuk PPN. Total akhir dihitung ulang sistem saat pesanan dibuat.",
+    recommended: "Rekomendasi",
+    from: "mulai",
+    perOutlets: (n: number) => `untuk ${n} outlet`,
+    outletCount: "Jumlah outlet",
+    citiesTitle: "Kota setiap outlet",
+    citiesHint: "Cukup kotanya dulu. Nama dan alamat outlet diisi setelah pembayaran diverifikasi.",
+    cityLabel: (n: number) => `Outlet ${n}`,
+    cityUnserved: "Kota ini belum rutin kami layani; pesanan akan dikonfirmasi admin dulu.",
+    addonsTitle: "Add-on (opsional)",
+    addonQuote: "Harga dikonfirmasi admin",
+    addonQuoteFrom: (price: string) => `Dikonfirmasi admin, mulai ${price}`,
+    quantity: "Jumlah",
+    summaryTitle: "Ringkasan",
+    total: "Total",
+    totalNote: "Sudah termasuk PPN",
+    pendingQuote: "Menunggu harga dari admin",
+    reviewNotice: "Pesanan ini akan dikonfirmasi admin dulu sebelum bisa dibayar.",
+    placeOrder: "Buat pesanan",
+    placing: "Membuat pesanan…",
+    openOrderExists: "Anda masih punya pesanan yang belum selesai. Selesaikan atau tunggu konfirmasi pesanan itu dulu.",
+    noPackages: "Belum ada paket yang tersedia. Hubungi tim SilentCX.",
+    billingTitle: "Tagihan",
+    noInvoices: "Belum ada tagihan. Pilih paket untuk membuat pesanan.",
+    invoiceStatus: { draft: "Menunggu konfirmasi", unpaid: "Belum dibayar", verifying: "Sedang diverifikasi", paid: "Lunas", expired: "Kedaluwarsa", cancelled: "Dibatalkan" },
+    dueAt: (d: string) => `Batas bayar ${d}`,
+    paidAt: (d: string) => `Lunas ${d}`,
+    item: "Item",
+    amount: "Jumlah",
+    howToPay: "Cara bayar",
+    payExact: "Bayar tepat sebesar",
+    copy: "Salin",
+    copied: "Tersalin",
+    bankTransfer: "Transfer bank",
+    qris: "QRIS",
+    qrisHint: "Scan dengan aplikasi bank atau e-wallet, lalu ketik nominal tagihan.",
+    accountHolder: (name: string) => `a.n. ${name}`,
+    paymentNotReady: "Rekening dan QRIS belum diatur. Hubungi tim SilentCX.",
+    uploadTitle: "Kirim bukti bayar",
+    method: "Metode",
+    paidAmount: "Nominal yang dibayar (Rp)",
+    payerName: "Nama pengirim / akun pembayar",
+    proofFile: "Foto atau PDF bukti bayar (maks. 5 MB)",
+    submitProof: "Kirim bukti",
+    submitting: "Mengirim…",
+    proofSent: "Bukti terkirim. Kami verifikasi paling lama 1x24 jam.",
+    proofRejected: "Bukti sebelumnya ditolak:",
+    adminNote: "Catatan admin:",
+    orderAgain: "Pesan lagi",
+    history: "Riwayat tagihan",
+    detailsTitle: "Data outlet dan perusahaan",
+    detailsLede: "Data ini dipakai tim SilentCX untuk menyiapkan kunjungan. Shopper hanya melihat nama dan alamat outlet.",
+    detailsLocked: "Data outlet bisa diisi setelah pembayaran diverifikasi.",
+    company: "Perusahaan",
+    companyName: "Nama perusahaan / brand",
+    industry: "Jenis usaha",
+    companyAddress: "Alamat kantor",
+    companyCity: "Kota kantor",
+    instagram: "Instagram (opsional)",
+    picName: "Nama PIC",
+    picPosition: "Jabatan PIC",
+    picPhone: "WhatsApp PIC",
+    outletName: "Nama outlet",
+    outletAddress: "Alamat lengkap",
+    mapsUrl: "Link Google Maps (opsional)",
+    outletNotes: "Catatan untuk tim (opsional)",
+    objectives: "Tujuan audit (opsional)",
+    objectivesHint: "Contoh: ingin tahu kecepatan layanan saat jam ramai.",
+    saveDraft: "Simpan",
+    saved: "Tersimpan.",
+    markComplete: "Simpan dan tandai lengkap",
+    completed: "Data lengkap. Tim SilentCX akan menjadwalkan kunjungan.",
+    lockedFeatureTitle: "Fitur ini belum termasuk paket Anda",
+    lockedFeatureBody: "Tersedia di paket atau add-on lain. Pilih paket untuk melihat pilihannya.",
+  },
   admin: {
     title: "Antrian kerja",
     lede: "Semua gerbang client dan shopper dibuka dari sini.",
     queues: {
       shoppers: "Shopper menunggu seleksi",
+      reviews: "Pesanan perlu review",
       payments: "Pembayaran menunggu verifikasi",
       qc: "Submission menunggu QC",
       payouts: "Payout belum dibayar",
@@ -124,8 +224,10 @@ const id = {
 };
 
 type Dict = typeof id;
+type DeepPartial<T> = { [K in keyof T]?: T[K] extends (...args: never[]) => unknown ? T[K] : T[K] extends object ? DeepPartial<T[K]> : T[K] };
 
-const en: Dict = {
+// Bahasa Inggris boleh belum lengkap; teks yang belum diterjemahkan jatuh ke Bahasa Indonesia.
+const en: DeepPartial<Dict> = {
   brand: { tagline: "Customer experience audits through mystery shopping" },
   common: {
     login: "Sign in",
@@ -220,6 +322,7 @@ const en: Dict = {
     lede: "Every client and shopper gate is opened from here.",
     queues: {
       shoppers: "Shoppers awaiting review",
+      reviews: "Orders awaiting review",
       payments: "Payments awaiting verification",
       qc: "Submissions awaiting QC",
       payouts: "Unpaid payouts",
@@ -240,7 +343,17 @@ const en: Dict = {
   },
 };
 
-const DICTS: Record<Lang, Dict> = { id, en };
+function merge<T>(base: T, over: DeepPartial<T> | undefined): T {
+  if (!over) return base;
+  const out = { ...base } as Record<string, unknown>;
+  for (const [k, v] of Object.entries(over as Record<string, unknown>)) {
+    const b = (base as Record<string, unknown>)[k];
+    out[k] = v && typeof v === "object" && !Array.isArray(v) && b && typeof b === "object" ? merge(b, v as DeepPartial<typeof b>) : (v ?? b);
+  }
+  return out as T;
+}
+
+const DICTS: Record<Lang, Dict> = { id, en: merge(id, en) };
 
 export function dict(lang: Lang): Dict {
   return DICTS[lang];

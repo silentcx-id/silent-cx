@@ -1,16 +1,25 @@
 import "server-only";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ComingSoon, PortalShell } from "@/components/portal-shell";
+import { dict } from "./i18n";
+import { clientState, getClientProjects } from "./orders";
 import { getLang, getTheme } from "./prefs";
 import { menuItem, ROLE_HOME, type Role } from "./roles";
 import { requireRole } from "./session";
+
+// Fitur yang dibuka paket dan add-on dari proyek client yang sudah aktif.
+async function clientEntitlements(clientId: string) {
+  return clientState(await getClientProjects(clientId)).entitlements;
+}
 
 // Layout bersama tiap area role: memastikan role, lalu membungkus halaman dengan PortalShell.
 export function areaLayout(role: Role, home: string) {
   return async function AreaLayout({ children }: { children: React.ReactNode }) {
     const [viewer, lang, theme] = await Promise.all([requireRole(role, home), getLang(), getTheme()]);
+    const entitlements = role === "client" ? await clientEntitlements(viewer.id) : undefined;
     return (
-      <PortalShell viewer={viewer} lang={lang} theme={theme}>
+      <PortalShell viewer={viewer} lang={lang} theme={theme} entitlements={entitlements}>
         {children}
       </PortalShell>
     );
@@ -22,7 +31,20 @@ export function areaLayout(role: Role, home: string) {
 export async function comingSoonPage(role: Role, slug: string) {
   const item = menuItem(role, slug);
   if (!item || !slug) notFound();
-  await requireRole(role, `${ROLE_HOME[role]}/${slug}`);
+  const viewer = await requireRole(role, `${ROLE_HOME[role]}/${slug}`);
   const lang = await getLang();
+  if (item.entitlement && !(await clientEntitlements(viewer.id)).includes(item.entitlement)) {
+    const t = dict(lang).orders;
+    return (
+      <section className="card grid max-w-xl gap-3 p-6">
+        <h1 className="text-2xl font-extrabold">{item.label[lang]}</h1>
+        <p className="font-semibold">{t.lockedFeatureTitle}</p>
+        <p className="text-muted">{t.lockedFeatureBody}</p>
+        <Link href="/app/paket" className="btn btn-primary w-fit">
+          {dict(lang).client.choosePackage} →
+        </Link>
+      </section>
+    );
+  }
   return <ComingSoon title={item.label[lang]} phase={item.phase} lang={lang} />;
 }

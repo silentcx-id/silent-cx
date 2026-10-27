@@ -47,7 +47,9 @@ try {
       check(`client tertolak di ${p}`, path(page) === "/app", page.url());
     }
     await page.goto(BASE + "/app/paket", { waitUntil: "networkidle" });
-    check("menu Paket tampil sebagai Fase 1", (await page.textContent("main"))?.includes("Fase 1") ?? false);
+    check("menu Paket membuka halaman Pilih paket", (await page.textContent("h1"))?.includes("Pilih paket") ?? false);
+    await page.goto(BASE + "/app/benchmark", { waitUntil: "networkidle" });
+    check("menu Benchmark terkunci untuk calon client", (await page.textContent("main"))?.includes("belum termasuk paket") ?? false);
     await ctx.close();
   }
   {
