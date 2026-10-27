@@ -1,0 +1,198 @@
+@import "tailwindcss";
+
+/* SilentCX: warna diambil dari logo resmi (logo/): hitam #06080C dan emas #E5A93C.
+   Emas untuk aksi utama dan milestone aktif. Mode gelap bawaan; mode terang = latar krem, tinta hitam.
+   Merah, oranye, hijau hanya untuk arti status. */
+:root,
+[data-theme="dark"] {
+  --bg: #06080c;
+  --surface: #0e1117;
+  --raise: #161a22;
+  --line: #242a35;
+  --fg: #f4f2ec;
+  --muted: #9aa0ab;
+  --accent: #e5a93c;
+  --accent-ink: #06080c;
+  --mark: #f0bd5e;
+  --good: #7fd18b;
+  --warn: #ff9f43;
+  --bad: #ff6b5e;
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --bg: #f8f5ee;
+  --surface: #ffffff;
+  --raise: #f0ece2;
+  --line: #ded8ca;
+  --fg: #06080c;
+  --muted: #5d636e;
+  --accent: #e5a93c;
+  --accent-ink: #06080c;
+  --mark: #8a5d0f;
+  --good: #2e8540;
+  --warn: #b45a00;
+  --bad: #c0392b;
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-raise: var(--raise);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-mark: var(--mark);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --font-display: var(--font-bricolage), "Arial Narrow", system-ui, sans-serif;
+  --font-sans: var(--font-familjen), "Segoe UI", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, Consolas, monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  text-wrap: balance;
+}
+
+/* Logo mengikuti tema. */
+.logo-light,
+[data-theme="light"] .logo-dark {
+  display: none;
+}
+[data-theme="light"] .logo-light {
+  display: block;
+}
+
+:focus-visible {
+  outline: 2px solid var(--mark);
+  outline-offset: 2px;
+}
+
+/* Komponen berada di layer components supaya kelas utilitas Tailwind (bg-accent, md:hidden, border-warn)
+   tetap bisa menimpanya. */
+@layer components {
+/* Pita kuning-hitam khas SilentCX. */
+.tape {
+  height: 10px;
+  background: repeating-linear-gradient(-45deg, var(--accent) 0 12px, var(--accent-ink) 12px 24px);
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  background: transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn:hover {
+  border-color: var(--muted);
+}
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.btn-primary:hover {
+  background: var(--mark);
+  border-color: var(--mark);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn-sm {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+.field label {
+  font-weight: 600;
+  font-size: 14px;
+}
+.field input,
+.field textarea,
+.field select {
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--raise);
+  color: var(--fg);
+  padding: 8px 12px;
+}
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+.field small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--raise);
+  border: 1px solid var(--line);
+}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    animation: rise 0.35s ease both;
+  }
+  @keyframes rise {
+    from {
+      transform: translateY(6px);
+    }
+    to {
+      transform: none;
+    }
+  }
+}
