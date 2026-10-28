@@ -37,11 +37,13 @@ export type Invoice = {
   paid_at: string | null;
   status_note: string | null;
   created_at: string;
+  // order = pesanan paket; excess = tagihan tambahan kelebihan pembelian (Fase 4).
+  kind: "order" | "excess";
   invoice_lines: InvoiceLine[];
   payment_proofs: PaymentProof[];
 };
 
-export type ProjectOutlet = { id: string; position: number; city: string; name: string; address: string; maps_url: string; notes: string };
+export type ProjectOutlet = { id: string; position: number; city: string; name: string; address: string; maps_url: string; notes: string; is_competitor: boolean; paired_outlet_id: string | null };
 
 export type Project = {
   id: string;
@@ -76,7 +78,8 @@ export function sortProject(p: Project): Project {
   return {
     ...p,
     project_outlets: [...(p.project_outlets ?? [])].sort((a, b) => a.position - b.position),
-    invoices: asList<Invoice>(p.invoices).map((i) => ({
+    // Invoice pesanan selalu pertama; tagihan tambahan menyusul.
+    invoices: asList<Invoice>(p.invoices).sort((a, b) => (a.kind === b.kind ? a.created_at.localeCompare(b.created_at) : a.kind === "order" ? -1 : 1)).map((i) => ({
       ...i,
       invoice_lines: [...(i.invoice_lines ?? [])].sort((a, b) => a.position - b.position),
       payment_proofs: [...(i.payment_proofs ?? [])].sort((a, b) => b.uploaded_at.localeCompare(a.uploaded_at)),
@@ -108,8 +111,8 @@ export function clientState(projects: Project[]) {
   const current = open ?? live;
   const lastClosed = !current ? (projects.find((p) => p.status === "cancelled" || p.status === "expired") ?? null) : null;
   const stage: ClientStage = open ? "verifying" : live ? "active" : "prospect";
-  // Milestone client: 2 pilih paket, 3 pembayaran, 4 lengkapi data, 5 audit berjalan.
-  const milestone = open ? 3 : live ? (live.details_completed_at ? 5 : 4) : 2;
+  // Milestone client: 2 pilih paket, 3 pembayaran, 4 lengkapi data, 5 audit berjalan, 7 tindak lanjut (laporan terbit).
+  const milestone = open ? 3 : live ? (live.status === "completed" ? 7 : live.details_completed_at ? 5 : 4) : 2;
   const entitlements = [...new Set(projects.filter((p) => LIVE_STATUSES.includes(p.status)).flatMap((p) => p.entitlements))];
   return { open, live, current, lastClosed, stage, milestone, entitlements };
 }

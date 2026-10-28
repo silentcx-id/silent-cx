@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MilestoneTrack } from "@/components/milestone-track";
+import { NotificationList } from "@/components/notification-list";
 import { dateTime, rupiah } from "@/lib/format";
 import { dict } from "@/lib/i18n";
 import { clientState, getClientProjects, type ClientStage, type Project } from "@/lib/orders";
 import { getLang } from "@/lib/prefs";
 import { requireRole } from "@/lib/session";
+import { getNotifications } from "@/lib/shopper";
 
 export const metadata: Metadata = { title: "Beranda" };
 
@@ -16,7 +18,8 @@ export default async function ClientHome() {
   const [viewer, lang] = await Promise.all([requireRole("client", "/app"), getLang()]);
   const t = dict(lang);
   const o = t.orders;
-  const state = clientState(await getClientProjects(viewer.id));
+  const [projects, notifications] = await Promise.all([getClientProjects(viewer.id), getNotifications(viewer.id)]);
+  const state = clientState(projects);
   const { stage, milestone, open, live, lastClosed } = state;
 
   let hero: { title: string; lede: string; cta?: { href: string; label: string } };
@@ -28,6 +31,8 @@ export default async function ClientHome() {
         : open.status === "verifying"
           ? { title: o.stageVerifyTitle, lede: o.stageVerifyLede, cta: { href: "/app/billing", label: o.openBilling } }
           : { title: o.stagePayTitle, lede: o.stagePayLede(dateTime(inv?.due_at, lang)), cta: { href: "/app/billing", label: o.openBilling } };
+  } else if (live?.status === "completed") {
+    hero = { title: o.stageReportTitle, lede: o.stageReportLede, cta: { href: `/app/reports/${live.id}`, label: o.openReport } };
   } else if (live) {
     hero = live.details_completed_at
       ? { title: o.stageReadyTitle, lede: o.stageReadyLede }
@@ -63,6 +68,8 @@ export default async function ClientHome() {
           </div>
         )}
       </section>
+
+      {notifications.length > 0 && <NotificationList items={notifications} lang={lang} />}
 
       <section className="grid gap-3">
         <h2 className="eyebrow">Milestone</h2>

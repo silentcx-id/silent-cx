@@ -191,3 +191,52 @@ Persiapan:
 - [ ] Client membuka **Audit berjalan** → progres per outlet tanpa tanggal kunjungan atau nama shopper. Kunjungan yang sedang berlangsung tetap tampil "Dijadwalkan".
 
 Bagian ini juga sudah diuji otomatis dengan 28 tes database: bobot dan jatah foto kuesioner, salinan terkunci, tawaran dan kedaluwarsa, batas tugas aktif, check-in, validasi jawaban, batas foto, skor, kerahasiaan client dan shopper, serta log aktivitas. Uji ujung-ke-ujung di browser ada di `tests/e2e/fase3-flow.mjs`; uji ini menulis data sementara lalu menghapusnya.
+
+## Fase 4: QC, laporan, dan benchmark kompetitor
+
+Persiapan:
+
+1. Jalankan `npm run db:migrate`. Perintah ini memasang dua migrasi baru: status QC, serta tabel laporan, revisi, kompetitor, dan tagihan tambahan.
+2. Siapkan satu proyek aktif dengan kunjungan yang sudah dikirim shopper (alur Fase 3). Untuk mencoba benchmark kompetitor, pesan paket Insight atau Performance dengan add-on **Benchmark kompetitor**.
+
+### A. Kompetitor (client)
+
+- [ ] Di **Outlet & data**, muncul bagian **Kompetitor untuk benchmark** sesuai jumlah add-on, dengan keterangan bahwa foto kunjungan ke kompetitor tidak ditampilkan di laporan.
+- [ ] Isi nama, kota, dan alamat kompetitor, lalu pilih outlet pasangan (opsional) → "Kompetitor tersimpan".
+- [ ] **Simpan dan tandai lengkap** sebelum kompetitor diisi → ditolak dengan pesan "Isi 1 kompetitor…".
+- [ ] Admin melihat kompetitor bertanda **Kompetitor** di halaman proyek dan bisa menjadwalkannya. Shopper melihatnya seperti outlet biasa.
+
+### B. QC (admin)
+
+- [ ] **Quality control** menampilkan antrian kunjungan yang menunggu QC, urut dari yang paling lama, beserta tanda revisi dan kelebihan pembelian.
+- [ ] Buka satu kunjungan → jawaban per pertanyaan tampil di samping foto bukti, struk, peta titik check-in, dan alamat dari client.
+- [ ] Centang **Minta revisi** pada satu pertanyaan, isi catatan, lalu kirim → status menjadi **Revisi**, dan shopper mendapat notifikasi dengan batas 24 jam.
+- [ ] **Follow up revisi via WhatsApp** membuka chat ke shopper.
+- [ ] Setelah 2 putaran revisi, tombol **Minta revisi** nonaktif.
+- [ ] Revisi yang tidak dikirim dalam 24 jam kembali ke antrian dengan tanda "Revisi tidak dikirim".
+- [ ] **Setujui** → kunjungan "Lolos QC". Kalau ada kelebihan pembelian, centang persetujuannya.
+- [ ] **Tolak** → pilih "Tidak dibayar" atau "Hanya reimburse", isi alasan, dan biarkan "Buat tugas pengganti" tercentang → tugas baru muncul di halaman proyek.
+
+### C. Revisi dan riwayat (shopper)
+
+- [ ] Notifikasi revisi membuka tugas. Hanya pertanyaan yang ditandai yang tampil, dengan catatan admin dan batas waktu.
+- [ ] Ubah jawaban, lalu **Kirim revisi** → status kembali "Menunggu QC".
+- [ ] **Riwayat & QC** menampilkan kunjungan yang lolos atau ditolak, keputusan fee, dan catatan admin. Skor tidak ditampilkan ke shopper.
+
+### D. Laporan (admin)
+
+- [ ] **Laporan** menampilkan proyek beserta jumlah outlet yang sudah punya kunjungan lolos QC.
+- [ ] Buka satu proyek → ringkasan dan temuan terisi otomatis dari skor. Tambah atau ubah temuan dan rekomendasi, lalu pilih foto bukti (foto kompetitor dan foto check-in tidak muncul).
+- [ ] **Simpan draf**, lalu **Pratinjau PDF** → PDF bertanda "DRAF, BELUM TERBIT".
+- [ ] Selama ada outlet tanpa kunjungan lolos QC atau kunjungan yang masih menunggu QC, tombol **Terbitkan ke client** nonaktif dan alasannya tampil.
+- [ ] **Terbitkan ke client** → proyek menjadi Selesai. Kalau ada kelebihan pembelian yang disetujui, tagihan tambahan dibuat.
+
+### E. Client
+
+- [ ] Beranda menampilkan "Laporan audit sudah terbit" dan notifikasinya.
+- [ ] **Laporan** menampilkan skor, area penilaian, outlet, temuan, rekomendasi, foto pilihan, dan benchmark kompetitor sesuai paket. **Unduh PDF** mengunduh file PDF.
+- [ ] Calon client tanpa laporan bisa membuka **Unduh contoh laporan (PDF)**.
+- [ ] **Tagihan** menampilkan **Tagihan tambahan** kelebihan pembelian, bisa dibayar dengan cara yang sama, dan diverifikasi admin tanpa mengubah status proyek.
+- [ ] Setiap invoice punya tombol **Unduh PDF**.
+
+Bagian ini juga sudah diuji otomatis dengan 17 tes database: jumlah kompetitor, QC dan revisi, kedaluwarsa revisi, penolakan dan tugas pengganti, angka laporan, foto yang boleh masuk laporan, syarat terbit, laporan beku, tagihan tambahan, dan hak baca. Uji ujung-ke-ujung di browser ada di `tests/e2e/fase4-flow.mjs`; uji ini menulis data sementara lalu menghapusnya.

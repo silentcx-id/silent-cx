@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { markNotificationsRead } from "./actions";
-import { StatusText, useAction } from "@/components/use-action";
+import { markNotificationsRead } from "@/app/notification-actions";
+import { StatusText, useAction } from "./use-action";
 import { date, dateTime } from "@/lib/format";
 import { dict, type Lang } from "@/lib/i18n";
 import type { Notification } from "@/lib/shopper";
@@ -23,10 +23,18 @@ export function NotificationList({ items, lang }: { items: Notification[]; lang:
     if (n.kind === "task.offered") return t.taskOffered(code, n.detail.city ?? "—", n.detail.respond_by ? dateTime(n.detail.respond_by, lang) : "—");
     if (n.kind === "task.withdrawn") return t.taskWithdrawn(code);
     if (n.kind === "task.cancelled") return t.taskCancelled(code, n.detail.note ?? "—");
+    if (n.kind === "task.approved") return t.taskApproved(code);
+    if (n.kind === "task.revision") return t.taskRevision(code, n.detail.note ?? "—", n.detail.due ? dateTime(n.detail.due, lang) : "—");
+    if (n.kind === "task.rejected") return t.taskRejected(code, n.detail.note ?? "—");
+    if (n.kind === "report.published") return t.reportPublished(code);
     return n.kind;
   };
-  // Tawaran yang masih bisa dibuka langsung dari notifikasi.
-  const link = (n: Notification) => (n.kind === "task.offered" && n.detail.task ? `/shopper/assignments/${n.detail.task}` : null);
+  // Notifikasi yang bisa dibuka langsung ke halaman terkait.
+  const link = (n: Notification): { href: string; label: string } | null => {
+    if (["task.offered", "task.revision", "task.approved", "task.rejected"].includes(n.kind) && n.detail.task) return { href: `/shopper/assignments/${n.detail.task}`, label: t.openTask };
+    if (n.kind === "report.published" && n.detail.project) return { href: `/app/reports/${n.detail.project}`, label: t.openReport };
+    return null;
+  };
 
   return (
     <section className="grid gap-3" aria-labelledby="notif-title">
@@ -50,8 +58,8 @@ export function NotificationList({ items, lang }: { items: Notification[]; lang:
             </div>
             <p>{text(n)}</p>
             {link(n) && (
-              <Link href={link(n)!} className="w-fit text-sm font-semibold text-mark underline underline-offset-4">
-                {t.openTask} →
+              <Link href={link(n)!.href} className="w-fit text-sm font-semibold text-mark underline underline-offset-4">
+                {link(n)!.label} →
               </Link>
             )}
           </li>

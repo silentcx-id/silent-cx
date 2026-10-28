@@ -19,12 +19,38 @@ export default async function BillingPage() {
   const current = withInvoice[0];
   const invoice = current?.invoices[0];
   const rejected = invoice?.payment_proofs.find((p) => p.status === "rejected");
+  // Tagihan tambahan kelebihan pembelian (terbit bersama laporan).
+  const extras = projects.flatMap((p) => p.invoices.filter((i) => i.kind === "excess" && i.status !== "cancelled").map((i) => ({ invoice: i, code: p.code })));
 
   return (
     <>
       <section className="grid max-w-3xl gap-2">
         <h1 className="text-[clamp(28px,4vw,40px)] font-extrabold leading-tight">{t.billingTitle}</h1>
       </section>
+
+      {extras.map(({ invoice: x, code }) => (
+        <section key={x.id} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,420px)] xl:items-start">
+          <div className="card grid gap-3 border-accent p-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl font-extrabold">{t.excessTitle}</h2>
+              <InvoiceStatusChip status={x.status} lang={lang} />
+            </div>
+            <p className="text-sm text-muted">{t.excessLede}</p>
+            {x.status === "unpaid" && (
+              <>
+                {x.status_note && (
+                  <p className="text-sm">
+                    <strong>{t.adminNote}</strong> {x.status_note}
+                  </p>
+                )}
+                <PaymentPanel invoiceId={x.id} total={x.total} settings={settings} lang={lang} />
+              </>
+            )}
+            {x.status === "verifying" && <p className="text-sm">{t.stageVerifyLede}</p>}
+          </div>
+          <InvoiceView invoice={x} projectCode={code} lang={lang} pdfHref={`/app/billing/${x.id}/pdf`} />
+        </section>
+      ))}
 
       {!current || !invoice ? (
         <section className="card grid max-w-xl gap-4 p-6">
@@ -85,7 +111,7 @@ export default async function BillingPage() {
               </section>
             )}
           </div>
-          <InvoiceView invoice={invoice} projectCode={current.code} lang={lang} />
+          <InvoiceView invoice={invoice} projectCode={current.code} lang={lang} pdfHref={`/app/billing/${invoice.id}/pdf`} />
         </div>
       )}
 

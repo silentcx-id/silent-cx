@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Audit berjalan" };
 
-type Row = { project_id: string; project_code: string; outlet_id: string; position: number; name: string; city: string; visits_planned: number; scheduled: number; awaiting_qc: number };
+type Row = { project_id: string; project_code: string; outlet_id: string; position: number; name: string; city: string; visits_planned: number; scheduled: number; awaiting_qc: number; approved: number; is_competitor: boolean };
 
 // Progres per outlet tanpa tanggal kunjungan, nama shopper, atau jawaban (dihitung di client_audit_progress).
 export default async function AuditsPage() {
@@ -31,7 +31,7 @@ export default async function AuditsPage() {
             {rows
               .filter((r) => r.project_id === projectId)
               .map((r) => {
-                const done = r.awaiting_qc;
+                const done = r.approved;
                 const pct = Math.min(100, Math.round((done / Math.max(1, r.visits_planned)) * 100));
                 return (
                   <li key={r.outlet_id} className="card grid gap-3 p-5">
@@ -39,7 +39,10 @@ export default async function AuditsPage() {
                       <span className="font-extrabold">
                         {r.position}. {r.name || r.city}
                       </span>
-                      <span className="chip">{r.city}</span>
+                      <span className="flex gap-1">
+                        {r.is_competitor && <span className="chip border-accent text-mark">{t.competitor}</span>}
+                        <span className="chip">{r.city}</span>
+                      </span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-raise" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
                       <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
@@ -48,7 +51,8 @@ export default async function AuditsPage() {
                       <li className="text-muted">{t.planned(r.visits_planned)}</li>
                       {r.scheduled > 0 && <li>{t.scheduled}: {r.scheduled}</li>}
                       {r.awaiting_qc > 0 && <li className="text-mark">{t.awaitingQc}: {r.awaiting_qc}</li>}
-                      {r.scheduled + r.awaiting_qc === 0 && <li className="text-muted">{t.notScheduled}</li>}
+                      {r.approved > 0 && <li className="text-good">{t.approved}: {r.approved}</li>}
+                      {r.scheduled + r.awaiting_qc + r.approved === 0 && <li className="text-muted">{t.notScheduled}</li>}
                     </ul>
                   </li>
                 );

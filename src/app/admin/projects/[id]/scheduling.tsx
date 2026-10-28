@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { assignQuestionnaire, cancelTask, checkLocation, createTask, offerTask, recordFollowup, updateTask, visitPhotoLink, withdrawOffer } from "../field-actions";
+import { CheckinMap } from "@/components/checkin-map";
 import { StatusText, useAction } from "@/components/use-action";
 import { followupMessage, TASK_STATUS_LABEL, TASK_STATUS_TONE, waLink, windowLabel, type TaskStatus } from "@/lib/field";
 import { dateTime, rupiah } from "@/lib/format";
@@ -41,7 +42,7 @@ export type AdminTask = {
   candidates: Candidate[];
 };
 
-export type OutletTasks = { id: string; position: number; name: string; city: string; address: string; maps_url: string; tasks: AdminTask[] };
+export type OutletTasks = { id: string; position: number; name: string; city: string; address: string; maps_url: string; is_competitor: boolean; tasks: AdminTask[] };
 
 type Defaults = { fee: number; reimburse: number; hours: number; today: string; inAWeek: string };
 
@@ -315,7 +316,6 @@ function LocationReview({ task, outlet }: { task: AdminTask; outlet: OutletTasks
   const [note, setNote] = useState(task.location_note ?? "");
   const lat = task.checkin_lat ?? 0;
   const lng = task.checkin_lng ?? 0;
-  const bbox = [lng - 0.004, lat - 0.0025, lng + 0.004, lat + 0.0025].map((n) => n.toFixed(6)).join(",");
   const checkinPhoto = task.photos.find((p) => p.kind === "checkin");
   return (
     <div className="grid gap-3 rounded-xl border border-line p-3">
@@ -327,12 +327,7 @@ function LocationReview({ task, outlet }: { task: AdminTask; outlet: OutletTasks
           {task.location_check === "match" ? "Lokasi sesuai" : task.location_check === "mismatch" ? "Lokasi tidak sesuai" : "Lokasi belum dicek"}
         </span>
       </div>
-      <iframe
-        title={`Titik check-in ${task.code}`}
-        className="h-56 w-full rounded-lg border border-line"
-        loading="lazy"
-        src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`}
-      />
+      <CheckinMap lat={lat} lng={lng} title={`Titik check-in ${task.code}`} />
       <p className="text-sm">
         <span className="text-muted">Alamat dari client:</span> {outlet.address || "—"}
       </p>
@@ -445,7 +440,7 @@ function TaskCard({ task, outlet, defaults }: { task: AdminTask; outlet: OutletT
               <PhotoButton key={p.id} id={p.id} text={`Bukti ${i + 1}`} />
             ))}
           </div>
-          <p className="text-xs text-muted">Pemeriksaan jawaban per pertanyaan dan keputusan QC ada di Fase 4.</p>
+          <p className="text-xs text-muted">Pemeriksaan jawaban dan keputusan QC ada di menu Quality control.</p>
         </div>
       )}
 
@@ -479,6 +474,7 @@ export function OutletSchedule({ outlet, defaults, canCreate, visitsPlanned }: {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="flex flex-wrap items-center gap-2 text-lg font-extrabold">
           {outlet.position}. {outlet.name || "Nama belum diisi"} <span className="chip font-normal">{outlet.city}</span>
+          {outlet.is_competitor && <span className="chip border-accent font-normal text-mark">Kompetitor</span>}
         </h3>
         <span className={`text-sm ${live < visitsPlanned ? "text-warn" : "text-muted"}`}>
           {live}/{visitsPlanned} kunjungan dijadwalkan

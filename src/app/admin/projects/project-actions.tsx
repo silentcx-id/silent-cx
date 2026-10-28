@@ -47,7 +47,7 @@ export function ReviewForm({ projectId, pendingLines }: { projectId: string; pen
 }
 
 // Memeriksa bukti bayar: lihat file, lalu terima atau tolak dengan alasan.
-export function VerifyForm({ invoiceId, proofId }: { invoiceId: string; proofId: string }) {
+export function VerifyForm({ invoiceId, proofId, extra = false }: { invoiceId: string; proofId: string; extra?: boolean }) {
   const { pending, status, setStatus, act } = useAction();
   const [note, setNote] = useState("");
   return (
@@ -73,8 +73,8 @@ export function VerifyForm({ invoiceId, proofId }: { invoiceId: string; proofId:
         <textarea className={`${input} min-h-20`} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />
       </label>
       <div className="flex flex-wrap items-center gap-3">
-        <button type="button" className="btn btn-primary" disabled={pending} onClick={() => act(() => verifyPayment({ invoiceId, approve: true, note }), "Pembayaran diverifikasi. Proyek aktif.")}>
-          Pembayaran sesuai, aktifkan proyek
+        <button type="button" className="btn btn-primary" disabled={pending} onClick={() => act(() => verifyPayment({ invoiceId, approve: true, note }), extra ? "Tagihan tambahan lunas." : "Pembayaran diverifikasi. Proyek aktif.")}>
+          {extra ? "Pembayaran sesuai, tandai lunas" : "Pembayaran sesuai, aktifkan proyek"}
         </button>
         <button type="button" className="btn" disabled={pending || !note.trim()} onClick={() => act(() => verifyPayment({ invoiceId, approve: false, note }), "Bukti ditolak. Client bisa mengirim ulang.")}>
           Tolak bukti

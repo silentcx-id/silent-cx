@@ -77,15 +77,3 @@ export async function saveBankAccount(raw: unknown) {
   );
 }
 
-export async function markNotificationsRead() {
-  await requireRole("shopper", "/shopper");
-  return run(
-    z.undefined(),
-    undefined,
-    async () => {
-      const supabase = await createClient();
-      check(await supabase.rpc("mark_notifications_read"));
-    },
-    ["/shopper"],
-  );
-}

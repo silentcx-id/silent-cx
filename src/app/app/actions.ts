@@ -126,3 +126,32 @@ export async function saveProjectDetails(raw: unknown) {
     PATHS,
   );
 }
+
+const competitorSchema = z.object({
+  projectId: z.uuid(),
+  items: z
+    .array(
+      z.object({
+        name: z.string().trim().min(2, "Isi nama kompetitor.").max(120),
+        address: z.string().trim().min(5, "Isi alamat kompetitor.").max(300),
+        city: z.string().trim().min(2, "Isi kota kompetitor.").max(80),
+        maps_url: z.string().trim().max(500).refine((v) => v === "" || v.startsWith("https://"), "Link Google Maps harus diawali https://"),
+        paired_outlet_id: z.uuid().or(z.literal("")),
+      }),
+    )
+    .max(10),
+});
+
+// Kompetitor untuk add-on benchmark; jumlah maksimal dan kompetitor yang sudah dijadwalkan dijaga database.
+export async function saveCompetitors(raw: unknown) {
+  await requireRole("client", "/app/outlets");
+  return run(
+    competitorSchema,
+    raw,
+    async ({ projectId, items }) => {
+      const supabase = await createClient();
+      check(await supabase.rpc("client_save_competitors", { p_project: projectId, p_items: items }));
+    },
+    PATHS,
+  );
+}

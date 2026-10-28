@@ -25,7 +25,7 @@ export default async function AssignmentsPage() {
   const tasks = (data ?? []) as ShopperTaskRow[];
   const groups = [
     { title: t.tasks.offers, items: tasks.filter((x) => x.status === "offered") },
-    { title: t.tasks.running, items: tasks.filter((x) => x.status === "accepted" || x.status === "in_progress") },
+    { title: t.tasks.running, items: tasks.filter((x) => x.status === "revision" || x.status === "accepted" || x.status === "in_progress") },
     { title: t.tasks.sent, items: tasks.filter((x) => x.status === "submitted") },
   ].filter((g) => g.items.length);
 

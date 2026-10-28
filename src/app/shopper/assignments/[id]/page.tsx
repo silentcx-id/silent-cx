@@ -24,7 +24,7 @@ export default async function AssignmentPage({ params }: PageProps<"/shopper/ass
 
   // Tautan sementara untuk foto milik shopper sendiri (kepemilikan sudah dicek shopper_task).
   const photoUrls: Record<string, string> = {};
-  if (task.photos.length && task.status === "in_progress") {
+  if (task.photos.length && (task.status === "in_progress" || task.status === "revision")) {
     const { data: signed } = await createAdminClient().storage.from("audit-evidence").createSignedUrls(task.photos.map((p) => p.path), 600);
     for (const [i, s] of (signed ?? []).entries()) if (s.signedUrl) photoUrls[task.photos[i].id] = s.signedUrl;
   }
@@ -68,7 +68,18 @@ export default async function AssignmentPage({ params }: PageProps<"/shopper/ass
 
       {task.status === "offered" && <OfferResponse taskId={task.id} respondBy={task.respond_by} lang={lang} />}
       {task.status === "accepted" && <CheckIn taskId={task.id} lang={lang} />}
-      {task.status === "in_progress" && task.questionnaire && <AuditForm task={task} photoUrls={photoUrls} lang={lang} />}
+      {(task.status === "in_progress" || task.status === "revision") && task.questionnaire && <AuditForm task={task} photoUrls={photoUrls} lang={lang} />}
+      {(task.status === "approved" || task.status === "rejected") && task.qc && (
+        <section className={`card grid gap-2 p-5 ${task.status === "approved" ? "border-good/50" : "border-bad/50"}`}>
+          <p className={`text-lg font-extrabold ${task.status === "approved" ? "text-good" : "text-bad"}`}>{task.status === "approved" ? t.approvedTitle : t.rejectedTitle}</p>
+          <p>{task.status === "approved" ? t.approvedBody : task.qc.fee ? t.feeDecision[task.qc.fee] : null}</p>
+          {task.qc.note && (
+            <p className="text-sm">
+              <span className="text-muted">{t.qcNote}</span> {task.qc.note}
+            </p>
+          )}
+        </section>
+      )}
       {task.status === "submitted" && (
         <section className="card grid gap-2 border-accent p-5">
           <p className="font-semibold">{t.submitted(dateTime(task.submitted_at, lang))}</p>

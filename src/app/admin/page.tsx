@@ -18,7 +18,8 @@ export default async function AdminHome() {
     // Hanya lamaran yang sudah dikirim (lulus kuis dan pakta); draft belum perlu keputusan.
     count(supabase.from("shopper_applications").select("id", { count: "exact", head: true }).eq("status", "submitted")),
     count(supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "awaiting_review")),
-    count(supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "verifying")),
+    // Termasuk tagihan tambahan kelebihan pembelian.
+    count(supabase.from("invoices").select("id", { count: "exact", head: true }).eq("status", "verifying")),
     count(supabase.from("audit_tasks").select("id", { count: "exact", head: true }).eq("status", "open")),
     count(supabase.from("audit_tasks").select("id", { count: "exact", head: true }).eq("status", "submitted")),
   ]);

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { NotificationList } from "./notification-list";
 import { MilestoneTrack } from "@/components/milestone-track";
+import { NotificationList } from "@/components/notification-list";
 import { windowLabel, type ShopperTaskRow } from "@/lib/field";
 import { date, dateTime } from "@/lib/format";
 import { dict } from "@/lib/i18n";
@@ -26,7 +26,7 @@ export default async function ShopperHome() {
     const [bank, { data: taskData }] = await Promise.all([getBankAccount(viewer.id), supabase.rpc("shopper_tasks")]);
     const tasks = (taskData ?? []) as ShopperTaskRow[];
     const offers = tasks.filter((x) => x.status === "offered");
-    const running = tasks.filter((x) => x.status === "accepted" || x.status === "in_progress");
+    const running = tasks.filter((x) => x.status === "revision" || x.status === "accepted" || x.status === "in_progress");
     // Milestone shopper: 3 terima tugas, 4 kunjungan, 5 submit & QC.
     const milestone = running.length ? 4 : tasks.some((x) => x.status === "submitted") && !offers.length ? 5 : 3;
     return (

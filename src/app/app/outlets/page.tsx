@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CompetitorForm } from "./competitor-form";
 import { DetailsForm } from "./details-form";
 import { dateTime } from "@/lib/format";
 import { dict } from "@/lib/i18n";
@@ -16,6 +17,8 @@ export default async function OutletsPage() {
   const { live, open } = clientState(await getClientProjects(viewer.id));
   const supabase = await createClient();
   const { data: company } = await supabase.from("companies").select("*").eq("client_id", viewer.id).maybeSingle();
+  // Jumlah kompetitor dari add-on benchmark kompetitor yang dibeli.
+  const allowance = (live?.addons_snapshot ?? []).filter((a) => a.item_key === "competitor_benchmark").reduce((n, a) => n + a.quantity, 0);
 
   return (
     <>
@@ -31,12 +34,21 @@ export default async function OutletsPage() {
               {t.completed} ({dateTime(live.details_completed_at, lang)})
             </p>
           )}
+          {allowance > 0 && (
+            <CompetitorForm
+              projectId={live.id}
+              allowance={allowance}
+              competitors={live.project_outlets.filter((o) => o.is_competitor)}
+              outlets={live.project_outlets.filter((o) => !o.is_competitor)}
+              lang={lang}
+            />
+          )}
           <DetailsForm
             projectId={live.id}
             lang={lang}
             completed={Boolean(live.details_completed_at)}
             objectives={live.objectives}
-            outlets={live.project_outlets}
+            outlets={live.project_outlets.filter((o) => !o.is_competitor)}
             company={{
               name: company?.name ?? "",
               industry: company?.industry ?? "",

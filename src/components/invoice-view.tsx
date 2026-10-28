@@ -16,7 +16,7 @@ export function InvoiceStatusChip({ status, lang }: { status: InvoiceStatus; lan
 }
 
 // Rincian invoice: kode, status, batas bayar, baris harga (harga promo dengan harga normal dicoret), dan total.
-export function InvoiceView({ invoice, projectCode, lang }: { invoice: Invoice; projectCode?: string; lang: Lang }) {
+export function InvoiceView({ invoice, projectCode, lang, pdfHref }: { invoice: Invoice; projectCode?: string; lang: Lang; pdfHref?: string }) {
   const t = dict(lang).orders;
   return (
     <section className="card grid gap-4 p-5">
@@ -68,6 +68,11 @@ export function InvoiceView({ invoice, projectCode, lang }: { invoice: Invoice; 
         </span>
         <span className="font-display text-2xl font-extrabold tabular-nums">{rupiah(invoice.total)}</span>
       </div>
+      {pdfHref && invoice.status !== "draft" && (
+        <a href={pdfHref} className="btn btn-sm w-fit">
+          {t.downloadPdf}
+        </a>
+      )}
     </section>
   );
 }

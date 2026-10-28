@@ -17,7 +17,7 @@ export type QuestionnaireSnapshot = { id?: string; name?: string; photo_limit: n
 export type Answer = { value?: "yes" | "no" | number | string | null; na?: boolean; note?: string };
 export type Answers = Record<string, Answer>;
 
-export type TaskStatus = "open" | "offered" | "accepted" | "in_progress" | "submitted" | "cancelled";
+export type TaskStatus = "open" | "offered" | "accepted" | "in_progress" | "submitted" | "revision" | "approved" | "rejected" | "cancelled";
 
 export const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
   open: "Belum ada shopper",
@@ -25,6 +25,9 @@ export const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
   accepted: "Diterima",
   in_progress: "Sedang dikunjungi",
   submitted: "Menunggu QC",
+  revision: "Revisi",
+  approved: "Lolos QC",
+  rejected: "Ditolak QC",
   cancelled: "Dibatalkan",
 };
 
@@ -34,6 +37,9 @@ export const TASK_STATUS_TONE: Record<TaskStatus, string> = {
   accepted: "border-good/50 text-good",
   in_progress: "border-good/50 text-good",
   submitted: "border-accent text-mark",
+  revision: "border-warn/50 text-warn",
+  approved: "border-good/50 text-good",
+  rejected: "border-bad/50 text-bad",
   cancelled: "text-muted",
 };
 
@@ -60,6 +66,8 @@ export type ShopperTaskDetail = {
   purchase_amount: number | null;
   purchase_note: string;
   submitted_at: string | null;
+  revision: { items: string[]; note: string | null; due: string | null; round: number } | null;
+  qc: { note: string | null; fee: "full" | "reimburse_only" | "none" | null; decided_at: string | null } | null;
   questionnaire: QuestionnaireSnapshot | null;
   photos: VisitPhoto[];
 };
@@ -79,6 +87,10 @@ export type ShopperTaskRow = {
   respond_by: string | null;
   urgent: boolean;
   submitted_at: string | null;
+  revision_due: string | null;
+  qc_note: string | null;
+  fee_decision: "full" | "reimburse_only" | "none" | null;
+  qc_decided_at: string | null;
 };
 
 // "2026-10-28" → "28 Okt 2026"; tanggal tanpa jam, jadi tidak digeser zona waktu.
@@ -105,4 +117,17 @@ export function waLink(phone: string, text: string): string {
 // Tanggal hari ini (WIB) ditambah n hari, format YYYY-MM-DD untuk <input type="date">.
 export function wibDate(offsetDays = 0): string {
   return new Date(Date.now() + 7 * 3600_000 + offsetDays * 86400_000).toISOString().slice(0, 10);
+}
+
+// Penanda revisi untuk nominal pembelian dan struk (bukan id pertanyaan).
+export const PURCHASE_ITEM = "__purchase";
+
+export const FEE_DECISION_LABEL = { full: "Fee dan reimburse dibayar", reimburse_only: "Hanya reimburse pembelian", none: "Tidak dibayar" } as const;
+
+export function answerLabel(q: SnapshotQuestion, a: Answer | undefined): string {
+  if (!a) return "Belum dijawab";
+  if (a.na) return "Tidak teramati";
+  if (q.kind === "yes_no") return a.value === "yes" ? "Ya" : a.value === "no" ? "Tidak" : "Belum dijawab";
+  if (q.kind === "scale") return typeof a.value === "number" ? `${a.value} dari 5` : "Belum dijawab";
+  return typeof a.value === "string" && a.value.trim() ? a.value : "Belum dijawab";
 }

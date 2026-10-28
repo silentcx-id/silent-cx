@@ -74,7 +74,7 @@ async function Scheduling({ project }: { project: Project }) {
       )}
       <QuestionnairePicker projectId={project.id} current={current} options={options} locked={locked} />
       {outlets.map((o) => (
-        <OutletSchedule key={o.id} outlet={o} defaults={defaults} canCreate={canCreate} visitsPlanned={visitsPlanned} />
+        <OutletSchedule key={o.id} outlet={o} defaults={defaults} canCreate={canCreate} visitsPlanned={o.is_competitor ? 1 : visitsPlanned} />
       ))}
     </section>
   );
@@ -99,7 +99,9 @@ export default async function ProjectDetail({ params }: PageProps<"/admin/projec
   ]);
   const served = new Set((cities ?? []).map((c) => c.name.trim().toLowerCase()));
   const invoice = project.invoices[0];
-  const pendingProof = invoice?.payment_proofs.find((p) => p.status === "pending");
+  // Invoice yang buktinya menunggu diperiksa: pesanan, atau tagihan tambahan setelah laporan terbit.
+  const verifyingInvoice = project.invoices.find((i) => i.status === "verifying");
+  const pendingProof = verifyingInvoice?.payment_proofs.find((p) => p.status === "pending");
   const open = ["awaiting_review", "awaiting_payment", "verifying"].includes(project.status);
 
   return (
@@ -131,17 +133,17 @@ export default async function ProjectDetail({ params }: PageProps<"/admin/projec
             </section>
           )}
 
-          {project.status === "verifying" && invoice && pendingProof && (
+          {verifyingInvoice && pendingProof && (
             <section className="card grid gap-4 border-accent p-5">
-              <h2 className="text-xl font-extrabold">Verifikasi pembayaran</h2>
+              <h2 className="text-xl font-extrabold">{verifyingInvoice.kind === "excess" ? "Verifikasi tagihan tambahan" : "Verifikasi pembayaran"}</h2>
               <dl className="grid gap-2 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="text-muted">Tagihan</dt>
-                  <dd className="font-display text-xl font-extrabold tabular-nums">{rupiah(invoice.total)}</dd>
+                  <dd className="font-display text-xl font-extrabold tabular-nums">{rupiah(verifyingInvoice.total)}</dd>
                 </div>
                 <div>
                   <dt className="text-muted">Dibayar menurut client</dt>
-                  <dd className={`font-display text-xl font-extrabold tabular-nums ${pendingProof.amount !== invoice.total ? "text-bad" : "text-good"}`}>{rupiah(pendingProof.amount)}</dd>
+                  <dd className={`font-display text-xl font-extrabold tabular-nums ${pendingProof.amount !== verifyingInvoice.total ? "text-bad" : "text-good"}`}>{rupiah(pendingProof.amount)}</dd>
                 </div>
                 <div>
                   <dt className="text-muted">Metode</dt>
@@ -156,7 +158,7 @@ export default async function ProjectDetail({ params }: PageProps<"/admin/projec
                   <dd>{dateTime(pendingProof.uploaded_at, "id")}</dd>
                 </div>
               </dl>
-              <VerifyForm invoiceId={invoice.id} proofId={pendingProof.id} />
+              <VerifyForm invoiceId={verifyingInvoice.id} proofId={pendingProof.id} extra={verifyingInvoice.kind === "excess"} />
             </section>
           )}
 
@@ -219,6 +221,7 @@ export default async function ProjectDetail({ params }: PageProps<"/admin/projec
                       {o.position}. {o.name || "Nama belum diisi"}
                     </span>
                     <span className="chip">{o.city}</span>
+                    {o.is_competitor && <span className="chip border-accent text-mark">Kompetitor</span>}
                     {!served.has(o.city.trim().toLowerCase()) && <span className="chip border-warn/50 text-warn">Di luar kota dilayani</span>}
                   </span>
                   {o.address && <span className="text-muted">{o.address}</span>}
@@ -254,7 +257,13 @@ export default async function ProjectDetail({ params }: PageProps<"/admin/projec
 
           {open && <CancelForm projectId={project.id} />}
         </div>
-        {invoice && <InvoiceView invoice={invoice} projectCode={project.code} lang="id" />}
+        {invoice && (
+          <div className="grid gap-4">
+            {project.invoices.map((inv) => (
+              <InvoiceView key={inv.id} invoice={inv} projectCode={project.code} lang="id" pdfHref={`/admin/invoices/${inv.id}/pdf`} />
+            ))}
+          </div>
+        )}
       </div>
     </>
   );

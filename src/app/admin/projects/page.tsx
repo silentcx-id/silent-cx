@@ -13,6 +13,7 @@ const TABS = [
   { id: "verify", label: "Verifikasi bukti", statuses: ["verifying"] },
   { id: "payment", label: "Menunggu pembayaran", statuses: ["awaiting_payment"] },
   { id: "active", label: "Aktif", statuses: ["active", "reporting"] },
+  { id: "done", label: "Selesai", statuses: ["completed"] },
   { id: "all", label: "Semua", statuses: [] },
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
@@ -23,15 +24,18 @@ export default async function ProjectsPage({ searchParams }: PageProps<"/admin/p
   const [, params] = await Promise.all([requireRole("admin", "/admin/projects"), searchParams]);
   const supabase = await createClient();
   await supabase.rpc("expire_overdue");
-  const [{ data }, { data: counts }] = await Promise.all([
-    supabase.from("projects").select("*, invoices(code, total, status, due_at), profiles!projects_client_id_fkey(full_name, email)").order("created_at", { ascending: false }).limit(300),
-    supabase.from("projects").select("status").in("status", ["awaiting_review", "verifying"]),
-  ]);
+  const { data } = await supabase
+    .from("projects")
+    .select("*, invoices(code, total, status, due_at, kind), profiles!projects_client_id_fkey(full_name, email)")
+    .order("created_at", { ascending: false })
+    .limit(300);
   const rows = (data ?? []) as Row[];
-  const needs = { review: (counts ?? []).filter((c) => c.status === "awaiting_review").length, verify: (counts ?? []).filter((c) => c.status === "verifying").length };
+  // Bukti bayar yang perlu diperiksa: pesanan baru atau tagihan tambahan kelebihan pembelian.
+  const verifying = (r: Row) => r.status === "verifying" || asList(r.invoices).some((i) => i.status === "verifying");
+  const needs = { review: rows.filter((r) => r.status === "awaiting_review").length, verify: rows.filter(verifying).length };
   const tab: Tab = TABS.some((t) => t.id === params.tab) ? (params.tab as Tab) : needs.review || !needs.verify ? "review" : "verify";
   const def = TABS.find((t) => t.id === tab)!;
-  const shown = def.statuses.length ? rows.filter((r) => (def.statuses as readonly string[]).includes(r.status)) : rows;
+  const shown = tab === "verify" ? rows.filter(verifying) : def.statuses.length ? rows.filter((r) => (def.statuses as readonly string[]).includes(r.status)) : rows;
 
   return (
     <>

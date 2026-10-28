@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { addVisitPhoto, checkIn, prepareVisitUpload, removeVisitPhoto, respondOffer, saveVisit, submitVisit } from "../../task-actions";
 import { StatusText, useAction } from "@/components/use-action";
-import type { Answer, Answers, ShopperTaskDetail, SnapshotQuestion } from "@/lib/field";
+import { PURCHASE_ITEM, type Answer, type Answers, type ShopperTaskDetail, type SnapshotQuestion } from "@/lib/field";
 import { dateTime, rupiah } from "@/lib/format";
 import { dict, type Lang } from "@/lib/i18n";
 import { shrinkImage } from "@/lib/shrink-image";
@@ -185,6 +185,10 @@ export function AuditForm({ task, photoUrls, lang }: { task: ShopperTaskDetail; 
   const t = dict(lang).tasks;
   const router = useRouter();
   const snap = task.questionnaire!;
+  // Saat revisi, hanya pertanyaan dan bagian pembelian yang ditandai admin yang tampil dan bisa diubah.
+  const revision = task.revision;
+  const open = (id: string) => !revision || revision.items.includes(id);
+  const purchaseOpen = open(PURCHASE_ITEM);
   const [answers, setAnswers] = useState<Answers>(task.answers ?? {});
   const [purchase, setPurchase] = useState(task.purchase_amount === null ? "" : String(task.purchase_amount));
   const [purchaseNote, setPurchaseNote] = useState(task.purchase_note ?? "");
@@ -193,7 +197,7 @@ export function AuditForm({ task, photoUrls, lang }: { task: ShopperTaskDetail; 
   const submit = useAction();
   const first = useRef(true);
 
-  const questions = snap.sections.flatMap((s) => s.questions);
+  const questions = snap.sections.flatMap((s) => s.questions).filter((q) => open(q.id));
   const done = questions.filter((q) => answered(q, answers[q.id])).length;
   const used = task.photos.length;
   const full = used >= snap.photo_limit;
@@ -261,12 +265,20 @@ export function AuditForm({ task, photoUrls, lang }: { task: ShopperTaskDetail; 
         {saveState && <span className={saveState.tone === "error" ? "text-bad" : saveState.tone === "ok" ? "text-good" : "text-muted"}>{saveState.text}</span>}
       </section>
 
-      <p className="text-sm text-muted">{t.checkedIn(dateTime(task.checkin_at, lang))}</p>
+      {revision ? (
+        <section className="card grid gap-1 border-warn/60 p-5">
+          <p className="font-semibold text-warn">{t.revisionTitle(revision.round)}</p>
+          {revision.note && <p>{revision.note}</p>}
+          <p className="text-sm text-muted">{t.revisionDue(dateTime(revision.due, lang))}</p>
+        </section>
+      ) : (
+        <p className="text-sm text-muted">{t.checkedIn(dateTime(task.checkin_at, lang))}</p>
+      )}
 
-      {snap.sections.map((s) => (
+      {snap.sections.filter((s) => s.questions.some((q) => open(q.id))).map((s) => (
         <section key={s.id} className="card grid gap-4 p-5">
           <h2 className="text-lg font-extrabold">{s.title}</h2>
-          {s.questions.map((q, i) => {
+          {s.questions.filter((q) => open(q.id)).map((q, i) => {
             const a = answers[q.id] ?? {};
             const photo = task.photos.find((p) => p.kind === "evidence" && p.question_id === q.id);
             return (
@@ -332,6 +344,7 @@ export function AuditForm({ task, photoUrls, lang }: { task: ShopperTaskDetail; 
         </section>
       ))}
 
+      {purchaseOpen && (
       <section className="card grid gap-4 p-5">
         <h2 className="text-lg font-extrabold">{t.purchaseTitle}</h2>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -353,6 +366,7 @@ export function AuditForm({ task, photoUrls, lang }: { task: ShopperTaskDetail; 
           <PhotoSlot label={t.addReceipt} busy={photoBusy} lang={lang} onAdd={full ? undefined : (f) => addPhoto("receipt", null, f)} />
         </div>
       </section>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <button
@@ -368,7 +382,7 @@ export function AuditForm({ task, photoUrls, lang }: { task: ShopperTaskDetail; 
             });
           }}
         >
-          {t.submit}
+          {revision ? t.submitRevision : t.submit}
         </button>
         <StatusText status={submit.status} />
       </div>
