@@ -124,10 +124,13 @@ export const PURCHASE_ITEM = "__purchase";
 
 export const FEE_DECISION_LABEL = { full: "Fee dan reimburse dibayar", reimburse_only: "Hanya reimburse pembelian", none: "Tidak dibayar" } as const;
 
+// Arti tiap nilai skala 1–5, dari terendah ke tertinggi.
+export const SCALE_LABEL = ["Sangat buruk", "Buruk", "Cukup", "Baik", "Sangat baik"];
+
 export function answerLabel(q: SnapshotQuestion, a: Answer | undefined): string {
   if (!a) return "Belum dijawab";
   if (a.na) return "Tidak teramati";
   if (q.kind === "yes_no") return a.value === "yes" ? "Ya" : a.value === "no" ? "Tidak" : "Belum dijawab";
-  if (q.kind === "scale") return typeof a.value === "number" ? `${a.value} dari 5` : "Belum dijawab";
+  if (q.kind === "scale") return typeof a.value === "number" ? `${a.value} dari 5 (${SCALE_LABEL[a.value - 1] ?? ""})` : "Belum dijawab";
   return typeof a.value === "string" && a.value.trim() ? a.value : "Belum dijawab";
 }

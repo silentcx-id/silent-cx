@@ -195,4 +195,7 @@ h3 {
       transform: none;
     }
   }
+  .toast {
+    animation: rise 0.2s ease both;
+  }
 }

@@ -2,16 +2,22 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { toast } from "./toaster";
 
 type Result<T> = { ok: true; data?: T } | { ok: false; error: string };
 export type Status = { tone: "ok" | "error"; text: string } | null;
 
-// Menjalankan aksi server dari tombol/form, menampilkan pesan berhasil atau error,
+// Menjalankan aksi server dari tombol/form, menampilkan pesan berhasil atau error sebagai pop-up,
 // lalu menyegarkan data halaman.
 export function useAction() {
   const router = useRouter();
   const [pending, start] = useTransition();
-  const [status, setStatus] = useState<Status>(null);
+  const [status, setRawStatus] = useState<Status>(null);
+
+  function setStatus(next: Status) {
+    setRawStatus(next);
+    if (next) toast(next.tone, next.text);
+  }
 
   function act<T>(fn: () => Promise<Result<T>>, success?: string, after?: (data: T | undefined) => void) {
     setStatus(null);
@@ -32,10 +38,11 @@ export function useAction() {
   return { pending, status, setStatus, act };
 }
 
+// Pesan berhasil cukup tampil sebagai pop-up; error juga tetap ditulis di dekat form supaya tidak hilang.
 export function StatusText({ status }: { status: Status }) {
-  if (!status) return null;
+  if (status?.tone !== "error") return null;
   return (
-    <p role={status.tone === "error" ? "alert" : "status"} className={`text-sm ${status.tone === "error" ? "text-bad" : "text-good"}`}>
+    <p role="alert" className="text-sm text-bad">
       {status.text}
     </p>
   );

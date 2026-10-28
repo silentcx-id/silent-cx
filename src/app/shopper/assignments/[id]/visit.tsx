@@ -296,12 +296,22 @@ export function AuditForm({ task, photoUrls, lang }: { task: ShopperTaskDetail; 
                         {v === "yes" ? t.yes : t.no}
                       </button>
                     ))}
-                  {q.kind === "scale" &&
-                    [1, 2, 3, 4, 5].map((v) => (
-                      <button key={v} type="button" className={choice(!a.na && a.value === v)} onClick={() => setAnswer(q.id, { value: v, na: false })}>
-                        {v}
-                      </button>
-                    ))}
+                  {/* Tiap angka diberi arti supaya shopper tahu ujung mana yang terendah. */}
+                  {q.kind === "scale" && (
+                    <div className="grid w-full grid-cols-5 gap-1.5 sm:max-w-xl">
+                      {[1, 2, 3, 4, 5].map((v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          className={`${choice(!a.na && a.value === v)} h-auto flex-col gap-0 rounded-xl px-1 py-1.5`}
+                          onClick={() => setAnswer(q.id, { value: v, na: false })}
+                        >
+                          <span className="text-base">{v}</span>
+                          <span className="text-[11px] font-normal leading-tight">{t.scaleLabels[v - 1]}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <button type="button" className={choice(Boolean(a.na))} onClick={() => setAnswer(q.id, { na: !a.na })}>
                     {t.na}
                   </button>

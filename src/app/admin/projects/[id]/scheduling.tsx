@@ -9,6 +9,7 @@ import { dateTime, rupiah } from "@/lib/format";
 
 const input = "min-h-10 w-full rounded-lg border border-line bg-raise px-3 py-2 text-sm";
 const label = "grid gap-1 text-sm font-semibold";
+const sub = "grid gap-1 text-xs text-muted";
 
 export type Candidate = { shopper_id: string; full_name: string; phone: string | null; reaches_city: boolean; active_tasks: number; same_outlet: boolean; eligible: boolean };
 
@@ -110,48 +111,66 @@ function BriefForm({ initial, submitLabel, onSubmit, onCancel, pending }: { init
   const set = (k: keyof Brief) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setB({ ...b, [k]: e.target.value });
   return (
     <form
-      className="grid gap-3 rounded-xl border border-dashed border-accent p-4"
+      className="@container grid gap-3 rounded-xl border border-dashed border-accent p-4"
       onSubmit={(e) => {
         e.preventDefault();
         onSubmit(b);
       }}
     >
-      <div className="grid gap-3 sm:grid-cols-4">
-        <label className={label}>
-          Mulai
-          <input type="date" className={input} value={b.windowStart} onChange={set("windowStart")} required />
+      {/* Dikelompokkan (tanggal, jam, biaya) dengan label sama pendek supaya kotak isian sejajar; berjajar tiga hanya kalau wadahnya cukup lebar. */}
+      <div className="grid gap-3 @4xl:grid-cols-3">
+        <fieldset className="grid gap-1">
+          <legend className="mb-1 text-sm font-semibold">Tanggal kunjungan</legend>
+          <div className="grid grid-cols-2 gap-2">
+            <label className={sub}>
+              Dari
+              <input type="date" className={input} value={b.windowStart} onChange={set("windowStart")} required />
+            </label>
+            <label className={sub}>
+              Sampai
+              <input type="date" className={input} value={b.windowEnd} onChange={set("windowEnd")} required />
+            </label>
+          </div>
+        </fieldset>
+        <fieldset className="grid gap-1">
+          <legend className="mb-1 text-sm font-semibold">
+            Jam kunjungan <span className="font-normal text-muted">(opsional)</span>
+          </legend>
+          <div className="grid grid-cols-2 gap-2">
+            <label className={sub}>
+              Dari
+              <input type="time" className={input} value={b.hoursStart} onChange={set("hoursStart")} />
+            </label>
+            <label className={sub}>
+              Sampai
+              <input type="time" className={input} value={b.hoursEnd} onChange={set("hoursEnd")} />
+            </label>
+          </div>
+        </fieldset>
+        <fieldset className="grid gap-1">
+          <legend className="mb-1 text-sm font-semibold">Biaya per kunjungan (Rp)</legend>
+          <div className="grid grid-cols-2 gap-2">
+            <label className={sub}>
+              Fee shopper
+              <input className={input} inputMode="numeric" value={b.fee} onChange={set("fee")} required />
+            </label>
+            <label className={sub}>
+              Batas reimburse
+              <input className={input} inputMode="numeric" value={b.reimburse} onChange={set("reimburse")} required />
+            </label>
+          </div>
+        </fieldset>
+      </div>
+      <div className="grid gap-3 @2xl:grid-cols-2">
+        <label className={`${label} content-start`}>
+          Skenario kunjungan
+          <textarea className={input} rows={2} maxLength={2000} value={b.scenario} onChange={set("scenario")} placeholder="Contoh: datang sendiri, tanyakan menu andalan, bayar dengan QRIS." />
         </label>
-        <label className={label}>
-          Sampai
-          <input type="date" className={input} value={b.windowEnd} onChange={set("windowEnd")} required />
-        </label>
-        <label className={label}>
-          Jam mulai (opsional)
-          <input type="time" className={input} value={b.hoursStart} onChange={set("hoursStart")} />
-        </label>
-        <label className={label}>
-          Jam selesai
-          <input type="time" className={input} value={b.hoursEnd} onChange={set("hoursEnd")} />
+        <label className={`${label} content-start`}>
+          Pembelian wajib
+          <input className={input} maxLength={500} value={b.purchase} onChange={set("purchase")} placeholder="Contoh: 1 minuman andalan dan 1 makanan ringan" />
         </label>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className={label}>
-          Fee shopper (Rp)
-          <input className={input} inputMode="numeric" value={b.fee} onChange={set("fee")} required />
-        </label>
-        <label className={label}>
-          Batas reimburse (Rp)
-          <input className={input} inputMode="numeric" value={b.reimburse} onChange={set("reimburse")} required />
-        </label>
-      </div>
-      <label className={label}>
-        Skenario kunjungan
-        <textarea className={input} rows={2} maxLength={2000} value={b.scenario} onChange={set("scenario")} placeholder="Contoh: datang sendiri, tanyakan menu andalan, bayar dengan QRIS." />
-      </label>
-      <label className={label}>
-        Pembelian wajib
-        <input className={input} maxLength={500} value={b.purchase} onChange={set("purchase")} placeholder="Contoh: 1 minuman andalan dan 1 makanan ringan" />
-      </label>
       <div className="flex gap-2">
         <button className="btn btn-sm btn-primary" disabled={pending}>
           {submitLabel}
@@ -375,12 +394,20 @@ function TaskCard({ task, outlet, defaults }: { task: AdminTask; outlet: OutletT
           <span className={`chip ${TASK_STATUS_TONE[task.status]}`}>{TASK_STATUS_LABEL[task.status]}</span>
           {task.offer?.urgent && <span className="chip border-accent text-mark">Segera</span>}
         </span>
-        <span className="text-sm text-muted">{windowLabel(task)}</span>
       </div>
-      <p className="text-sm text-muted">
-        Fee {rupiah(task.fee)} · reimburse maks. {rupiah(task.reimburse_cap)}
-        {task.mandatory_purchase && ` · beli: ${task.mandatory_purchase}`}
-      </p>
+      <dl className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          ["Jadwal", windowLabel(task)],
+          ["Fee shopper", rupiah(task.fee)],
+          ["Batas reimburse", rupiah(task.reimburse_cap)],
+          ["Pembelian wajib", task.mandatory_purchase || "—"],
+        ].map(([k, v]) => (
+          <div key={k} className="grid gap-0.5">
+            <dt className="text-xs text-muted">{k}</dt>
+            <dd className="font-semibold">{v}</dd>
+          </div>
+        ))}
+      </dl>
       {task.scenario && <p className="whitespace-pre-line text-sm">{task.scenario}</p>}
       {task.cancel_note && <p className="text-sm text-muted">Dibatalkan: {task.cancel_note}</p>}
 

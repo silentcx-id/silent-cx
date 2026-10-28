@@ -75,9 +75,10 @@ export default async function ProjectsPage({ searchParams }: PageProps<"/admin/p
               {shown.map((r) => {
                 const inv = asList(r.invoices)[0];
                 return (
-                  <tr key={r.id} className="border-b border-line align-top last:border-0">
+                  // Seluruh baris bisa diklik: tautan kode proyek direntangkan menutupi baris.
+                  <tr key={r.id} className="relative border-b border-line align-top transition last:border-0 hover:bg-raise">
                     <td className="px-4 py-3">
-                      <Link href={`/admin/projects/${r.id}`} className="font-mono font-semibold text-mark underline-offset-4 hover:underline">
+                      <Link href={`/admin/projects/${r.id}`} className="font-mono font-semibold text-mark after:absolute after:inset-0 after:content-['']">
                         {r.code}
                       </Link>
                       {inv && <div className="font-mono text-xs text-muted">{inv.code}</div>}

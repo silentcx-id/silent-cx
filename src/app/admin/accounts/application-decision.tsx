@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { decideApplication } from "./actions";
+import { toast } from "@/components/toaster";
 import { dict, type Lang } from "@/lib/i18n";
 
 // Keputusan atas lamaran yang sedang ditinjau. Menolak meminta alasan, yang dilihat pelamar.
@@ -16,8 +17,13 @@ export function ApplicationDecision({ applicationId, lang }: { applicationId: st
     setError(null);
     start(async () => {
       const res = await decideApplication({ applicationId, approve, note: reason });
-      if (res.ok) setAsking(false);
-      else setError(res.error);
+      if (res.ok) {
+        setAsking(false);
+        toast("ok", t.applicationDecided(approve));
+      } else {
+        setError(res.error);
+        toast("error", res.error);
+      }
     });
   }
 

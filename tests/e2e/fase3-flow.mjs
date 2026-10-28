@@ -96,7 +96,7 @@ try {
   await a.page.getByRole("button", { name: "+ Tugas kunjungan" }).click();
   await a.page.getByRole("button", { name: "Buat tugas" }).click();
   await a.page.getByText("Tugas dibuat.").waitFor({ timeout: 30000 });
-  check("admin membuat tugas dengan fee bawaan", await a.page.getByText(/^Fee Rp150.000/).first().waitFor({ timeout: 30000 }).then(() => true, () => false));
+  check("admin membuat tugas dengan fee bawaan", await a.page.locator("dt", { hasText: "Fee shopper" }).locator("xpath=following-sibling::dd[1]", { hasText: "Rp150.000" }).first().waitFor({ timeout: 30000 }).then(() => true, () => false));
   await a.page.getByLabel("Tawarkan ke").selectOption(shopperId);
   await a.page.getByLabel("Segera").check();
   await a.page.getByRole("button", { name: "Tawarkan" }).click();
@@ -130,7 +130,7 @@ try {
   check("check-in dengan lokasi dan foto berhasil", true);
 
   for (const b of await s.page.getByRole("button", { name: "Ya", exact: true }).all()) await b.click();
-  for (const b of await s.page.getByRole("button", { name: "5", exact: true }).all()) await b.click();
+  for (const b of await s.page.getByRole("button", { name: /^5 / }).all()) await b.click();
   for (const area of await s.page.getByLabel("Jawaban").all()) await area.fill("Pelayanan cepat dan ramah.");
   for (let i = 0; i < 5; i++) {
     const add = s.page.getByRole("button", { name: /Ambil foto/ });

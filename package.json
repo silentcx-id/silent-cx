@@ -11,6 +11,7 @@
     "check": "tsc --noEmit && eslint && vitest run",
     "db:migrate": "node --env-file=.env.local scripts/db-migrate.mjs",
     "demo:akun": "node --env-file=.env.local scripts/demo-accounts.mjs",
+    "demo:data": "node --env-file=.env.local scripts/demo-data.mjs",
     "env:cek": "node --env-file-if-exists=.env.local scripts/check-env.mjs",
     "contoh:laporan": "esbuild scripts/sample-report.mts --bundle --platform=node --format=esm --packages=external --jsx=automatic --log-level=warning --outfile=e2e-output/.sample-report.mjs && node e2e-output/.sample-report.mjs"
   },

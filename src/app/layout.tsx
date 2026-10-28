@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Familjen_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Toaster } from "@/components/toaster";
 import { getLang, getTheme } from "@/lib/prefs";
 import "./globals.css";
 
@@ -16,7 +17,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const [lang, theme] = await Promise.all([getLang(), getTheme()]);
   return (
     <html lang={lang} data-theme={theme} className={`${display.variable} ${body.variable} ${mono.variable}`}>
-      <body className="min-h-dvh antialiased">{children}</body>
+      <body className="min-h-dvh antialiased">
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

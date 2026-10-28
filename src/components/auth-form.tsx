@@ -1,10 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { login, register, type FormState } from "@/app/(auth)/actions";
+import { toast } from "./toaster";
 import { dict, type Lang } from "@/lib/i18n";
 
+// Pesan juga dimunculkan sebagai pop-up setiap kali hasil form berubah.
 function Alert({ state }: { state: FormState }) {
+  useEffect(() => {
+    if (state.error) toast("error", state.error);
+    else if (state.notice) toast("ok", state.notice);
+  }, [state]);
   if (state.error) {
     return (
       <p role="alert" className="rounded-lg border border-bad/40 bg-bad/10 px-3 py-2 text-sm text-fg">

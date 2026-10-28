@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { createOrder } from "../actions";
+import { toast } from "@/components/toaster";
 import { displayPrice, promoActive, type Addon, type City, type Package } from "@/lib/catalog-types";
 import { rupiah } from "@/lib/format";
 import { dict, type Lang } from "@/lib/i18n";
@@ -54,9 +55,13 @@ export function Checkout({ packages, addons, cities, initialKey, lang }: { packa
       try {
         const res = await createOrder({ package: key, cities: cityList.map((c) => c.trim()), addons: selected.map((a) => ({ key: a.key, qty: chosen[a.key] })) });
         if (res.ok) router.push("/app/billing");
-        else setError(res.error);
+        else {
+          setError(res.error);
+          toast("error", res.error);
+        }
       } catch {
         setError(dict(lang).auth.network);
+        toast("error", dict(lang).auth.network);
       }
     });
   }

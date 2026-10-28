@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { setAccountStatus } from "./actions";
+import { toast } from "@/components/toaster";
 import { dict, type Lang } from "@/lib/i18n";
 import type { AccountStatus, Role } from "@/lib/roles";
 
@@ -32,7 +33,11 @@ export function AccountActions({ userId, role, status, lang }: { userId: string;
       if (res.ok) {
         setAsking(null);
         setNote("");
-      } else setError(res.error);
+        toast("ok", t.saved);
+      } else {
+        setError(res.error);
+        toast("error", res.error);
+      }
     });
   }
 

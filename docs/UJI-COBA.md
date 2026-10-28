@@ -2,6 +2,10 @@
 
 Centang setiap baris setelah dicoba. Kalau ada yang tidak sesuai, catat langkahnya dan apa yang terlihat.
 
+## Data contoh
+
+Supaya setiap tahap bisa langsung dicoba tanpa membuat rantainya dari nol, jalankan `npm run demo:data`. Perintah ini membuat 5 client (invoice belum dibayar, bukti bayar menunggu verifikasi, audit berjalan, draf laporan siap terbit, laporan terbit dengan tagihan tambahan), 3 shopper aktif, 2 pelamar, serta payout dalam batas waktu, lewat 48 jam, menunggu rekening, dan sudah dibayar. Semua akun beremail `data-…@silentcx.demo` dengan satu password yang tampil di terminal. Rekening, QRIS, dan kontak admin diisi contoh hanya kalau masih kosong. Hapus semuanya dengan `npm run demo:data -- --hapus`.
+
 ## Fase 0: Fondasi
 
 Persiapan: ikuti [SETUP.md](SETUP.md) langkah 1 sampai 6, lalu buka `http://localhost:3000`.
@@ -271,3 +275,12 @@ Persiapan:
 - [ ] Shopper lain tidak bisa melihat pembayaran dan bukti milik shopper ini.
 
 Bagian ini juga sudah diuji otomatis dengan 14 tes database: nominal per tugas, menunggu rekening dan notifikasinya, batas 48 jam dan tanda lewat batas, transfer kolektif, pembayaran ganda, salinan rekening, log tanpa nomor rekening, penggantian bukti, dan hak baca. Uji ujung-ke-ujung di browser ada di `tests/e2e/fase5-flow.mjs`; uji ini menulis data sementara lalu menghapusnya.
+
+## Perbaikan tampilan, putaran 1
+
+1. **Sidebar.** Buka dashboard role mana saja. Label F1, F3, dan F4 di menu samping sudah tidak ada.
+2. **Pop-up notifikasi.** Simpan apa saja, misalnya kontak admin di Keuangan. Pesan berhasil muncul sebagai pop-up di pojok kanan bawah lalu hilang sendiri setelah 4 detik. Coba juga login dengan password salah: pop-up error muncul, dan pesannya tetap tertulis di form.
+3. **Baris proyek bisa diklik penuh.** Di Proyek & verifikasi, klik di mana saja pada baris proyek (nama client, paket, total) untuk membuka detailnya, tidak harus di kode proyek.
+4. **PDF invoice.** Unduh PDF invoice. Tulisan "INVOICE" dan nomor invoice tidak lagi bertumpuk.
+5. **Skala 1–5.** Di form kunjungan shopper, tiap angka punya keterangan: 1 Sangat buruk, 2 Buruk, 3 Cukup, 4 Baik, 5 Sangat baik. Di halaman QC admin, jawaban skala tampil seperti "4 dari 5 (Baik)".
+6. **Jadwal kunjungan.** Di detail proyek, tiap tugas menampilkan Jadwal, Fee shopper, Batas reimburse, dan Pembelian wajib dalam kolom. Form brief (Ubah brief atau + Tugas kunjungan) dikelompokkan menjadi Tanggal, Jam (opsional), dan Biaya, dengan kotak isian yang sejajar.

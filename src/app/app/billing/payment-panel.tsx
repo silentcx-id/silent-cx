@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { prepareProofUpload, submitPaymentProof } from "../actions";
+import { toast } from "@/components/toaster";
 import type { PaymentSettings } from "@/lib/catalog-types";
 import { rupiah } from "@/lib/format";
 import { dict, type Lang } from "@/lib/i18n";
@@ -58,9 +59,12 @@ export function PaymentPanel({ invoiceId, total, settings, lang }: { invoiceId: 
         if (upErr) throw new Error(upErr.message);
         const res = await submitPaymentProof({ invoiceId, path: prep.data.path, method, amount, payer });
         if (!res.ok) throw new Error(res.error);
+        toast("ok", t.proofUploaded);
         router.refresh();
       } catch (e) {
-        setError(e instanceof Error && e.message !== "Failed to fetch" ? e.message : dict(lang).auth.network);
+        const message = e instanceof Error && e.message !== "Failed to fetch" ? e.message : dict(lang).auth.network;
+        setError(message);
+        toast("error", message);
       }
     });
   }

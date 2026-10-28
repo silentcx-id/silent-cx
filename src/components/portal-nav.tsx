@@ -6,8 +6,7 @@ import { Icon } from "./icon";
 import { dict, type Lang } from "@/lib/i18n";
 import { ROLE_HOME, ROLE_MENU, type Role } from "@/lib/roles";
 
-// Menu samping (desktop) atau baris geser (HP). Menu dari fase berikutnya tetap tampil dengan label fasenya;
-// menu yang terkunci untuk shopper yang belum disetujui diberi gembok.
+// Menu samping (desktop) atau baris geser (HP). Menu yang terkunci untuk shopper yang belum disetujui diberi gembok.
 export function PortalNav({ role, lang, locked, entitlements = [] }: { role: Role; lang: Lang; locked: boolean; entitlements?: string[] }) {
   const pathname = usePathname();
   const t = dict(lang).common;
@@ -34,8 +33,6 @@ export function PortalNav({ role, lang, locked, entitlements = [] }: { role: Rol
                   <span aria-hidden="true" className={active ? "" : "text-muted"}>
                     ⌀
                   </span>
-                ) : item.phase > 0 ? (
-                  <span className={`hidden font-mono text-[10px] md:inline ${active ? "" : "text-muted"}`}>F{item.phase}</span>
                 ) : null}
               </Link>
             </li>
