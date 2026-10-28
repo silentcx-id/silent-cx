@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Tabs } from "@/components/tabs";
 import { rupiah, dateTime } from "@/lib/format";
 import { asList, type Project } from "@/lib/orders";
 import { PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE } from "@/lib/project-labels";
@@ -44,17 +45,12 @@ export default async function ProjectsPage({ searchParams }: PageProps<"/admin/p
         <p className="text-muted">Tinjau pesanan yang perlu konfirmasi, periksa bukti bayar, lalu aktifkan proyek.</p>
       </section>
 
-      <nav className="flex flex-wrap gap-2" aria-label="Filter proyek">
-        {TABS.map((t) => {
-          const n = t.id === "review" ? needs.review : t.id === "verify" ? needs.verify : 0;
-          return (
-            <Link key={t.id} href={`/admin/projects?tab=${t.id}`} aria-current={t.id === tab ? "page" : undefined} className={`btn btn-sm ${t.id === tab ? "btn-primary" : ""}`}>
-              {t.label}
-              {n > 0 && <span className="rounded-full bg-accent-ink/80 px-1.5 text-[11px] text-accent">{n}</span>}
-            </Link>
-          );
-        })}
-      </nav>
+      <Tabs
+        base="/admin/projects"
+        label="Filter proyek"
+        current={tab}
+        items={TABS.map((t) => ({ id: t.id, label: t.label, count: t.id === "review" ? needs.review : t.id === "verify" ? needs.verify : 0 }))}
+      />
 
       {shown.length === 0 ? (
         <p className="card p-6 text-muted">Tidak ada proyek di kategori ini.</p>

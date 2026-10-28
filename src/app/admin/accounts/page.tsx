@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AccountActions } from "./account-actions";
-import { ApplicationDecision } from "./application-decision";
-import { ApplicationSummary } from "@/components/application-summary";
+import { Tabs } from "@/components/tabs";
 import { dateTime } from "@/lib/format";
 import { dict, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/prefs";
@@ -50,14 +49,9 @@ export default async function AccountsPage({ searchParams }: PageProps<"/admin/a
         <p className="text-muted">{t.admin.accountsLede}</p>
       </section>
 
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <nav className="flex flex-wrap gap-2" aria-label={t.admin.accountsTitle}>
-          {TABS.map((k) => (
-            <Link key={k} href={`/admin/accounts?tab=${k}`} aria-current={k === tab ? "page" : undefined} className={`btn btn-sm ${k === tab ? "btn-primary" : ""}`}>
-              {tabLabel[k]}
-            </Link>
-          ))}
-        </nav>
+      <Tabs base="/admin/accounts" label={t.admin.accountsTitle} current={tab} items={TABS.map((k) => ({ id: k, label: tabLabel[k] }))} />
+
+      <div className="flex flex-wrap items-end justify-end gap-3 empty:hidden">
         {withCity && cities.length > 0 && (
           // Form GET biasa: memilih kota memuat ulang halaman dengan ?kota=.
           <form className="field min-w-48" action="/admin/accounts">
@@ -110,28 +104,34 @@ async function ApplicationsQueue({ city, lang }: { city: string; lang: Lang }) {
         {queued.length === 0 ? (
           <p className="card p-6 text-muted">{t.admin.noApplications}</p>
         ) : (
-          <ul className="grid gap-3">
-            {queued.map((a) => (
-              <li key={a.id} className="card grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_240px]">
-                <div className="grid gap-4">
-                  <div className="grid gap-0.5">
-                    <span className="text-lg font-extrabold">{a.profile?.full_name || "—"}</span>
-                    <span className="text-sm text-muted">
-                      {a.profile?.email}
-                      {a.profile?.phone && <span className="font-mono"> · {a.profile.phone}</span>}
-                    </span>
-                    <span className="text-xs text-muted">
-                      {t.admin.submittedAt(dateTime(a.submitted_at, lang))} · {t.application.attempts(a.quiz_attempts)}
-                    </span>
-                  </div>
-                  <ApplicationSummary app={a} lang={lang} />
-                </div>
-                <div className="lg:border-l lg:border-line lg:pl-5">
-                  <ApplicationDecision applicationId={a.id} lang={lang} />
-                </div>
-              </li>
-            ))}
-          </ul>
+          // Ringkasan saja; isi lamaran dan tombol keputusan ada di halaman detail.
+          <div className="card overflow-x-auto">
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <thead className="border-b border-line text-xs uppercase tracking-wider text-muted">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">{t.admin.columns.name}</th>
+                  <th className="px-4 py-3 font-semibold">{t.admin.domicile}</th>
+                  <th className="px-4 py-3 font-semibold">{t.admin.reach}</th>
+                  <th className="px-4 py-3 font-semibold">{t.admin.submitted}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {queued.map((a) => (
+                  <tr key={a.id} className="relative border-b border-line align-top transition last:border-0 hover:bg-raise">
+                    <td className="px-4 py-3">
+                      <Link href={`/admin/accounts/applications/${a.id}`} className="font-semibold text-mark after:absolute after:inset-0 after:content-['']">
+                        {a.profile?.full_name || "—"}
+                      </Link>
+                      <div className="text-muted">{a.profile?.email}</div>
+                    </td>
+                    <td className="px-4 py-3">{a.domicile || "—"}</td>
+                    <td className="max-w-[32ch] px-4 py-3 text-muted">{a.reachable_cities.join(", ") || "—"}</td>
+                    <td className="px-4 py-3 text-muted">{dateTime(a.submitted_at, lang)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 

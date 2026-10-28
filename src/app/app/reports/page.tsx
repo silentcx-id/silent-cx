@@ -27,7 +27,7 @@ export default async function ReportsPage() {
         <p className="text-muted">{t.lede}</p>
       </section>
       {rows.length === 0 ? (
-        <section className="card grid max-w-xl gap-4 p-6">
+        <section className="card grid gap-4 p-6">
           <p className="text-muted">{t.empty}</p>
           <a href="/app/reports/contoh/pdf" target="_blank" rel="noreferrer" className="btn w-fit">
             {t.sample} ↗

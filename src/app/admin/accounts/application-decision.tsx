@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { decideApplication } from "./actions";
 import { toast } from "@/components/toaster";
 import { dict, type Lang } from "@/lib/i18n";
 
 // Keputusan atas lamaran yang sedang ditinjau. Menolak meminta alasan, yang dilihat pelamar.
-export function ApplicationDecision({ applicationId, lang }: { applicationId: string; lang: Lang }) {
+// Setelah diputuskan, admin dibawa kembali ke `doneHref` (antrian lamaran).
+export function ApplicationDecision({ applicationId, lang, doneHref }: { applicationId: string; lang: Lang; doneHref?: string }) {
+  const router = useRouter();
   const t = dict(lang).admin;
   const [asking, setAsking] = useState(false);
   const [note, setNote] = useState("");
@@ -20,6 +23,7 @@ export function ApplicationDecision({ applicationId, lang }: { applicationId: st
       if (res.ok) {
         setAsking(false);
         toast("ok", t.applicationDecided(approve));
+        if (doneHref) router.push(doneHref);
       } else {
         setError(res.error);
         toast("error", res.error);

@@ -284,3 +284,28 @@ Bagian ini juga sudah diuji otomatis dengan 14 tes database: nominal per tugas, 
 4. **PDF invoice.** Unduh PDF invoice. Tulisan "INVOICE" dan nomor invoice tidak lagi bertumpuk.
 5. **Skala 1–5.** Di form kunjungan shopper, tiap angka punya keterangan: 1 Sangat buruk, 2 Buruk, 3 Cukup, 4 Baik, 5 Sangat baik. Di halaman QC admin, jawaban skala tampil seperti "4 dari 5 (Baik)".
 6. **Jadwal kunjungan.** Di detail proyek, tiap tugas menampilkan Jadwal, Fee shopper, Batas reimburse, dan Pembelian wajib dalam kolom. Form brief (Ubah brief atau + Tugas kunjungan) dikelompokkan menjadi Tanggal, Jam (opsional), dan Biaya, dengan kotak isian yang sejajar.
+
+## Perbaikan tampilan, putaran 2
+
+1. **Lebar penuh.** Buka halaman mana saja di layar laptop. Isi halaman memenuhi lebar layar, dan sisi kanan tidak lagi kosong.
+2. **Detail proyek dengan tab.** Buka satu proyek di Proyek & verifikasi. Halamannya terbagi menjadi tab **Ringkasan**, **Outlet**, **Jadwal kunjungan**, dan **Pembayaran**.
+   - Proyek aktif langsung terbuka di tab Jadwal kunjungan.
+   - Proyek yang perlu direview atau diverifikasi terbuka di Ringkasan, dan tabnya diberi angka 1.
+   - Invoice dan riwayat bukti bayar ada di tab Pembayaran, tidak terpotong lagi.
+   - Pilihan **Tawarkan ke** di jadwal kunjungan terbaca penuh.
+3. **Keuangan dengan tab.** Keuangan terbagi menjadi **Antrian payout**, **Sudah dibayar**, dan **Kontak untuk shopper**.
+   - Antrian hanya menampilkan satu baris per shopper: rekening, jumlah tugas, batas bayar, dan total.
+   - Klik baris untuk membuka halaman shopper itu. Di sana ada rincian tugas dan form **Tandai sudah ditransfer**.
+   - Setelah ditransfer, shopper itu hilang dari antrian dan muncul di Sudah dibayar.
+4. **QC dengan tab.** Quality control terbagi menjadi **Menunggu QC** dan **Menunggu revisi shopper**, masing-masing dengan jumlahnya.
+5. **Lamaran shopper ringkas.** Di Akun → Lamaran masuk, setiap lamaran tampil sebagai satu baris: nama, domisili, jangkauan, dan tanggal kirim.
+   - Klik baris untuk membuka isi lamaran lengkap beserta tombol **Setujui** dan **Tolak**.
+   - Setelah diputuskan, admin kembali ke daftar lamaran.
+6. **Tab yang seragam.** Tab di Akun, Katalog, dan Proyek & verifikasi memakai gaya garis bawah yang sama, dengan angka untuk antrian yang perlu dikerjakan.
+7. **Timeline Audit berjalan (client).** Login sebagai client dengan proyek aktif, lalu buka **Audit berjalan**.
+   - Ada garis tahapan Pesanan → Pembayaran → Data outlet → Penjadwalan → Kunjungan → QC → Laporan. Tahap yang sudah lewat dicentang, dan tahap saat ini ditandai kuning.
+   - Di bawahnya, tiap outlet menampilkan progres "x dari y kunjungan lolos QC" dan statusnya. Nama shopper dan tanggal kunjungan tidak ditampilkan.
+   - Di HP, timeline tampil vertikal.
+8. **Beranda admin.** Kotak Milestone di bawah antrian kerja sudah tidak ada. Menu yang belum dibangun, misalnya Konsultasi, bertuliskan "Segera hadir" tanpa nomor fase.
+
+Uji e2e `tests/e2e/fase2-flow.mjs` dan `tests/e2e/fase5-flow.mjs` sudah disesuaikan dengan halaman detail lamaran dan halaman payout per shopper.

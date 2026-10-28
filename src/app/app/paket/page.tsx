@@ -23,7 +23,7 @@ export default async function PackagesPage({ searchParams }: PageProps<"/app/pak
         <p className="text-muted">{t.checkoutLede}</p>
       </section>
       {open ? (
-        <section className="card grid max-w-xl gap-4 p-6">
+        <section className="card grid gap-4 p-6">
           <p>{t.openOrderExists}</p>
           <Link href="/app/billing" className="btn btn-primary w-fit">
             {t.openBilling} →

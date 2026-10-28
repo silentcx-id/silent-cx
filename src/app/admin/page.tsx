@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MilestoneTrack } from "@/components/milestone-track";
 import { dict } from "@/lib/i18n";
 import { getLang } from "@/lib/prefs";
 import { requireRole } from "@/lib/session";
@@ -27,14 +26,13 @@ export default async function AdminHome() {
   // Payout yang lewat 48 jam ditandai merah di kartunya.
   const payoutsLate = payoutQueue.filter((p) => p.payout_status === "overdue").length;
 
-  // Antrian lain diisi oleh fase yang membangunnya.
   const queues = [
-    { label: t.admin.queues.shoppers, count: pendingShoppers, href: "/admin/accounts?tab=pending", phase: 2 },
-    { label: t.admin.queues.reviews, count: reviews, href: "/admin/projects?tab=review", phase: 1 },
-    { label: t.admin.queues.payments, count: payments, href: "/admin/projects?tab=verify", phase: 1 },
-    { label: t.admin.queues.unassigned, count: unassigned, href: "/admin/projects", phase: 3 },
-    { label: t.admin.queues.qc, count: submitted, href: "/admin/qc", phase: 4 },
-    { label: t.admin.queues.payouts, count: payoutQueue.length, href: "/admin/payouts", phase: 5, late: payoutsLate },
+    { label: t.admin.queues.shoppers, count: pendingShoppers, href: "/admin/accounts?tab=pending" },
+    { label: t.admin.queues.reviews, count: reviews, href: "/admin/projects?tab=review" },
+    { label: t.admin.queues.payments, count: payments, href: "/admin/projects?tab=verify" },
+    { label: t.admin.queues.unassigned, count: unassigned, href: "/admin/projects" },
+    { label: t.admin.queues.qc, count: submitted, href: "/admin/qc" },
+    { label: t.admin.queues.payouts, count: payoutQueue.length, href: "/admin/payouts", late: payoutsLate },
   ];
 
   return (
@@ -52,23 +50,14 @@ export default async function AdminHome() {
               className={`card grid h-full content-between gap-4 p-5 transition hover:border-muted ${q.late ? "border-bad/60" : q.count ? "border-accent" : ""}`}
             >
               <span className="text-sm text-muted">{q.label}</span>
-              {q.count === null ? (
-                <span className="chip w-fit">{t.common.comingIn(q.phase)}</span>
-              ) : (
-                <span className="grid gap-1">
-                  <span className={`font-display text-5xl font-extrabold tabular-nums ${q.count ? "text-mark" : ""}`}>{q.count}</span>
-                  {q.late ? <span className="text-sm font-semibold text-bad">{t.admin.queues.payoutsLate(q.late)}</span> : null}
-                </span>
-              )}
+              <span className="grid gap-1">
+                <span className={`font-display text-5xl font-extrabold tabular-nums ${q.count ? "text-mark" : ""}`}>{q.count}</span>
+                {q.late ? <span className="text-sm font-semibold text-bad">{t.admin.queues.payoutsLate(q.late)}</span> : null}
+              </span>
             </Link>
           </li>
         ))}
       </ul>
-
-      <section className="grid gap-3">
-        <h2 className="eyebrow">Milestone</h2>
-        <MilestoneTrack role="admin" lang={lang} />
-      </section>
     </>
   );
 }

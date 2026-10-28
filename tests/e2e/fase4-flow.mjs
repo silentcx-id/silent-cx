@@ -124,7 +124,7 @@ try {
   await c.page.fill("#k-city-0", city);
   await c.page.fill("#k-addr-0", "Jl. Pesaing No. 9");
   await c.page.getByRole("button", { name: "Simpan kompetitor" }).click();
-  await c.page.getByText("Kompetitor tersimpan.").waitFor({ timeout: 30000 });
+  await c.page.getByText("Kompetitor tersimpan.").first().waitFor({ timeout: 30000 });
   await c.page.fill("#o-addr-0", "Jl. Uji No. 4");
   await c.page.getByRole("button", { name: "Simpan dan tandai lengkap" }).click();
   await c.page.getByText(/Data lengkap/).first().waitFor({ timeout: 30000 });
@@ -137,7 +137,7 @@ try {
   check("kompetitor ditandai di penjadwalan", (await text(a.page)).includes("Kompetitor"));
   await a.page.selectOption("#pick-q", { label: "Kafe & restoran — dasar" });
   await a.page.getByRole("button", { name: "Tetapkan" }).click();
-  await a.page.getByText("Kuesioner ditetapkan.").waitFor({ timeout: 30000 });
+  await a.page.getByText("Kuesioner ditetapkan.").first().waitFor({ timeout: 30000 });
   for (const [i, shopper] of [shopperA, shopperB].entries()) {
     await a.page.getByRole("button", { name: "+ Tugas kunjungan" }).nth(i).click();
     await a.page.getByRole("button", { name: "Buat tugas" }).click();
@@ -170,7 +170,7 @@ try {
   await a.page.getByRole("button", { name: /^Minta revisi/ }).click();
   await a.page.getByLabel(/Catatan untuk shopper/).fill("Sapaan: jelaskan berapa detik sampai disapa.");
   await a.page.getByRole("button", { name: "Kirim permintaan revisi" }).click();
-  await a.page.getByText(/Revisi diminta/).waitFor({ timeout: 30000 });
+  await a.page.getByText(/Revisi diminta/).first().waitFor({ timeout: 30000 });
   check("admin meminta revisi satu pertanyaan", true);
 
   const shopperEmail = outletTask.shopper_id === shopperA ? emails.a : emails.b;
@@ -189,11 +189,11 @@ try {
   await a.page.getByRole("button", { name: "Setujui", exact: true }).click();
   await a.page.getByLabel(/Setujui kelebihan pembelian/).check();
   await a.page.getByRole("button", { name: "Setujui kunjungan" }).click();
-  await a.page.getByText("Kunjungan disetujui.").waitFor({ timeout: 30000 });
+  await a.page.getByText("Kunjungan disetujui.").first().waitFor({ timeout: 30000 });
   await a.page.goto(`${BASE}/admin/qc/${compTask.id}`, { waitUntil: "networkidle" });
   await a.page.getByRole("button", { name: "Setujui", exact: true }).click();
   await a.page.getByRole("button", { name: "Setujui kunjungan" }).click();
-  await a.page.getByText("Kunjungan disetujui.").waitFor({ timeout: 30000 });
+  await a.page.getByText("Kunjungan disetujui.").first().waitFor({ timeout: 30000 });
   check("admin menyetujui kedua kunjungan", true);
 
   // 6. Laporan: draf otomatis, rekomendasi, foto, pratinjau PDF, terbit.
@@ -208,13 +208,13 @@ try {
   check("foto kompetitor tidak bisa dipilih", captions.length > 0 && !captions.includes("Kompetitor Uji"), `${await photoBoxes.count()} foto`);
   if (await photoBoxes.count()) await photoBoxes.first().check();
   await a.page.getByRole("button", { name: "Simpan draf" }).click();
-  await a.page.getByText("Draf tersimpan.").waitFor({ timeout: 30000 });
+  await a.page.getByText("Draf tersimpan.").first().waitFor({ timeout: 30000 });
   const preview = await a.page.request.get(`${BASE}/admin/reports/${projectId}/pdf`);
   check("pratinjau PDF admin berupa file PDF", preview.headers()["content-type"] === "application/pdf" && (await preview.body()).length > 10000, `${(await preview.body()).length} byte`);
   await a.page.goto(`${BASE}/admin/reports/${projectId}`, { waitUntil: "networkidle" });
   a.page.once("dialog", (d) => d.accept());
   await a.page.getByRole("button", { name: "Terbitkan ke client" }).click();
-  await a.page.getByText(/Laporan terbit/).waitFor({ timeout: 45000 });
+  await a.page.getByText(/Laporan terbit/).first().waitFor({ timeout: 45000 });
   check("admin menerbitkan laporan", true);
   await shot(a.page, "report-published");
 

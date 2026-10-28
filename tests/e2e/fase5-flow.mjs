@@ -122,29 +122,40 @@ try {
   const a = await loginAs(browser, "admin@silentcx.demo");
   await a.page.goto(`${BASE}/admin`, { waitUntil: "networkidle" });
   check("beranda admin menghitung payout belum dibayar", (await a.page.locator("a[href='/admin/payouts']").last().textContent())?.match(/\d+/) !== null);
-  await a.page.goto(`${BASE}/admin/payouts`, { waitUntil: "networkidle" });
+  await a.page.goto(`${BASE}/admin/payouts?tab=kontak`, { waitUntil: "networkidle" });
   await a.page.getByLabel("Nama kontak person").fill("Kontak Uji");
   await a.page.getByLabel("Nomor WhatsApp").fill("081200009999");
   await a.page.getByRole("button", { name: "Simpan kontak" }).click();
-  await a.page.getByText("Kontak tersimpan.").waitFor();
+  await a.page.getByText("Kontak tersimpan.").first().waitFor();
   check("kontak admin tersimpan", true);
 
-  const cardA = a.page.locator("article", { hasText: names.a });
+  // Antrian hanya ringkasan per shopper; rincian dan form transfer ada di halaman shopper.
+  await a.page.goto(`${BASE}/admin/payouts`, { waitUntil: "networkidle" });
+  const rowA = a.page.locator("tr", { hasText: names.a });
+  const rowB = a.page.locator("tr", { hasText: names.b });
+  check("antrian ringkas: total A dan rekening B belum diisi", ((await rowA.textContent()) ?? "").includes("Rp240.000") && ((await rowB.textContent()) ?? "").includes("Belum diisi"));
+  await shot(a.page, "antrian");
+  await a.page.goto(`${BASE}/admin/payouts/${shopperB}`, { waitUntil: "networkidle" });
   const cardB = a.page.locator("article", { hasText: names.b });
-  const ta = (await cardA.textContent()) ?? "";
-  check("antrian A: fee + reimburse dan reimburse saja", ta.includes("Rp200.000") && ta.includes("Rp40.000") && ta.includes("Rp240.000"), ta.slice(0, 160));
-  check("rekening A tampil", ta.includes("1234500000"));
   const tb = (await cardB.textContent()) ?? "";
   check("B menunggu rekening", tb.includes("Menunggu rekening") && tb.includes("Belum mengisi rekening"));
   check("B tidak bisa ditransfer", (await cardB.getByRole("button", { name: "Tandai sudah ditransfer" }).count()) === 0);
-  await shot(a.page, "antrian");
+  await a.page.goto(`${BASE}/admin/payouts`, { waitUntil: "networkidle" });
+  await rowA.getByRole("link").click();
+  await a.page.waitForURL(`**/admin/payouts/${shopperA}`);
+  const cardA = a.page.locator("article", { hasText: names.a });
+  const ta = (await cardA.textContent()) ?? "";
+  check("antrian A: fee + reimburse dan reimburse saja", ta.includes("Rp200.000") && ta.includes("Rp40.000") && ta.includes("Rp240.000"), ta.slice(0, 160));
+  check("rekening A tampil", ta.includes("1234500000"));
+  await shot(a.page, "payout-shopper");
 
   await cardA.locator("input[type=file]").setInputFiles(proofFile);
   await cardA.getByLabel("Catatan (opsional)").fill("Transfer uji");
   await cardA.getByRole("button", { name: "Tandai sudah ditransfer" }).click();
-  await a.page.getByText("Payout tercatat. Shopper sudah diberi tahu.").waitFor();
-  await a.page.reload({ waitUntil: "networkidle" });
-  check("A hilang dari antrian setelah dibayar", (await a.page.locator("article", { hasText: names.a }).filter({ has: a.page.getByRole("button", { name: "Tandai sudah ditransfer" }) }).count()) === 0);
+  await a.page.getByText("Payout tercatat. Shopper sudah diberi tahu.").first().waitFor();
+  await a.page.goto(`${BASE}/admin/payouts`, { waitUntil: "networkidle" });
+  check("A hilang dari antrian setelah dibayar", (await a.page.locator("tr", { hasText: names.a }).count()) === 0);
+  await a.page.goto(`${BASE}/admin/payouts?tab=dibayar`, { waitUntil: "networkidle" });
   const payout = must(await admin.from("payouts").select("id, code, total").eq("shopper_id", shopperA).single(), "payout A");
   check("satu payout untuk dua tugas", payout.total === 240000, `${payout.code} ${payout.total}`);
   const paidCard = a.page.locator("article", { hasText: payout.code });
@@ -156,7 +167,7 @@ try {
   await paidCard.locator("input[type=file]").setInputFiles(proofFile);
   await paidCard.getByLabel("Alasan").fill("Bukti pertama terpotong");
   await paidCard.getByRole("button", { name: "Simpan" }).click();
-  await a.page.getByText("Bukti diganti. Shopper sudah diberi tahu.").waitFor();
+  await a.page.getByText("Bukti diganti. Shopper sudah diberi tahu.").first().waitFor();
   check("bukti bisa diganti dengan alasan", true);
   await shot(a.page, "sudah-dibayar");
   await a.ctx.close();
@@ -188,8 +199,10 @@ try {
 } finally {
   await browser.close();
   // Urutan hapus: proyek (beserta tugas) → payout → bukti → akun; payout menahan penghapusan akun shopper.
-  if (projectId) await admin.from("projects").delete().eq("id", projectId);
-  await admin.from("payouts").delete().in("shopper_id", [shopperA, shopperB]);
+  // Error ditampilkan supaya jelas langkah mana yang menahan penghapusan akun.
+  const logError = (step, res) => res.error && console.log(`! ${step} gagal: ${res.error.message}`);
+  if (projectId) logError("hapus proyek uji", await admin.from("projects").delete().eq("id", projectId));
+  logError("hapus payout uji", await admin.from("payouts").delete().in("shopper_id", [shopperA, shopperB]));
   for (const id of [shopperA, shopperB]) {
     const { data: files } = await admin.storage.from("payout-proofs").list(id);
     if (files?.length) await admin.storage.from("payout-proofs").remove(files.map((x) => `${id}/${x.name}`));

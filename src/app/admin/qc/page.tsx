@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { pickTab, Tabs } from "@/components/tabs";
 import { TASK_STATUS_LABEL, TASK_STATUS_TONE, type TaskStatus } from "@/lib/field";
 import { dateTime, rupiah } from "@/lib/format";
 import { requireRole } from "@/lib/session";
@@ -22,8 +23,10 @@ type Row = {
   project_outlets: { name: string; city: string; is_competitor: boolean } | null;
 };
 
-export default async function QcPage() {
-  await requireRole("admin", "/admin/qc");
+const TABS = ["menunggu", "revisi"] as const;
+
+export default async function QcPage({ searchParams }: PageProps<"/admin/qc">) {
+  const [, params] = await Promise.all([requireRole("admin", "/admin/qc"), searchParams]);
   const supabase = await createClient();
   await supabase.rpc("expire_offers");
   const { data } = await supabase
@@ -37,9 +40,10 @@ export default async function QcPage() {
   const name = new Map((people ?? []).map((p) => [p.id as string, p.full_name as string]));
   const waiting = rows.filter((r) => r.status === "submitted");
   const revising = rows.filter((r) => r.status === "revision");
+  const tab = pickTab(params.tab, TABS, "menunggu");
 
   const list = (items: Row[]) => (
-    <ul className="grid gap-3">
+    <ul className="grid gap-3 xl:grid-cols-2">
       {items.map((r) => (
         <li key={r.id}>
           <Link href={`/admin/qc/${r.id}`} className="card grid gap-2 p-4 transition hover:border-muted sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
@@ -73,16 +77,17 @@ export default async function QcPage() {
         <h1 className="text-[clamp(28px,4vw,40px)] font-extrabold leading-tight">Quality control</h1>
         <p className="text-muted">Cocokkan jawaban dengan foto, struk, dan titik check-in, lalu setujui, minta revisi, atau tolak. Urut dari yang paling lama menunggu.</p>
       </section>
-      <section className="grid gap-3">
-        <h2 className="eyebrow">Menunggu QC ({waiting.length})</h2>
-        {waiting.length ? list(waiting) : <p className="card p-6 text-muted">Tidak ada kunjungan yang menunggu QC.</p>}
-      </section>
-      {revising.length > 0 && (
-        <section className="grid gap-3">
-          <h2 className="eyebrow">Menunggu revisi shopper ({revising.length})</h2>
-          {list(revising)}
-        </section>
-      )}
+      <Tabs
+        base="/admin/qc"
+        label="Antrian QC"
+        current={tab}
+        items={[
+          { id: "menunggu", label: "Menunggu QC", count: waiting.length },
+          { id: "revisi", label: "Menunggu revisi shopper", count: revising.length },
+        ]}
+      />
+      {tab === "menunggu" && (waiting.length ? list(waiting) : <p className="card p-6 text-muted">Tidak ada kunjungan yang menunggu QC.</p>)}
+      {tab === "revisi" && (revising.length ? list(revising) : <p className="card p-6 text-muted">Tidak ada kunjungan yang menunggu revisi.</p>)}
     </>
   );
 }

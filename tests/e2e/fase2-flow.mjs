@@ -88,19 +88,19 @@ try {
   await s.page.selectOption("#experience", "under_1y");
   await s.page.getByLabel("Kafe & restoran").check();
   await s.page.getByRole("button", { name: "Simpan draft" }).click();
-  await s.page.getByText("Draft tersimpan.").waitFor({ timeout: 30000 });
+  await s.page.getByText("Draft tersimpan.").first().waitFor({ timeout: 30000 });
   check("draft tersimpan", true);
   await shot(s.page, "form");
   await s.page.getByRole("button", { name: /Lanjut ke kuis/ }).click();
-  await s.page.getByText("Kuis etika dan kerahasiaan").waitFor({ timeout: 30000 });
+  await s.page.getByText("Kuis etika dan kerahasiaan").first().waitFor({ timeout: 30000 });
 
   // 2. Kuis: salah dulu, lalu benar.
   await answerQuiz(s.page, [0, 0, 0, 0, 0]);
-  await s.page.getByText(/dari 5 jawaban benar/).waitFor({ timeout: 30000 });
+  await s.page.getByText(/dari 5 jawaban benar/).first().waitFor({ timeout: 30000 });
   check("kuis yang belum benar semua ditolak dengan jumlah benar", true);
   await shot(s.page, "quiz-failed");
   await answerQuiz(s.page, RIGHT);
-  await s.page.getByText(/Keputusan tim SilentCX akan muncul/).waitFor({ timeout: 30000 });
+  await s.page.getByText(/Keputusan tim SilentCX akan muncul/).first().waitFor({ timeout: 30000 });
   check("lamaran terkirim dan sedang ditinjau", true);
   await s.page.goto(`${BASE}/shopper`, { waitUntil: "networkidle" });
   check("beranda pelamar: sedang ditinjau", (await text(s.page)).includes("sedang ditinjau"));
@@ -108,13 +108,19 @@ try {
   // 3. Admin menolak dengan alasan.
   const a = await loginAs(browser, "admin@silentcx.demo");
   await a.page.goto(`${BASE}/admin/accounts?tab=pending&kota=${encodeURIComponent(city)}`, { waitUntil: "networkidle" });
-  const card = a.page.locator("li", { hasText: email });
-  check("lamaran muncul di antrian dengan filter kota", (await card.count()) > 0);
+  const row = a.page.locator("tr", { hasText: email });
+  check("lamaran muncul di antrian dengan filter kota", (await row.count()) > 0);
   await shot(a.page, "admin-queue");
-  await card.getByRole("button", { name: "Tolak" }).click();
-  await card.locator("textarea").fill("Uji penolakan otomatis.");
-  await card.getByRole("button", { name: "Tolak" }).click();
-  await a.page.locator("li", { hasText: email }).waitFor({ state: "detached", timeout: 30000 });
+  // Daftar hanya ringkasan; keputusan diambil di halaman detail lamaran.
+  await row.getByRole("link").click();
+  await a.page.waitForURL("**/admin/accounts/applications/**");
+  check("detail lamaran menampilkan isi lamaran", (await text(a.page)).includes(email));
+  await shot(a.page, "admin-application");
+  await a.page.getByRole("button", { name: "Tolak" }).click();
+  await a.page.locator("textarea").fill("Uji penolakan otomatis.");
+  await a.page.getByRole("button", { name: "Tolak" }).click();
+  await a.page.waitForURL("**/admin/accounts?tab=pending", { timeout: 30000 });
+  await a.page.locator("tr", { hasText: email }).waitFor({ state: "detached", timeout: 30000 });
   check("admin menolak lamaran dengan alasan", true);
 
   await s.page.goto(`${BASE}/shopper`, { waitUntil: "networkidle" });
@@ -128,15 +134,17 @@ try {
   await s.page.goto(`${BASE}/shopper/profile`, { waitUntil: "networkidle" });
   check("setelah 30 hari bisa melamar lagi, isian tersalin", (await text(s.page)).includes("sudah bisa melamar lagi") && (await s.page.inputValue("#domicile")) === "Jakarta Selatan");
   await s.page.getByRole("button", { name: /Lanjut ke kuis/ }).click();
-  await s.page.getByText("Kuis etika dan kerahasiaan").waitFor({ timeout: 30000 });
+  await s.page.getByText("Kuis etika dan kerahasiaan").first().waitFor({ timeout: 30000 });
   await answerQuiz(s.page, RIGHT);
-  await s.page.getByText(/Keputusan tim SilentCX akan muncul/).waitFor({ timeout: 30000 });
+  await s.page.getByText(/Keputusan tim SilentCX akan muncul/).first().waitFor({ timeout: 30000 });
   check("lamaran ulang terkirim", true);
 
   // 5. Admin menyetujui.
   await a.page.goto(`${BASE}/admin/accounts?tab=pending`, { waitUntil: "networkidle" });
-  await a.page.locator("li", { hasText: email }).getByRole("button", { name: "Setujui" }).click();
-  await a.page.locator("li", { hasText: email }).waitFor({ state: "detached", timeout: 30000 });
+  await a.page.locator("tr", { hasText: email }).getByRole("link").click();
+  await a.page.getByRole("button", { name: "Setujui" }).click();
+  await a.page.waitForURL("**/admin/accounts?tab=pending", { timeout: 30000 });
+  await a.page.locator("tr", { hasText: email }).waitFor({ state: "detached", timeout: 30000 });
   check("admin menyetujui lamaran", true);
 
   await s.page.goto(`${BASE}/shopper`, { waitUntil: "networkidle" });
@@ -155,7 +163,7 @@ try {
   await s.page.fill("#number", "1234567890");
   await s.page.fill("#holder", "Uji Fase Dua");
   await s.page.getByRole("button", { name: "Simpan rekening" }).click();
-  await s.page.getByText("Rekening tersimpan.").waitFor({ timeout: 30000 });
+  await s.page.getByText("Rekening tersimpan.").first().waitFor({ timeout: 30000 });
   check("rekening tersimpan", true);
   await shot(s.page, "profile-active");
 

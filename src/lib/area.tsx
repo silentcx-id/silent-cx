@@ -26,7 +26,7 @@ export function areaLayout(role: Role, home: string) {
   };
 }
 
-// Halaman menu yang belum dibangun: tampil sebagai "Hadir di Fase N"; slug di luar menu → 404.
+// Halaman menu yang belum dibangun: tampil sebagai "Segera hadir"; slug di luar menu → 404.
 // Setiap halaman memeriksa role sendiri, karena layout tidak dirender ulang saat berpindah halaman.
 export async function comingSoonPage(role: Role, slug: string) {
   const item = menuItem(role, slug);
@@ -36,7 +36,7 @@ export async function comingSoonPage(role: Role, slug: string) {
   if (item.entitlement && !(await clientEntitlements(viewer.id)).includes(item.entitlement)) {
     const t = dict(lang).orders;
     return (
-      <section className="card grid max-w-xl gap-3 p-6">
+      <section className="card grid gap-3 p-6">
         <h1 className="text-2xl font-extrabold">{item.label[lang]}</h1>
         <p className="font-semibold">{t.lockedFeatureTitle}</p>
         <p className="text-muted">{t.lockedFeatureBody}</p>
@@ -46,5 +46,5 @@ export async function comingSoonPage(role: Role, slug: string) {
       </section>
     );
   }
-  return <ComingSoon title={item.label[lang]} phase={item.phase} lang={lang} />;
+  return <ComingSoon title={item.label[lang]} lang={lang} />;
 }

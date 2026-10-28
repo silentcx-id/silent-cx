@@ -15,7 +15,7 @@ export default async function ShopperMenuPage({ params }: PageProps<"/shopper/[s
   if (item.activeOnly && viewer.status !== "active") {
     const t = dict(await getLang()).shopper;
     return (
-      <section className="card grid max-w-xl gap-3 p-6">
+      <section className="card grid gap-3 p-6">
         <h1 className="text-2xl font-extrabold">{t.lockedTitle}</h1>
         <p className="text-muted">{t.lockedBody}</p>
       </section>

@@ -91,16 +91,16 @@ try {
   check("bagian Penjadwalan kunjungan tampil", (await text(a.page)).includes("Penjadwalan kunjungan"));
   await a.page.selectOption("#pick-q", { label: "Kafe & restoran — dasar" });
   await a.page.getByRole("button", { name: "Tetapkan" }).click();
-  await a.page.getByText("Kuesioner ditetapkan.").waitFor({ timeout: 30000 });
+  await a.page.getByText("Kuesioner ditetapkan.").first().waitFor({ timeout: 30000 });
   check("admin menetapkan kuesioner", true);
   await a.page.getByRole("button", { name: "+ Tugas kunjungan" }).click();
   await a.page.getByRole("button", { name: "Buat tugas" }).click();
-  await a.page.getByText("Tugas dibuat.").waitFor({ timeout: 30000 });
+  await a.page.getByText("Tugas dibuat.").first().waitFor({ timeout: 30000 });
   check("admin membuat tugas dengan fee bawaan", await a.page.locator("dt", { hasText: "Fee shopper" }).locator("xpath=following-sibling::dd[1]", { hasText: "Rp150.000" }).first().waitFor({ timeout: 30000 }).then(() => true, () => false));
   await a.page.getByLabel("Tawarkan ke").selectOption(shopperId);
   await a.page.getByLabel("Segera").check();
   await a.page.getByRole("button", { name: "Tawarkan" }).click();
-  await a.page.getByText("Tugas ditawarkan.").waitFor({ timeout: 30000 });
+  await a.page.getByText("Tugas ditawarkan.").first().waitFor({ timeout: 30000 });
   check("tugas ditawarkan dengan tanda Segera", (await text(a.page)).includes("Segera"));
   await shot(a.page, "admin-offered");
 
@@ -120,13 +120,13 @@ try {
   check("brief menampilkan aturan kelebihan pembelian", (await text(s.page)).includes("selisihnya ditanggung sendiri"));
   await shot(s.page, "offer");
   await s.page.getByRole("button", { name: "Terima tugas" }).click();
-  await s.page.getByText("Check-in di outlet").waitFor({ timeout: 30000 });
+  await s.page.getByText("Check-in di outlet").first().waitFor({ timeout: 30000 });
   check("shopper menerima tugas", true);
   await s.page.getByRole("button", { name: /Ambil lokasi saya/ }).click();
-  await s.page.getByText(/Lokasi terbaca/).waitFor({ timeout: 30000 });
+  await s.page.getByText(/Lokasi terbaca/).first().waitFor({ timeout: 30000 });
   await s.page.setInputFiles("#checkin-photo", photo);
   await s.page.getByRole("button", { name: /Check-in$/ }).click();
-  await s.page.getByText(/pertanyaan terjawab/).waitFor({ timeout: 45000 });
+  await s.page.getByText(/pertanyaan terjawab/).first().waitFor({ timeout: 45000 });
   check("check-in dengan lokasi dan foto berhasil", true);
 
   for (const b of await s.page.getByRole("button", { name: "Ya", exact: true }).all()) await b.click();
@@ -142,7 +142,7 @@ try {
   await s.page.fill("#purchase", "60000");
   await s.page.getByRole("button", { name: /Foto struk/ }).locator("xpath=preceding-sibling::input[1]").setInputFiles(photo);
   await s.page.getByRole("img", { name: "Struk 1" }).waitFor({ timeout: 45000 });
-  await s.page.getByText(/Tersimpan otomatis/).waitFor({ timeout: 30000 });
+  await s.page.getByText(/Tersimpan otomatis/).first().waitFor({ timeout: 30000 });
   check("struk terunggah dan isian tersimpan otomatis", true);
   await shot(s.page, "audit-form");
   s.page.once("dialog", (d) => d.accept());
@@ -155,7 +155,7 @@ try {
   const adminText = await text(a.page);
   check("admin melihat skor dan peta check-in", adminText.includes("skor sementara") && (await a.page.locator("iframe[title^='Titik check-in']").count()) === 1);
   await a.page.getByRole("button", { name: "Sesuai", exact: true }).click();
-  await a.page.getByText("Ditandai sesuai.").waitFor({ timeout: 30000 });
+  await a.page.getByText("Ditandai sesuai.").first().waitFor({ timeout: 30000 });
   check("admin menandai lokasi sesuai", true);
   await shot(a.page, "admin-submitted");
 

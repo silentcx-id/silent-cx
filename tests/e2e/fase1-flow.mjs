@@ -79,7 +79,7 @@ try {
   if (project.status === "awaiting_review") {
     await a.page.goto(`${BASE}/admin/projects/${project.id}`, { waitUntil: "networkidle" });
     await a.page.getByRole("button", { name: "Setujui pesanan" }).click();
-    await a.page.getByText("Pesanan disetujui").waitFor({ timeout: 30000 });
+    await a.page.getByText("Pesanan disetujui").first().waitFor({ timeout: 30000 });
     check("admin menyetujui pesanan yang perlu review", true);
   }
 
@@ -93,7 +93,7 @@ try {
     await c.page.setInputFiles("#pay-file", proofPath);
     await c.page.fill("#pay-payer", "Uji Fase Satu");
     await c.page.getByRole("button", { name: "Kirim bukti" }).click();
-    await c.page.getByText("Pembayaran sedang diverifikasi").waitFor({ timeout: 45000 });
+    await c.page.getByText("Pembayaran sedang diverifikasi").first().waitFor({ timeout: 45000 });
     check("bukti terkirim, status Sedang diverifikasi", true);
 
     // 4. Admin memverifikasi.
@@ -102,7 +102,7 @@ try {
     await a.page.goto(`${BASE}/admin/projects/${project.id}`, { waitUntil: "networkidle" });
     await shot(a.page, "admin-verify");
     await a.page.getByRole("button", { name: "Pembayaran sesuai, aktifkan proyek" }).click();
-    await a.page.getByText("Pembayaran diverifikasi").waitFor({ timeout: 30000 });
+    await a.page.getByText("Pembayaran diverifikasi").first().waitFor({ timeout: 30000 });
     check("admin memverifikasi pembayaran", true);
 
     // 5. Dashboard client aktif dan lengkapi data.

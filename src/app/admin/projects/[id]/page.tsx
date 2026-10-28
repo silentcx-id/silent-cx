@@ -4,9 +4,11 @@ import { notFound } from "next/navigation";
 import { CancelForm, ReviewForm, VerifyForm } from "../project-actions";
 import { OutletSchedule, QuestionnairePicker, type AdminTask, type Candidate, type OutletTasks } from "./scheduling";
 import { InvoiceView } from "@/components/invoice-view";
+import { pickTab, Tabs } from "@/components/tabs";
 import { wibDate } from "@/lib/field";
 import { dateTime, rupiah } from "@/lib/format";
-import { getProject, type Project } from "@/lib/orders";
+import { dict } from "@/lib/i18n";
+import { getProject, type Invoice, type PaymentProof, type Project } from "@/lib/orders";
 import { PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE } from "@/lib/project-labels";
 import { requireRole } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
@@ -86,8 +88,10 @@ const REASON: Record<string, string> = {
   addon: "Ada add-on yang perlu persetujuan admin.",
 };
 
-export default async function ProjectDetail({ params }: PageProps<"/admin/projects/[id]">) {
-  const { id } = await params;
+const TABS = ["ringkasan", "outlet", "jadwal", "pembayaran"] as const;
+
+export default async function ProjectDetail({ params, searchParams }: PageProps<"/admin/projects/[id]">) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   await requireRole("admin", `/admin/projects/${id}`);
   const project = await getProject(id);
   if (!project) notFound();
@@ -103,6 +107,12 @@ export default async function ProjectDetail({ params }: PageProps<"/admin/projec
   const verifyingInvoice = project.invoices.find((i) => i.status === "verifying");
   const pendingProof = verifyingInvoice?.payment_proofs.find((p) => p.status === "pending");
   const open = ["awaiting_review", "awaiting_payment", "verifying"].includes(project.status);
+  const needsReview = project.status === "awaiting_review" && Boolean(invoice);
+  const outside = project.project_outlets.filter((o) => !served.has(o.city.trim().toLowerCase())).length;
+  // Proyek aktif tanpa bukti bayar yang menunggu langsung dibuka di tab jadwal, karena itu pekerjaan utamanya.
+  const tab = pickTab(query.tab, TABS, project.status === "active" && !pendingProof ? "jadwal" : "ringkasan");
+  const proofs = project.invoices.flatMap((i) => i.payment_proofs.map((p) => ({ ...p, invoiceCode: i.code })));
+  const invoiceStatus = dict("id").orders.invoiceStatus;
 
   return (
     <>
@@ -113,137 +123,170 @@ export default async function ProjectDetail({ params }: PageProps<"/admin/projec
         <div className="grid gap-1">
           <h1 className="font-mono text-[clamp(26px,4vw,36px)] font-extrabold">{project.code}</h1>
           <p className="text-muted">
-            {project.package_snapshot.name} · {project.outlet_count} outlet · dipesan {dateTime(project.created_at, "id")}
+            {client?.full_name || "—"} · {project.package_snapshot.name} · {project.outlet_count} outlet · dipesan {dateTime(project.created_at, "id")}
           </p>
         </div>
         <span className={`chip ${PROJECT_STATUS_TONE[project.status]}`}>{PROJECT_STATUS_LABEL[project.status]}</span>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,440px)] xl:items-start">
-        <div className="grid gap-6">
-          {project.status === "awaiting_review" && invoice && (
-            <section className="card grid gap-4 border-warn/60 p-5">
-              <h2 className="text-xl font-extrabold">Tinjau pesanan</h2>
-              <ul className="list-disc pl-5 text-sm">
-                {project.review_reasons.map((r) => (
-                  <li key={r}>{REASON[r] ?? r}</li>
-                ))}
-              </ul>
-              <ReviewForm projectId={project.id} pendingLines={invoice.invoice_lines.filter((l) => l.amount == null)} />
-            </section>
-          )}
+      <Tabs
+        base={`/admin/projects/${project.id}`}
+        label="Bagian proyek"
+        current={tab}
+        items={[
+          { id: "ringkasan", label: "Ringkasan", count: needsReview || pendingProof ? 1 : 0 },
+          { id: "outlet", label: "Outlet", count: project.project_outlets.length },
+          { id: "jadwal", label: "Jadwal kunjungan" },
+          { id: "pembayaran", label: "Pembayaran", count: pendingProof ? 1 : 0 },
+        ]}
+      />
 
-          {verifyingInvoice && pendingProof && (
-            <section className="card grid gap-4 border-accent p-5">
-              <h2 className="text-xl font-extrabold">{verifyingInvoice.kind === "excess" ? "Verifikasi tagihan tambahan" : "Verifikasi pembayaran"}</h2>
-              <dl className="grid gap-2 text-sm sm:grid-cols-2">
-                <div>
-                  <dt className="text-muted">Tagihan</dt>
-                  <dd className="font-display text-xl font-extrabold tabular-nums">{rupiah(verifyingInvoice.total)}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted">Dibayar menurut client</dt>
-                  <dd className={`font-display text-xl font-extrabold tabular-nums ${pendingProof.amount !== verifyingInvoice.total ? "text-bad" : "text-good"}`}>{rupiah(pendingProof.amount)}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted">Metode</dt>
-                  <dd>{pendingProof.method === "qris" ? "QRIS" : "Transfer bank"}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted">Pengirim</dt>
-                  <dd>{pendingProof.payer_name || "—"}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted">Dikirim</dt>
-                  <dd>{dateTime(pendingProof.uploaded_at, "id")}</dd>
-                </div>
+      {tab === "ringkasan" && (
+        <div className="grid gap-6 xl:grid-cols-2 xl:items-start">
+          <div className="grid gap-6">
+            {needsReview && invoice && (
+              <section className="card grid gap-4 border-warn/60 p-5">
+                <h2 className="text-xl font-extrabold">Tinjau pesanan</h2>
+                <ul className="list-disc pl-5 text-sm">
+                  {project.review_reasons.map((r) => (
+                    <li key={r}>{REASON[r] ?? r}</li>
+                  ))}
+                </ul>
+                <ReviewForm projectId={project.id} pendingLines={invoice.invoice_lines.filter((l) => l.amount == null)} />
+              </section>
+            )}
+
+            {verifyingInvoice && pendingProof && <VerifyCard invoice={verifyingInvoice} proof={pendingProof} />}
+
+            <section className="card grid gap-4 p-5">
+              <h2 className="text-xl font-extrabold">Pesanan</h2>
+              <dl className="grid gap-4 text-sm sm:grid-cols-2">
+                <Fact label="Paket" value={project.package_snapshot.name} />
+                <Fact label="Kunjungan per outlet" value={String(project.package_snapshot.visits ?? 1)} />
+                <Fact label="Outlet" value={`${project.outlet_count} outlet${outside ? ` · ${outside} di luar kota dilayani` : ""}`} />
+                <Fact label="Data outlet" value={project.details_completed_at ? `Lengkap sejak ${dateTime(project.details_completed_at, "id")}` : "Belum ditandai lengkap"} />
+                <Fact label="Total pesanan" value={invoice ? rupiah(invoice.total) : "—"} />
+                <Fact label="Status invoice" value={invoice ? invoiceStatus[invoice.status] : "—"} />
               </dl>
-              <VerifyForm invoiceId={verifyingInvoice.id} proofId={pendingProof.id} extra={verifyingInvoice.kind === "excess"} />
+              {project.addons_snapshot.length > 0 && (
+                <ul className="flex flex-wrap gap-2">
+                  {project.addons_snapshot.map((a) => (
+                    <li key={a.item_key} className="chip">
+                      {a.label}
+                      {a.quantity > 1 ? ` × ${a.quantity}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {project.status_note && (
+                <p className="rounded-xl border border-line p-4 text-sm">
+                  <strong>Catatan terakhir:</strong> {project.status_note}
+                </p>
+              )}
             </section>
-          )}
+          </div>
 
-          {project.status === "active" && <Scheduling project={project} />}
-
-          {project.status_note && (
-            <p className="rounded-xl border border-line p-4 text-sm">
-              <strong>Catatan terakhir:</strong> {project.status_note}
-            </p>
-          )}
-
-          <section className="card grid gap-3 p-5">
-            <h2 className="text-xl font-extrabold">Client</h2>
-            <p>
-              <span className="font-semibold">{client?.full_name || "—"}</span> · {client?.email} {client?.phone && <span className="font-mono text-sm">· {client.phone}</span>}
-            </p>
-            {company ? (
-              <dl className="grid gap-2 text-sm sm:grid-cols-2">
-                <div>
-                  <dt className="text-muted">Perusahaan</dt>
-                  <dd>
-                    {company.name || "—"} {company.industry && `· ${company.industry}`}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted">PIC</dt>
-                  <dd>
-                    {company.pic_name || "—"} {company.pic_position && `(${company.pic_position})`} {company.pic_phone && <span className="font-mono">{company.pic_phone}</span>}
-                  </dd>
-                </div>
-                {company.address && (
-                  <div className="sm:col-span-2">
-                    <dt className="text-muted">Alamat kantor</dt>
+          <div className="grid gap-6">
+            <section className="card grid gap-3 p-5">
+              <h2 className="text-xl font-extrabold">Client</h2>
+              <p>
+                <span className="font-semibold">{client?.full_name || "—"}</span> · {client?.email} {client?.phone && <span className="font-mono text-sm">· {client.phone}</span>}
+              </p>
+              {company ? (
+                <dl className="grid gap-2 text-sm sm:grid-cols-2">
+                  <div>
+                    <dt className="text-muted">Perusahaan</dt>
                     <dd>
-                      {company.address}, {company.city}
+                      {company.name || "—"} {company.industry && `· ${company.industry}`}
                     </dd>
                   </div>
-                )}
-              </dl>
-            ) : (
-              <p className="text-sm text-muted">Data perusahaan belum diisi.</p>
-            )}
-            {project.objectives && (
-              <p className="text-sm">
-                <span className="text-muted">Tujuan audit:</span> {project.objectives}
-              </p>
-            )}
-          </section>
-
-          <section className="card grid gap-3 p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-xl font-extrabold">Outlet</h2>
-              <span className="text-sm text-muted">{project.details_completed_at ? `Ditandai lengkap ${dateTime(project.details_completed_at, "id")}` : "Belum ditandai lengkap"}</span>
-            </div>
-            <ol className="grid gap-2">
-              {project.project_outlets.map((o) => (
-                <li key={o.id} className="grid gap-0.5 rounded-lg border border-line p-3 text-sm">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold">
-                      {o.position}. {o.name || "Nama belum diisi"}
-                    </span>
-                    <span className="chip">{o.city}</span>
-                    {o.is_competitor && <span className="chip border-accent text-mark">Kompetitor</span>}
-                    {!served.has(o.city.trim().toLowerCase()) && <span className="chip border-warn/50 text-warn">Di luar kota dilayani</span>}
-                  </span>
-                  {o.address && <span className="text-muted">{o.address}</span>}
-                  {o.maps_url && (
-                    <a href={o.maps_url} target="_blank" rel="noreferrer" className="w-fit text-mark underline underline-offset-4">
-                      Google Maps ↗
-                    </a>
+                  <div>
+                    <dt className="text-muted">PIC</dt>
+                    <dd>
+                      {company.pic_name || "—"} {company.pic_position && `(${company.pic_position})`} {company.pic_phone && <span className="font-mono">{company.pic_phone}</span>}
+                    </dd>
+                  </div>
+                  {company.address && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-muted">Alamat kantor</dt>
+                      <dd>
+                        {company.address}, {company.city}
+                      </dd>
+                    </div>
                   )}
-                  {o.notes && <span className="text-muted">Catatan: {o.notes}</span>}
-                </li>
-              ))}
-            </ol>
-          </section>
+                </dl>
+              ) : (
+                <p className="text-sm text-muted">Data perusahaan belum diisi.</p>
+              )}
+              {project.objectives && (
+                <p className="text-sm">
+                  <span className="text-muted">Tujuan audit:</span> {project.objectives}
+                </p>
+              )}
+            </section>
+            {open && <CancelForm projectId={project.id} />}
+          </div>
+        </div>
+      )}
 
-          {invoice && invoice.payment_proofs.length > 0 && (
+      {tab === "outlet" && (
+        <section className="grid gap-3">
+          <p className="text-sm text-muted">{project.details_completed_at ? `Ditandai lengkap oleh client ${dateTime(project.details_completed_at, "id")}.` : "Client belum menandai data outlet lengkap."}</p>
+          <ol className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+            {project.project_outlets.map((o) => (
+              <li key={o.id} className="card grid content-start gap-1 p-4 text-sm">
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold">
+                    {o.position}. {o.name || "Nama belum diisi"}
+                  </span>
+                  <span className="chip">{o.city}</span>
+                  {o.is_competitor && <span className="chip border-accent text-mark">Kompetitor</span>}
+                  {!served.has(o.city.trim().toLowerCase()) && <span className="chip border-warn/50 text-warn">Di luar kota dilayani</span>}
+                </span>
+                {o.address && <span className="text-muted">{o.address}</span>}
+                {o.maps_url && (
+                  <a href={o.maps_url} target="_blank" rel="noreferrer" className="w-fit text-mark underline underline-offset-4">
+                    Google Maps ↗
+                  </a>
+                )}
+                {o.notes && <span className="text-muted">Catatan: {o.notes}</span>}
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {tab === "jadwal" &&
+        (project.status === "active" ? (
+          <Scheduling project={project} />
+        ) : (
+          <p className="card p-6 text-muted">
+            {project.status === "reporting" || project.status === "completed"
+              ? "Semua kunjungan proyek ini sudah selesai."
+              : "Penjadwalan kunjungan dibuka setelah pembayaran diverifikasi dan proyek aktif."}
+          </p>
+        ))}
+
+      {tab === "pembayaran" && (
+        <div className="grid gap-6">
+          {verifyingInvoice && pendingProof && <VerifyCard invoice={verifyingInvoice} proof={pendingProof} />}
+          {project.invoices.length === 0 ? (
+            <p className="card p-6 text-muted">Belum ada invoice.</p>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+              {project.invoices.map((inv) => (
+                <InvoiceView key={inv.id} invoice={inv} projectCode={project.code} lang="id" pdfHref={`/admin/invoices/${inv.id}/pdf`} />
+              ))}
+            </div>
+          )}
+          {proofs.length > 0 && (
             <section className="card grid gap-3 p-5">
               <h2 className="text-xl font-extrabold">Riwayat bukti bayar</h2>
               <ul className="grid gap-2 text-sm">
-                {invoice.payment_proofs.map((p) => (
+                {proofs.map((p) => (
                   <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line p-3">
                     <span>
-                      {dateTime(p.uploaded_at, "id")} · {p.method === "qris" ? "QRIS" : "Transfer"} · {rupiah(p.amount)}
+                      <span className="font-mono">{p.invoiceCode}</span> · {dateTime(p.uploaded_at, "id")} · {p.method === "qris" ? "QRIS" : "Transfer"} · {rupiah(p.amount)}
                     </span>
                     <span className={`chip ${p.status === "accepted" ? "text-good" : p.status === "rejected" ? "text-bad" : "text-mark"}`}>
                       {p.status === "accepted" ? "Diterima" : p.status === "rejected" ? "Ditolak" : "Menunggu"}
@@ -254,17 +297,49 @@ export default async function ProjectDetail({ params }: PageProps<"/admin/projec
               </ul>
             </section>
           )}
-
-          {open && <CancelForm projectId={project.id} />}
         </div>
-        {invoice && (
-          <div className="grid gap-4">
-            {project.invoices.map((inv) => (
-              <InvoiceView key={inv.id} invoice={inv} projectCode={project.code} lang="id" pdfHref={`/admin/invoices/${inv.id}/pdf`} />
-            ))}
-          </div>
-        )}
-      </div>
+      )}
     </>
+  );
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid gap-0.5">
+      <dt className="text-muted">{label}</dt>
+      <dd className="font-semibold">{value}</dd>
+    </div>
+  );
+}
+
+// Bukti bayar yang menunggu diperiksa; tampil di tab Ringkasan dan Pembayaran.
+function VerifyCard({ invoice, proof }: { invoice: Invoice; proof: PaymentProof }) {
+  return (
+    <section className="card grid gap-4 border-accent p-5">
+      <h2 className="text-xl font-extrabold">{invoice.kind === "excess" ? "Verifikasi tagihan tambahan" : "Verifikasi pembayaran"}</h2>
+      <dl className="grid gap-2 text-sm sm:grid-cols-2">
+        <div>
+          <dt className="text-muted">Tagihan</dt>
+          <dd className="font-display text-xl font-extrabold tabular-nums">{rupiah(invoice.total)}</dd>
+        </div>
+        <div>
+          <dt className="text-muted">Dibayar menurut client</dt>
+          <dd className={`font-display text-xl font-extrabold tabular-nums ${proof.amount !== invoice.total ? "text-bad" : "text-good"}`}>{rupiah(proof.amount)}</dd>
+        </div>
+        <div>
+          <dt className="text-muted">Metode</dt>
+          <dd>{proof.method === "qris" ? "QRIS" : "Transfer bank"}</dd>
+        </div>
+        <div>
+          <dt className="text-muted">Pengirim</dt>
+          <dd>{proof.payer_name || "—"}</dd>
+        </div>
+        <div>
+          <dt className="text-muted">Dikirim</dt>
+          <dd>{dateTime(proof.uploaded_at, "id")}</dd>
+        </div>
+      </dl>
+      <VerifyForm invoiceId={invoice.id} proofId={proof.id} extra={invoice.kind === "excess"} />
+    </section>
   );
 }

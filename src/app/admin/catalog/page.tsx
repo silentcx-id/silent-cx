@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { AddonForm, CityManager, NewItemForm, PackageForm, PaymentForm } from "./catalog-forms";
+import { Tabs } from "@/components/tabs";
 import { getCatalog, getPaymentSettings, promoActive } from "@/lib/catalog";
 import { rupiah } from "@/lib/format";
 import { requireRole } from "@/lib/session";
@@ -35,13 +35,7 @@ export default async function CatalogPage({ searchParams }: PageProps<"/admin/ca
         </div>
       )}
 
-      <nav className="flex flex-wrap gap-2" aria-label="Bagian katalog">
-        {TABS.map((t) => (
-          <Link key={t.id} href={`/admin/catalog?tab=${t.id}`} aria-current={t.id === tab ? "page" : undefined} className={`btn btn-sm ${t.id === tab ? "btn-primary" : ""}`}>
-            {t.label}
-          </Link>
-        ))}
-      </nav>
+      <Tabs base="/admin/catalog" label="Bagian katalog" current={tab} items={[...TABS]} />
 
       {tab === "paket" && (
         <div className="grid gap-4">

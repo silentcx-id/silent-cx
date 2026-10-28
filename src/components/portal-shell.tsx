@@ -14,7 +14,7 @@ export function PortalShell({ viewer, lang, theme, entitlements, children }: { v
   return (
     <div className="flex min-h-dvh flex-col">
       <div className="tape" aria-hidden="true" />
-      <div className="mx-auto grid w-full max-w-7xl flex-1 md:grid-cols-[248px_minmax(0,1fr)]">
+      <div className="mx-auto grid w-full max-w-[1680px] flex-1 md:grid-cols-[248px_minmax(0,1fr)]">
         <aside className="grid content-start gap-5 border-b border-line px-4 py-4 md:sticky md:top-0 md:h-[calc(100dvh-10px)] md:border-b-0 md:border-r md:px-4 md:py-6">
           <div className="flex items-center justify-between gap-3">
             <Logo href={ROLE_HOME[viewer.role]} />
@@ -43,11 +43,11 @@ export function PortalShell({ viewer, lang, theme, entitlements, children }: { v
   );
 }
 
-// Halaman menu yang baru dibangun di fase berikutnya.
-export function ComingSoon({ title, phase, lang }: { title: string; phase: number; lang: Lang }) {
+// Halaman menu yang belum dibangun.
+export function ComingSoon({ title, lang }: { title: string; lang: Lang }) {
   return (
-    <section className="card grid max-w-xl gap-3 p-6">
-      <span className="chip w-fit">{dict(lang).common.comingIn(phase)}</span>
+    <section className="card grid gap-3 p-6">
+      <span className="chip w-fit">{dict(lang).common.comingIn}</span>
       <h1 className="text-2xl font-extrabold">{title}</h1>
     </section>
   );

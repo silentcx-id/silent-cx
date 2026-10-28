@@ -1,26 +1,24 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ContactForm, PaidPayout, type PaidRow } from "./payout-forms";
+import { getPayoutGroups } from "./queue";
+import { pickTab, Tabs } from "@/components/tabs";
 import { dateTime, rupiah } from "@/lib/format";
 import { requireRole } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
-import { ContactForm, PaidPayout, ShopperPayout, type PaidRow, type QueueTask } from "./payout-forms";
 
 export const metadata: Metadata = { title: "Keuangan" };
 
-type QueueRow = QueueTask & {
-  shopper_id: string;
-  shopper_name: string;
-  shopper_phone: string | null;
-  bank_name: string | null;
-  account_number: string | null;
-  account_holder: string | null;
-};
+const TABS = ["antrian", "dibayar", "kontak"] as const;
 
 // Payout shopper: paling lambat 48 jam setelah kunjungan disetujui QC (atau setelah rekening diisi).
-export default async function PayoutsPage() {
-  await requireRole("admin", "/admin/payouts");
+// Antrian hanya menampilkan ringkasan per shopper; transfer dicatat di halaman shopper masing-masing.
+export default async function PayoutsPage({ searchParams }: PageProps<"/admin/payouts">) {
+  const [, params] = await Promise.all([requireRole("admin", "/admin/payouts"), searchParams]);
+  const tab = pickTab(params.tab, TABS, "antrian");
   const supabase = await createClient();
-  const [queueRes, contactRes, paidRes] = await Promise.all([
-    supabase.rpc("admin_payout_queue"),
+  const [groups, contactRes, paidRes] = await Promise.all([
+    getPayoutGroups(),
     supabase.from("app_settings").select("value").eq("key", "admin_contact").maybeSingle(),
     supabase
       .from("payouts")
@@ -28,43 +26,28 @@ export default async function PayoutsPage() {
       .order("paid_at", { ascending: false })
       .limit(30),
   ]);
-  const rows = (queueRes.data ?? []) as QueueRow[];
   const contact = (contactRes.data?.value ?? {}) as { name?: string; whatsapp?: string };
   const paid = (paidRes.data ?? []) as unknown as (PaidRow & { profiles: { full_name: string } | null })[];
 
-  // Dikelompokkan per shopper, urutan mengikuti tugas paling mendesak dari database.
-  const groups = new Map<string, { name: string; phone: string | null; bank: { bank_name: string; account_number: string; account_holder: string } | null; tasks: QueueTask[] }>();
-  for (const r of rows) {
-    const g = groups.get(r.shopper_id) ?? {
-      name: r.shopper_name,
-      phone: r.shopper_phone,
-      bank: r.bank_name && r.account_number && r.account_holder ? { bank_name: r.bank_name, account_number: r.account_number, account_holder: r.account_holder } : null,
-      tasks: [],
-    };
-    g.tasks.push(r);
-    groups.set(r.shopper_id, g);
-  }
-  const overdue = rows.filter((r) => r.payout_status === "overdue");
-  const outstanding = rows.filter((r) => r.payout_status !== "waiting_bank").reduce((sum, r) => sum + r.total, 0);
+  const tasks = groups.reduce((n, g) => n + g.tasks.length, 0);
+  const late = groups.reduce((n, g) => n + g.late, 0);
+  const outstanding = groups.filter((g) => g.bank).reduce((sum, g) => sum + g.total, 0);
 
   return (
     <>
       <section className="grid max-w-3xl gap-2">
         <h1 className="text-[clamp(28px,4vw,40px)] font-extrabold leading-tight">Keuangan · payout shopper</h1>
-        <p className="text-muted">
-          Bayar fee dan reimburse paling lambat 48 jam setelah kunjungan disetujui QC. Untuk shopper yang belum mengisi rekening, hitungan baru mulai setelah rekening diisi. Beberapa tugas dari shopper yang
-          sama boleh digabung dalam satu transfer.
-        </p>
+        <p className="text-muted">Bayar fee dan reimburse paling lambat 48 jam setelah kunjungan disetujui QC. Untuk shopper yang belum mengisi rekening, hitungan baru mulai setelah rekening diisi.</p>
       </section>
 
       <ul className="grid gap-3 sm:grid-cols-3">
-        <li className={`card grid gap-2 p-5 ${overdue.length ? "border-bad/60" : ""}`}>
+        <li className={`card grid gap-2 p-5 ${late ? "border-bad/60" : ""}`}>
           <span className="text-sm text-muted">Lewat 48 jam</span>
-          <span className={`font-display text-4xl font-extrabold tabular-nums ${overdue.length ? "text-bad" : ""}`}>{overdue.length}</span>
+          <span className={`font-display text-4xl font-extrabold tabular-nums ${late ? "text-bad" : ""}`}>{late}</span>
         </li>
         <li className="card grid gap-2 p-5">
           <span className="text-sm text-muted">Tugas belum dibayar</span>
-          <span className="font-display text-4xl font-extrabold tabular-nums">{rows.length}</span>
+          <span className="font-display text-4xl font-extrabold tabular-nums">{tasks}</span>
         </li>
         <li className="card grid gap-2 p-5">
           <span className="text-sm text-muted">Siap ditransfer</span>
@@ -72,24 +55,56 @@ export default async function PayoutsPage() {
         </li>
       </ul>
 
-      <section className="grid gap-3">
-        <h2 className="eyebrow">Antrian payout ({rows.length})</h2>
-        {groups.size === 0 ? (
+      <Tabs
+        base="/admin/payouts"
+        label="Bagian keuangan"
+        current={tab}
+        items={[
+          { id: "antrian", label: "Antrian payout", count: groups.length, alert: late > 0 },
+          { id: "dibayar", label: "Sudah dibayar" },
+          { id: "kontak", label: "Kontak untuk shopper" },
+        ]}
+      />
+
+      {tab === "antrian" &&
+        (groups.length === 0 ? (
           <p className="card p-6 text-muted">Semua kunjungan yang disetujui sudah dibayar.</p>
         ) : (
-          <ul className="grid gap-4">
-            {[...groups.entries()].map(([id, g]) => (
-              <li key={id}>
-                <ShopperPayout shopperId={id} name={g.name} phone={g.phone} bank={g.bank} tasks={g.tasks} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          <div className="card overflow-x-auto">
+            <table className="w-full min-w-[680px] text-left text-sm">
+              <thead className="border-b border-line text-xs uppercase tracking-wider text-muted">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Shopper</th>
+                  <th className="px-4 py-3 font-semibold">Rekening</th>
+                  <th className="px-4 py-3 font-semibold">Tugas</th>
+                  <th className="px-4 py-3 font-semibold">Batas bayar</th>
+                  <th className="px-4 py-3 text-right font-semibold">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {groups.map((g) => (
+                  // Seluruh baris bisa diklik: tautan nama shopper direntangkan menutupi baris.
+                  <tr key={g.id} className={`relative border-b border-line align-top transition last:border-0 hover:bg-raise ${g.late ? "bg-bad/5" : ""}`}>
+                    <td className="px-4 py-3">
+                      <Link href={`/admin/payouts/${g.id}`} className="font-semibold text-mark after:absolute after:inset-0 after:content-['']">
+                        {g.name}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3">{g.bank ? g.bank.bank_name : <span className="font-semibold text-warn">Belum diisi</span>}</td>
+                    <td className="px-4 py-3 tabular-nums">{g.tasks.length}</td>
+                    <td className="px-4 py-3">
+                      {g.late ? <span className="chip border-bad/50 text-bad">Lewat 48 jam</span> : g.due ? dateTime(g.due, "id") : <span className="text-muted">Menunggu rekening</span>}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold tabular-nums">{rupiah(g.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
 
-      <section className="grid gap-3">
-        <h2 className="eyebrow">Sudah dibayar</h2>
-        {paid.length === 0 ? (
+      {tab === "dibayar" &&
+        (paid.length === 0 ? (
           <p className="card p-6 text-muted">Belum ada payout.</p>
         ) : (
           <ul className="grid gap-3">
@@ -99,13 +114,9 @@ export default async function PayoutsPage() {
               </li>
             ))}
           </ul>
-        )}
-      </section>
+        ))}
 
-      <section className="grid max-w-2xl gap-3">
-        <h2 className="eyebrow">Kontak untuk shopper</h2>
-        <ContactForm name={contact.name ?? ""} whatsapp={contact.whatsapp ?? ""} />
-      </section>
+      {tab === "kontak" && <ContactForm name={contact.name ?? ""} whatsapp={contact.whatsapp ?? ""} />}
     </>
   );
 }

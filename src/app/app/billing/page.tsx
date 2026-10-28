@@ -53,7 +53,7 @@ export default async function BillingPage() {
       ))}
 
       {!current || !invoice ? (
-        <section className="card grid max-w-xl gap-4 p-6">
+        <section className="card grid gap-4 p-6">
           <p className="text-muted">{t.noInvoices}</p>
           <Link href="/app/paket" className="btn btn-primary w-fit">
             {dict(lang).client.choosePackage} →

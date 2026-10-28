@@ -62,7 +62,7 @@ export default async function OutletsPage() {
           />
         </>
       ) : (
-        <section className="card grid max-w-xl gap-4 p-6">
+        <section className="card grid gap-4 p-6">
           <p className="text-muted">{t.detailsLocked}</p>
           <Link href={open ? "/app/billing" : "/app/paket"} className="btn btn-primary w-fit">
             {open ? t.openBilling : dict(lang).client.choosePackage} →

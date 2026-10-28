@@ -14,7 +14,7 @@ export default async function AssignmentsPage() {
   const t = dict(lang);
   if (viewer.status !== "active") {
     return (
-      <section className="card grid max-w-xl gap-3 p-6">
+      <section className="card grid gap-3 p-6">
         <h1 className="text-2xl font-extrabold">{t.shopper.lockedTitle}</h1>
         <p className="text-muted">{t.shopper.lockedBody}</p>
       </section>
