@@ -141,3 +141,53 @@ Persiapan:
 - [ ] Masuk sebagai `shopper@silentcx.demo` → Profil & lamaran menampilkan lamaran contoh yang disetujui.
 
 Bagian ini juga sudah diuji otomatis dengan 28 tes database: kota harus dari daftar, kelengkapan dan usia, kuis dan pakta, keputusan admin, log aktivitas, notifikasi, aturan 30 hari, rekening, dan siapa melihat apa. Uji ujung-ke-ujung di browser ada di `tests/e2e/fase2-flow.mjs`; uji ini menulis data sementara lalu menghapusnya.
+
+## Fase 3: Kuesioner, penjadwalan, dan kunjungan
+
+Persiapan:
+
+1. Jalankan `npm run db:migrate`. Perintah ini memasang tabel kuesioner dan tugas, template awal "Kafe & restoran — dasar", serta bucket privat `audit-evidence`.
+2. Siapkan satu proyek **aktif** yang data outletnya sudah ditandai lengkap (alur Fase 1), dan satu shopper aktif yang menjangkau kota outlet itu (alur Fase 2, atau `shopper@silentcx.demo`).
+3. Untuk check-in, buka aplikasi dari HP di Chrome atau Safari (bukan dari dalam Instagram), lewat alamat https. Di laptop, lokasi juga bisa dicoba di `localhost`.
+
+### A. Kuesioner (admin)
+
+- [ ] **Kuesioner** menampilkan template "Kafe & restoran — dasar" dengan label **Siap dipakai**.
+- [ ] Buka template, lalu ubah bobot satu bagian → chip total bobot berubah, dan muncul peringatan "Total bobot …, harus 100". Kembalikan bobotnya.
+- [ ] Tandai pertanyaan ketiga sebagai **Wajib foto** dengan batas 5 foto → muncul peringatan jatah foto (maksimal 3). Lepas lagi tandanya.
+- [ ] Tambah bagian dan pertanyaan, geser urutannya dengan ↑ ↓, lalu hapus.
+- [ ] **Salin** membuat salinan nonaktif yang bisa diubah untuk client tertentu.
+- [ ] **Pengaturan lapangan**: fee Rp150.000, maksimal 3 tugas aktif, dan batas respons 24 jam tersimpan.
+
+### B. Penjadwalan (admin, di halaman proyek)
+
+- [ ] Proyek aktif menampilkan bagian **Penjadwalan kunjungan**. Tetapkan kuesioner → muncul nama dan waktu penetapannya.
+- [ ] **+ Tugas kunjungan** → fee dan batas reimburse terisi otomatis. Isi jendela tanggal (dan jam, kalau perlu), skenario, dan pembelian wajib, lalu **Buat tugas**.
+- [ ] **Tawarkan ke** mengurutkan shopper yang menjangkau kota outlet di atas. Shopper yang penuh atau sudah pernah ke outlet itu tidak bisa dipilih.
+- [ ] Centang **Segera** → batas jawab otomatis menjadi 2 jam. Tawarkan.
+- [ ] **Follow up via WhatsApp** membuka chat ke nomor shopper. Pesannya hanya berisi kode tugas, kota, batas jawab, dan tautan, tanpa nama outlet atau client.
+- [ ] **Tarik tawaran** mengembalikan tugas ke "Belum ada shopper", dan shopper mendapat notifikasi.
+- [ ] Tawaran yang lewat batas jawab otomatis kembali ke "Belum ada shopper".
+
+### C. Kunjungan (shopper, dari HP)
+
+- [ ] Beranda dan notifikasi menampilkan tawaran, dengan tanda **Segera** kalau ada. **Buka tugas** menampilkan brief: outlet, jendela, fee, batas reimburse, skenario, pembelian wajib, dan aturan kelebihan pembelian.
+- [ ] Sebelum menerima, kuesioner belum terlihat. **Terima tugas** → muncul langkah check-in.
+- [ ] Check-in di luar jendela tanggal atau jam → ditolak dengan tanggal dan jam yang benar.
+- [ ] **Ambil lokasi saya** → browser meminta izin lokasi. Kalau izin ditolak, muncul petunjuk.
+- [ ] Ambil 1 foto di dalam outlet, lalu **Check-in** → kuesioner terbuka.
+- [ ] Jawab beberapa pertanyaan, tutup halaman, lalu buka lagi → jawaban masih ada ("Tersimpan otomatis").
+- [ ] **Tidak teramati** bisa dipilih untuk pertanyaan apa pun.
+- [ ] Pertanyaan **Wajib foto** meminta foto. Jumlah foto terpakai tampil di atas; setelah batas tercapai, tombol foto nonaktif.
+- [ ] Isi total pembelian di atas batas reimburse → muncul peringatan bahwa selisihnya diperiksa saat QC.
+- [ ] **Kirim hasil kunjungan** dengan pertanyaan yang belum dijawab → ditolak dengan jumlahnya. Kalau ada pembelian, tanpa struk juga ditolak.
+- [ ] Setelah terkirim, isian terkunci dan status menjadi **Menunggu QC**.
+
+### D. Setelah kunjungan
+
+- [ ] Admin melihat peta titik check-in, akurasi GPS, foto check-in, alamat, dan link Maps dari client, lalu menandai **Sesuai** atau **Tidak sesuai**.
+- [ ] Admin melihat skor sementara, nominal pembelian, selisih di atas batas, serta tombol foto struk dan bukti.
+- [ ] Kartu **Submission menunggu QC** di beranda admin bertambah.
+- [ ] Client membuka **Audit berjalan** → progres per outlet tanpa tanggal kunjungan atau nama shopper. Kunjungan yang sedang berlangsung tetap tampil "Dijadwalkan".
+
+Bagian ini juga sudah diuji otomatis dengan 28 tes database: bobot dan jatah foto kuesioner, salinan terkunci, tawaran dan kedaluwarsa, batas tugas aktif, check-in, validasi jawaban, batas foto, skor, kerahasiaan client dan shopper, serta log aktivitas. Uji ujung-ke-ujung di browser ada di `tests/e2e/fase3-flow.mjs`; uji ini menulis data sementara lalu menghapusnya.

@@ -2,14 +2,83 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CancelForm, ReviewForm, VerifyForm } from "../project-actions";
+import { OutletSchedule, QuestionnairePicker, type AdminTask, type Candidate, type OutletTasks } from "./scheduling";
 import { InvoiceView } from "@/components/invoice-view";
+import { wibDate } from "@/lib/field";
 import { dateTime, rupiah } from "@/lib/format";
-import { getProject } from "@/lib/orders";
+import { getProject, type Project } from "@/lib/orders";
 import { PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE } from "@/lib/project-labels";
 import { requireRole } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Detail proyek" };
+
+// Penjadwalan (Fase 3): kuesioner proyek, tugas per outlet, calon shopper, dan hasil check-in.
+async function Scheduling({ project }: { project: Project }) {
+  const supabase = await createClient();
+  await supabase.rpc("expire_offers");
+  const [{ data: assigned }, { data: questionnaires }, { data: taskRows }, { data: field }] = await Promise.all([
+    supabase.from("project_questionnaires").select("questionnaire_id, snapshot, assigned_at").eq("project_id", project.id).maybeSingle(),
+    supabase.from("questionnaires").select("id, name").eq("active", true).order("name"),
+    supabase
+      .from("audit_tasks")
+      .select("*, task_offers(status, respond_by, urgent, followups, last_followup_at), visit_photos(id, kind)")
+      .eq("project_id", project.id)
+      .order("created_at"),
+    supabase.from("app_settings").select("value").eq("key", "field").maybeSingle(),
+  ]);
+  const options = await Promise.all(
+    (questionnaires ?? []).map(async (q) => {
+      const { data: issues } = await supabase.rpc("questionnaire_issues", { p_questionnaire: q.id });
+      return { id: q.id as string, name: q.name as string, ready: !(issues ?? []).length };
+    }),
+  );
+
+  const rows = (taskRows ?? []) as (Omit<AdminTask, "shopper" | "offer" | "photos" | "candidates"> & {
+    outlet_id: string;
+    shopper_id: string | null;
+    task_offers: { status: string; respond_by: string; urgent: boolean; followups: number; last_followup_at: string | null }[];
+    visit_photos: AdminTask["photos"];
+  })[];
+  const shopperIds = [...new Set(rows.map((r) => r.shopper_id).filter((x): x is string => Boolean(x)))];
+  const { data: people } = shopperIds.length ? await supabase.from("profiles").select("id, full_name, phone").in("id", shopperIds) : { data: [] };
+  const personOf = new Map((people ?? []).map((p) => [p.id as string, { full_name: p.full_name as string, phone: p.phone as string | null }]));
+
+  const tasks: (AdminTask & { outlet_id: string })[] = await Promise.all(
+    rows.map(async ({ task_offers, visit_photos, shopper_id, ...r }) => {
+      const candidates = r.status === "open" ? (((await supabase.rpc("admin_task_candidates", { p_task: r.id })).data ?? []) as Candidate[]) : [];
+      const offer = task_offers.find((o) => o.status === "offered") ?? null;
+      return { ...r, shopper: shopper_id ? (personOf.get(shopper_id) ?? null) : null, offer, photos: visit_photos ?? [], candidates };
+    }),
+  );
+  const outlets: OutletTasks[] = project.project_outlets.map((o) => ({ ...o, tasks: tasks.filter((t) => t.outlet_id === o.id) }));
+
+  const settings = (field?.value ?? {}) as { default_fee?: number; default_response_hours?: number };
+  const defaults = {
+    fee: settings.default_fee ?? 150000,
+    reimburse: project.package_snapshot.purchase_allowance ?? 150000,
+    hours: settings.default_response_hours ?? 24,
+    today: wibDate(),
+    inAWeek: wibDate(7),
+  };
+  const locked = tasks.some((t) => t.status === "in_progress" || t.status === "submitted");
+  const current = assigned ? { id: assigned.questionnaire_id as string | null, name: (assigned.snapshot as { name?: string }).name ?? "Kuesioner", assigned_at: assigned.assigned_at as string } : null;
+  const canCreate = Boolean(assigned) && Boolean(project.details_completed_at);
+  const visitsPlanned = project.package_snapshot.visits ?? 1;
+
+  return (
+    <section className="grid gap-4">
+      <h2 className="eyebrow">Penjadwalan kunjungan</h2>
+      {!project.details_completed_at && (
+        <p className="rounded-xl border border-warn/50 bg-warn/10 p-4 text-sm">Client belum menandai data outlet lengkap. Tugas bisa dibuat setelah itu.</p>
+      )}
+      <QuestionnairePicker projectId={project.id} current={current} options={options} locked={locked} />
+      {outlets.map((o) => (
+        <OutletSchedule key={o.id} outlet={o} defaults={defaults} canCreate={canCreate} visitsPlanned={visitsPlanned} />
+      ))}
+    </section>
+  );
+}
 
 const REASON: Record<string, string> = {
   quote: "Ada add-on yang harganya perlu diisi admin.",
@@ -90,6 +159,8 @@ export default async function ProjectDetail({ params }: PageProps<"/admin/projec
               <VerifyForm invoiceId={invoice.id} proofId={pendingProof.id} />
             </section>
           )}
+
+          {project.status === "active" && <Scheduling project={project} />}
 
           {project.status_note && (
             <p className="rounded-xl border border-line p-4 text-sm">

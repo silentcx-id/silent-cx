@@ -12,13 +12,15 @@ export default async function AdminHome() {
   const [, lang] = await Promise.all([requireRole("admin", "/admin"), getLang()]);
   const t = dict(lang);
   const supabase = await createClient();
-  await supabase.rpc("expire_overdue");
+  await Promise.all([supabase.rpc("expire_overdue"), supabase.rpc("expire_offers")]);
   const count = (q: PromiseLike<{ count: number | null }>) => q.then((r) => r.count ?? 0);
-  const [pendingShoppers, reviews, payments] = await Promise.all([
+  const [pendingShoppers, reviews, payments, unassigned, submitted] = await Promise.all([
     // Hanya lamaran yang sudah dikirim (lulus kuis dan pakta); draft belum perlu keputusan.
     count(supabase.from("shopper_applications").select("id", { count: "exact", head: true }).eq("status", "submitted")),
     count(supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "awaiting_review")),
     count(supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "verifying")),
+    count(supabase.from("audit_tasks").select("id", { count: "exact", head: true }).eq("status", "open")),
+    count(supabase.from("audit_tasks").select("id", { count: "exact", head: true }).eq("status", "submitted")),
   ]);
 
   // Antrian lain diisi oleh fase yang membangunnya.
@@ -26,7 +28,8 @@ export default async function AdminHome() {
     { label: t.admin.queues.shoppers, count: pendingShoppers, href: "/admin/accounts?tab=pending", phase: 2 },
     { label: t.admin.queues.reviews, count: reviews, href: "/admin/projects?tab=review", phase: 1 },
     { label: t.admin.queues.payments, count: payments, href: "/admin/projects?tab=verify", phase: 1 },
-    { label: t.admin.queues.qc, count: null, href: "/admin/qc", phase: 4 },
+    { label: t.admin.queues.unassigned, count: unassigned, href: "/admin/projects", phase: 3 },
+    { label: t.admin.queues.qc, count: submitted, href: "/admin/qc", phase: 4 },
     { label: t.admin.queues.payouts, count: null, href: "/admin/payouts", phase: 5 },
   ];
 
@@ -37,7 +40,7 @@ export default async function AdminHome() {
         <p className="text-lg text-muted">{t.admin.lede}</p>
       </section>
 
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {queues.map((q) => (
           <li key={q.label}>
             <Link

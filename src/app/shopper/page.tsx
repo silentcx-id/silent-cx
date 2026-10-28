@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { NotificationList } from "./notification-list";
 import { MilestoneTrack } from "@/components/milestone-track";
-import { date } from "@/lib/format";
+import { windowLabel, type ShopperTaskRow } from "@/lib/field";
+import { date, dateTime } from "@/lib/format";
 import { dict } from "@/lib/i18n";
 import { getLang } from "@/lib/prefs";
 import { requireRole } from "@/lib/session";
 import { applicationStage, getBankAccount, getLatestApplication, getNotifications, reapplyDate } from "@/lib/shopper";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Beranda" };
 
@@ -20,7 +22,13 @@ export default async function ShopperHome() {
   const notes = notifications.length > 0 && <NotificationList items={notifications} lang={lang} />;
 
   if (viewer.status === "active") {
-    const bank = await getBankAccount(viewer.id);
+    const supabase = await createClient();
+    const [bank, { data: taskData }] = await Promise.all([getBankAccount(viewer.id), supabase.rpc("shopper_tasks")]);
+    const tasks = (taskData ?? []) as ShopperTaskRow[];
+    const offers = tasks.filter((x) => x.status === "offered");
+    const running = tasks.filter((x) => x.status === "accepted" || x.status === "in_progress");
+    // Milestone shopper: 3 terima tugas, 4 kunjungan, 5 submit & QC.
+    const milestone = running.length ? 4 : tasks.some((x) => x.status === "submitted") && !offers.length ? 5 : 3;
     return (
       <>
         <section className="rise grid max-w-3xl gap-3">
@@ -39,12 +47,34 @@ export default async function ShopperHome() {
         {notes}
         <section className="grid gap-3">
           <h2 className="eyebrow">Milestone</h2>
-          <MilestoneTrack role="shopper" current={3} lang={lang} />
+          <MilestoneTrack role="shopper" current={milestone} lang={lang} />
         </section>
-        <section className="card grid gap-2 p-6">
-          <p className="font-semibold">{s.noTasks}</p>
-          <span className="chip w-fit">{t.common.comingIn(3)}</span>
-        </section>
+        {offers.length + running.length === 0 ? (
+          <section className="card grid gap-2 p-6">
+            <p className="font-semibold">{s.noTasks}</p>
+          </section>
+        ) : (
+          <section className="grid gap-3">
+            <h2 className="eyebrow">{t.tasks.title}</h2>
+            <ul className="grid gap-3 md:grid-cols-2">
+              {[...offers, ...running].map((x) => (
+                <li key={x.id}>
+                  <Link href={`/shopper/assignments/${x.id}`} className={`card grid h-full gap-1 p-5 transition hover:border-muted ${x.status === "offered" ? "border-accent" : ""}`}>
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="chip">{t.tasks.status[x.status]}</span>
+                      {x.urgent && <span className="chip border-accent text-mark">{t.tasks.urgent}</span>}
+                    </span>
+                    <span className="font-extrabold">{x.outlet_name || x.city}</span>
+                    <span className="text-sm text-muted">
+                      {x.city} · {windowLabel(x, lang)}
+                    </span>
+                    {x.status === "offered" && x.respond_by && <span className="text-sm font-semibold text-mark">{t.tasks.respondBy(dateTime(x.respond_by, lang))}</span>}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </>
     );
   }

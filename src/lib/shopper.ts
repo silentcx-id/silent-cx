@@ -5,7 +5,13 @@ import { createClient } from "./supabase/server";
 export * from "./shopper-application";
 
 export type BankAccount = { bank_name: string; account_number: string; account_holder: string };
-export type Notification = { id: number; kind: string; detail: { note?: string; reapply_at?: string }; read_at: string | null; created_at: string };
+export type Notification = {
+  id: number;
+  kind: string;
+  detail: { note?: string; reapply_at?: string; task?: string; code?: string; city?: string; respond_by?: string; urgent?: boolean };
+  read_at: string | null;
+  created_at: string;
+};
 
 // Lamaran terbaru milik shopper (draft, ditinjau, disetujui, atau ditolak), atau null kalau belum pernah mengisi.
 export async function getLatestApplication(shopperId: string): Promise<ShopperApplication | null> {
