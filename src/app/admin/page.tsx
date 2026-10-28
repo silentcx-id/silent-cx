@@ -15,14 +15,15 @@ export default async function AdminHome() {
   await supabase.rpc("expire_overdue");
   const count = (q: PromiseLike<{ count: number | null }>) => q.then((r) => r.count ?? 0);
   const [pendingShoppers, reviews, payments] = await Promise.all([
-    count(supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "shopper").eq("status", "pending")),
+    // Hanya lamaran yang sudah dikirim (lulus kuis dan pakta); draft belum perlu keputusan.
+    count(supabase.from("shopper_applications").select("id", { count: "exact", head: true }).eq("status", "submitted")),
     count(supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "awaiting_review")),
     count(supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "verifying")),
   ]);
 
   // Antrian lain diisi oleh fase yang membangunnya.
   const queues = [
-    { label: t.admin.queues.shoppers, count: pendingShoppers, href: "/admin/accounts?tab=pending", phase: 0 },
+    { label: t.admin.queues.shoppers, count: pendingShoppers, href: "/admin/accounts?tab=pending", phase: 2 },
     { label: t.admin.queues.reviews, count: reviews, href: "/admin/projects?tab=review", phase: 1 },
     { label: t.admin.queues.payments, count: payments, href: "/admin/projects?tab=verify", phase: 1 },
     { label: t.admin.queues.qc, count: null, href: "/admin/qc", phase: 4 },

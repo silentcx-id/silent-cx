@@ -136,18 +136,24 @@ describe("admin mengubah status akun", () => {
     await expect(setStatus(shopper, shopper, "active")).rejects.toThrow(/Hanya admin/);
   });
 
-  it("menolak shopper wajib dengan alasan", async () => {
-    await expect(setStatus(admin, shopper, "rejected")).rejects.toThrow(/Alasan wajib/);
+  it("pelamar shopper hanya diputuskan lewat lamarannya (Fase 2)", async () => {
+    await expect(setStatus(admin, shopper, "active")).rejects.toThrow(/lewat lamarannya/);
+    await expect(setStatus(admin, shopper, "rejected", "x")).rejects.toThrow(/lewat lamarannya/);
+    expect(await t.profile(shopper)).toMatchObject({ status: "pending" });
   });
 
-  it("admin menyetujui shopper dan tercatat di log", async () => {
-    await setStatus(admin, shopper, "active");
-    expect(await t.profile(shopper)).toMatchObject({ status: "active", status_note: null });
+  it("menangguhkan wajib dengan alasan, dan perubahan status tercatat di log", async () => {
+    await expect(setStatus(admin, client, "suspended")).rejects.toThrow(/Alasan wajib/);
+    await setStatus(admin, client, "suspended", "Cek data");
+    await setStatus(admin, client, "active");
     const log = await t.db.query<{ actor_id: string; detail: { from: string; to: string } }>(
-      "select actor_id, detail from public.activity_log where action = 'account.status_changed' and target_id = $1",
-      [shopper],
+      "select actor_id, detail from public.activity_log where action = 'account.status_changed' and target_id = $1 order by id",
+      [client],
     );
-    expect(log.rows[0]).toMatchObject({ actor_id: admin, detail: { from: "pending", to: "active" } });
+    expect(log.rows.map((r) => r.detail)).toMatchObject([{ from: "active", to: "suspended" }, { from: "suspended", to: "active" }]);
+    expect(log.rows[0].actor_id).toBe(admin);
+    // Shopper diaktifkan seperti hasil lamaran yang disetujui, untuk tes penangguhan berikutnya.
+    await t.db.query("update public.profiles set status = 'active' where id = $1", [shopper]);
   });
 
   it("menangguhkan menyimpan alasan, mengaktifkan kembali menghapusnya", async () => {

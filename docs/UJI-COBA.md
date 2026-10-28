@@ -101,3 +101,43 @@ Persiapan:
 - [ ] Invoice yang tidak dibayar dalam 2x24 jam menjadi **Kedaluwarsa**, dan client bisa memesan ulang.
 
 Bagian ini sudah diuji otomatis dengan 29 tes database: harga per outlet, promo, add-on, kota, review, verifikasi, kedaluwarsa, dan akses antar client.
+
+## Fase 2: Lamaran dan seleksi shopper
+
+Persiapan:
+
+1. Jalankan `npm run db:migrate`. Perintah ini memasang tabel lamaran, notifikasi, dan rekening shopper.
+2. Pastikan ada minimal satu kota di **Katalog → Kota dilayani**. Pelamar hanya bisa memilih kota dari daftar ini.
+3. Jalankan `npm run demo:akun`. Akun yang sudah ada tidak diubah; `shopper@silentcx.demo` diberi lamaran contoh yang sudah disetujui.
+
+### A. Mengisi lamaran (pelamar)
+
+- [ ] Masuk sebagai `pelamar@silentcx.demo` → beranda "Lengkapi lamaran Anda", dengan catatan bahwa KTP dan selfie tidak diminta.
+- [ ] Buka **Profil & lamaran**. Isi tanggal lahir, gender, domisili, kendaraan, kota yang bisa dijangkau, pekerjaan, pengalaman, dan industri yang diminati.
+- [ ] Klik **Simpan draft**, muat ulang halaman → isian masih ada.
+- [ ] Tanggal lahir kurang dari 18 tahun → lamaran ditolak saat dikirim dengan pesan yang jelas.
+- [ ] Klik **Lanjut ke kuis** → 5 soal etika dan pakta kerahasiaan tampil. Tombol **Kirim lamaran** baru aktif setelah semua soal dijawab dan pakta dicentang.
+- [ ] Jawab salah satu soal dengan keliru → muncul "4 dari 5 jawaban benar", lamaran belum terkirim.
+- [ ] Jawab semua dengan benar → lamaran terkirim, halaman menampilkan isi lamaran dan "Sedang ditinjau". Beranda menampilkan "Lamaran Anda sedang ditinjau".
+- [ ] Menu **Tugas**, **Riwayat & QC**, dan **Pembayaran** tetap terkunci.
+
+### B. Antrian seleksi (admin)
+
+- [ ] Kartu **Shopper menunggu seleksi** di beranda admin hanya menghitung lamaran yang sudah dikirim, bukan draft.
+- [ ] **Akun → Lamaran masuk** menampilkan isi lamaran lengkap: kota dijangkau, usia, gender, pekerjaan, kendaraan, pengalaman, industri, waktu kirim, dan jumlah percobaan kuis.
+- [ ] Pilih kota di filter **Kota** → hanya lamaran yang menjangkau kota itu yang tampil.
+- [ ] Pelamar yang belum mengirim lamaran tampil di bagian **Belum mengirim lamaran**, tanpa tombol keputusan.
+- [ ] Klik **Tolak** → alasan wajib diisi. Pelamar melihat alasannya, tanggal boleh melamar lagi (30 hari), dan notifikasi di beranda.
+- [ ] Pelamar yang ditolak membuka **Profil & lamaran** sebelum 30 hari → hanya melihat alasan dan tanggal, tanpa formulir.
+- [ ] Klik **Setujui** pada lamaran lain → pelamar menjadi aktif, menu Tugas terbuka, dan beranda menampilkan notifikasi "Lamaran Anda disetujui".
+- [ ] Tab **Mystery shopper** dengan filter kota → hanya shopper aktif yang menjangkau kota itu (pool per kota). Kolom **Jangkauan** menunjukkan kotanya.
+- [ ] Shopper aktif masih bisa **Tangguhkan** (alasan wajib) dan **Aktifkan kembali**. Pelamar tidak punya tombol di tab ini; keputusannya lewat Lamaran masuk.
+
+### C. Setelah disetujui (shopper)
+
+- [ ] Beranda meminta **Isi rekening**. Di **Profil & lamaran**, isi nama bank, nomor rekening, dan nama pemilik → "Rekening tersimpan".
+- [ ] Nomor rekening berisi huruf → ditolak.
+- [ ] **Tandai sudah dibaca** pada notifikasi → label "Baru" hilang.
+- [ ] Masuk sebagai `shopper@silentcx.demo` → Profil & lamaran menampilkan lamaran contoh yang disetujui.
+
+Bagian ini juga sudah diuji otomatis dengan 28 tes database: kota harus dari daftar, kelengkapan dan usia, kuis dan pakta, keputusan admin, log aktivitas, notifikasi, aturan 30 hari, rekening, dan siapa melihat apa. Uji ujung-ke-ujung di browser ada di `tests/e2e/fase2-flow.mjs`; uji ini menulis data sementara lalu menghapusnya.

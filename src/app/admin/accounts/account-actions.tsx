@@ -5,9 +5,9 @@ import { setAccountStatus } from "./actions";
 import { dict, type Lang } from "@/lib/i18n";
 import type { AccountStatus, Role } from "@/lib/roles";
 
-type Target = "active" | "rejected" | "suspended";
+type Target = "active" | "suspended";
 
-// Tombol aksi per akun. Menolak dan menangguhkan meminta alasan, yang nanti dilihat pemilik akun.
+// Tombol aksi per akun: menangguhkan (wajib alasan, dilihat pemilik akun) dan mengaktifkan kembali.
 export function AccountActions({ userId, role, status, lang }: { userId: string; role: Role; status: AccountStatus; lang: Lang }) {
   const t = dict(lang).admin;
   const [asking, setAsking] = useState<Target | null>(null);
@@ -15,19 +15,15 @@ export function AccountActions({ userId, role, status, lang }: { userId: string;
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
+  // Pelamar shopper (menunggu seleksi atau ditolak) diputuskan lewat lamarannya di tab Lamaran masuk.
   const options: { to: Target; label: string; primary?: boolean }[] =
-    role === "shopper" && status === "pending"
-      ? [
-          { to: "active", label: t.approve, primary: true },
-          { to: "rejected", label: t.reject },
-        ]
-      : role === "shopper" && status === "rejected"
-        ? [{ to: "active", label: t.approve }]
-        : status === "active"
-          ? [{ to: "suspended", label: t.suspend }]
-          : status === "suspended"
-            ? [{ to: "active", label: t.reactivate }]
-            : [];
+    role === "shopper" && (status === "pending" || status === "rejected")
+      ? []
+      : status === "active"
+        ? [{ to: "suspended", label: t.suspend }]
+        : status === "suspended"
+          ? [{ to: "active", label: t.reactivate }]
+          : [];
 
   function run(to: Target, reason?: string) {
     setError(null);

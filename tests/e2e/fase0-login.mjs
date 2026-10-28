@@ -55,7 +55,8 @@ try {
   {
     const { ctx, page } = await loginAs(browser, "pelamar@silentcx.demo");
     check("pelamar masuk ke /shopper", path(page) === "/shopper", page.url());
-    check("pelamar melihat layar seleksi", (await page.textContent("h1"))?.includes("ditinjau") ?? false, await page.textContent("h1"));
+    // Sejak Fase 2: "Lengkapi lamaran Anda" sebelum mengirim, "sedang ditinjau" setelahnya.
+    check("pelamar melihat layar seleksi", /ditinjau|Lengkapi lamaran/.test((await page.textContent("h1")) ?? ""), await page.textContent("h1"));
     await shot(page, "shopper-pending");
     await page.goto(BASE + "/shopper/assignments", { waitUntil: "networkidle" });
     check("menu Tugas terkunci untuk pelamar", (await page.textContent("h1"))?.includes("disetujui") ?? false);
