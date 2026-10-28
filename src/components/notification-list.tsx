@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { markNotificationsRead } from "@/app/notification-actions";
 import { StatusText, useAction } from "./use-action";
-import { date, dateTime } from "@/lib/format";
+import { date, dateTime, rupiah } from "@/lib/format";
 import { dict, type Lang } from "@/lib/i18n";
 import type { Notification } from "@/lib/shopper";
 
@@ -27,12 +27,17 @@ export function NotificationList({ items, lang }: { items: Notification[]; lang:
     if (n.kind === "task.revision") return t.taskRevision(code, n.detail.note ?? "—", n.detail.due ? dateTime(n.detail.due, lang) : "—");
     if (n.kind === "task.rejected") return t.taskRejected(code, n.detail.note ?? "—");
     if (n.kind === "report.published") return t.reportPublished(code);
+    if (n.kind === "payout.paid") return t.payoutPaid(code, rupiah(n.detail.total ?? 0));
+    if (n.kind === "payout.need_bank") return t.payoutNeedBank(code);
+    if (n.kind === "payout.proof_replaced") return t.payoutProofReplaced(code, n.detail.note ?? "—");
     return n.kind;
   };
   // Notifikasi yang bisa dibuka langsung ke halaman terkait.
   const link = (n: Notification): { href: string; label: string } | null => {
     if (["task.offered", "task.revision", "task.approved", "task.rejected"].includes(n.kind) && n.detail.task) return { href: `/shopper/assignments/${n.detail.task}`, label: t.openTask };
     if (n.kind === "report.published" && n.detail.project) return { href: `/app/reports/${n.detail.project}`, label: t.openReport };
+    if (n.kind === "payout.paid" || n.kind === "payout.proof_replaced") return { href: "/shopper/payments", label: t.openPayments };
+    if (n.kind === "payout.need_bank") return { href: "/shopper/profile", label: t.openProfile };
     return null;
   };
 

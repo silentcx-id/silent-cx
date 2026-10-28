@@ -240,3 +240,34 @@ Persiapan:
 - [ ] Setiap invoice punya tombol **Unduh PDF**.
 
 Bagian ini juga sudah diuji otomatis dengan 17 tes database: jumlah kompetitor, QC dan revisi, kedaluwarsa revisi, penolakan dan tugas pengganti, angka laporan, foto yang boleh masuk laporan, syarat terbit, laporan beku, tagihan tambahan, dan hak baca. Uji ujung-ke-ujung di browser ada di `tests/e2e/fase4-flow.mjs`; uji ini menulis data sementara lalu menghapusnya.
+
+## Fase 5: Payout shopper
+
+Persiapan:
+
+1. Jalankan `npm run db:migrate`. Perintah ini memasang migrasi payout dan membuat bucket `payout-proofs` untuk bukti transfer.
+2. Siapkan beberapa kunjungan yang sudah diputuskan QC (alur Fase 4): satu disetujui, satu disetujui dengan kelebihan pembelian, dan satu ditolak dengan "Hanya reimburse". Agar bisa mencoba "Menunggu rekening", sertakan satu shopper yang belum mengisi rekening.
+
+### A. Kontak admin (admin)
+
+- [ ] Di **Keuangan**, bagian **Kontak untuk shopper**: isi nama kontak person dan nomor WhatsApp, lalu simpan.
+
+### B. Antrian payout (admin)
+
+- [ ] **Keuangan** menampilkan tiga ringkasan: jumlah yang lewat 48 jam, jumlah tugas belum dibayar, dan total yang siap ditransfer.
+- [ ] Antrian dikelompokkan per shopper dan diurutkan dari yang paling mendesak. Setiap tugas menampilkan fee, reimburse, batas waktu, dan sisa jamnya.
+- [ ] Nominal tugas yang disetujui adalah fee ditambah pembelian sampai batas reimburse. Kalau kelebihan pembelian disetujui, yang dihitung seluruh pembelian. Kunjungan yang ditolak dengan "Hanya reimburse" hanya membawa reimburse, dan yang ditolak "Tidak dibayar" tidak muncul.
+- [ ] Shopper tanpa rekening bertanda **Menunggu rekening**, dan tombol **Ingatkan via WhatsApp** tersedia. Setelah shopper mengisi rekening, batasnya menjadi 48 jam sejak rekening diisi.
+- [ ] Tugas yang lewat 48 jam ditandai merah di Keuangan dan di kartu **Payout belum dibayar** di Antrian kerja.
+- [ ] Pilih satu atau beberapa tugas dari satu shopper → total transfer menyesuaikan. Unggah bukti transfer, lalu **Tandai sudah ditransfer** → tugasnya hilang dari antrian dan muncul di **Sudah dibayar** dengan kode PAY-xxxx.
+- [ ] Di **Sudah dibayar**, **Lihat bukti** membuka bukti transfer. **Ganti bukti** meminta file baru dan alasan, lalu memberi tanda "Bukti diganti".
+
+### C. Pembayaran (shopper)
+
+- [ ] Shopper mendapat notifikasi **Pembayaran PAY-xxxx sebesar … sudah ditransfer**, dan tautannya membuka **Pembayaran**.
+- [ ] **Pembayaran** menampilkan yang menunggu ditransfer beserta batas waktunya, serta yang sudah ditransfer: total, rekening tujuan, rincian per tugas, dan tombol **Lihat bukti transfer**.
+- [ ] Tombol **Hubungi (nama kontak)** membuka WhatsApp ke kontak admin dengan pesan berisi kode dan nominal pembayaran, tanpa nomor rekening.
+- [ ] Shopper tanpa rekening melihat peringatan **Rekening belum diisi** dan mendapat notifikasi untuk mengisinya.
+- [ ] Shopper lain tidak bisa melihat pembayaran dan bukti milik shopper ini.
+
+Bagian ini juga sudah diuji otomatis dengan 14 tes database: nominal per tugas, menunggu rekening dan notifikasinya, batas 48 jam dan tanda lewat batas, transfer kolektif, pembayaran ganda, salinan rekening, log tanpa nomor rekening, penggantian bukti, dan hak baca. Uji ujung-ke-ujung di browser ada di `tests/e2e/fase5-flow.mjs`; uji ini menulis data sementara lalu menghapusnya.

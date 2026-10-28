@@ -14,7 +14,7 @@ export default async function AdminHome() {
   const supabase = await createClient();
   await Promise.all([supabase.rpc("expire_overdue"), supabase.rpc("expire_offers")]);
   const count = (q: PromiseLike<{ count: number | null }>) => q.then((r) => r.count ?? 0);
-  const [pendingShoppers, reviews, payments, unassigned, submitted] = await Promise.all([
+  const [pendingShoppers, reviews, payments, unassigned, submitted, payoutQueue] = await Promise.all([
     // Hanya lamaran yang sudah dikirim (lulus kuis dan pakta); draft belum perlu keputusan.
     count(supabase.from("shopper_applications").select("id", { count: "exact", head: true }).eq("status", "submitted")),
     count(supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "awaiting_review")),
@@ -22,7 +22,10 @@ export default async function AdminHome() {
     count(supabase.from("invoices").select("id", { count: "exact", head: true }).eq("status", "verifying")),
     count(supabase.from("audit_tasks").select("id", { count: "exact", head: true }).eq("status", "open")),
     count(supabase.from("audit_tasks").select("id", { count: "exact", head: true }).eq("status", "submitted")),
+    supabase.rpc("admin_payout_queue").then((r) => (r.data ?? []) as { payout_status: string }[]),
   ]);
+  // Payout yang lewat 48 jam ditandai merah di kartunya.
+  const payoutsLate = payoutQueue.filter((p) => p.payout_status === "overdue").length;
 
   // Antrian lain diisi oleh fase yang membangunnya.
   const queues = [
@@ -31,7 +34,7 @@ export default async function AdminHome() {
     { label: t.admin.queues.payments, count: payments, href: "/admin/projects?tab=verify", phase: 1 },
     { label: t.admin.queues.unassigned, count: unassigned, href: "/admin/projects", phase: 3 },
     { label: t.admin.queues.qc, count: submitted, href: "/admin/qc", phase: 4 },
-    { label: t.admin.queues.payouts, count: null, href: "/admin/payouts", phase: 5 },
+    { label: t.admin.queues.payouts, count: payoutQueue.length, href: "/admin/payouts", phase: 5, late: payoutsLate },
   ];
 
   return (
@@ -46,13 +49,16 @@ export default async function AdminHome() {
           <li key={q.label}>
             <Link
               href={q.href}
-              className={`card grid h-full content-between gap-4 p-5 transition hover:border-muted ${q.count ? "border-accent" : ""}`}
+              className={`card grid h-full content-between gap-4 p-5 transition hover:border-muted ${q.late ? "border-bad/60" : q.count ? "border-accent" : ""}`}
             >
               <span className="text-sm text-muted">{q.label}</span>
               {q.count === null ? (
                 <span className="chip w-fit">{t.common.comingIn(q.phase)}</span>
               ) : (
-                <span className={`font-display text-5xl font-extrabold tabular-nums ${q.count ? "text-mark" : ""}`}>{q.count}</span>
+                <span className="grid gap-1">
+                  <span className={`font-display text-5xl font-extrabold tabular-nums ${q.count ? "text-mark" : ""}`}>{q.count}</span>
+                  {q.late ? <span className="text-sm font-semibold text-bad">{t.admin.queues.payoutsLate(q.late)}</span> : null}
+                </span>
               )}
             </Link>
           </li>

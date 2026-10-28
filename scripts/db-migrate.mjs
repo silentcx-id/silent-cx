@@ -48,6 +48,8 @@ if (!process.exitCode && url && serviceKey) {
     { name: "site-assets", options: { public: true, fileSizeLimit: "2MB", allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"] } },
     // Foto kunjungan (check-in, struk, bukti): privat, hanya diunggah shopper pemilik tugas lewat tautan sekali pakai.
     { name: "audit-evidence", options: { public: false, fileSizeLimit: "5MB", allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"] } },
+    // Bukti transfer payout: privat, diunggah admin; shopper hanya membuka buktinya sendiri lewat tautan sementara.
+    { name: "payout-proofs", options: { public: false, fileSizeLimit: "5MB", allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "application/pdf"] } },
   ];
   const { data: existing, error } = await admin.storage.listBuckets();
   if (error) console.error(`Tidak bisa membaca bucket: ${error.message}`);

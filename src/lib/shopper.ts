@@ -8,7 +8,7 @@ export type BankAccount = { bank_name: string; account_number: string; account_h
 export type Notification = {
   id: number;
   kind: string;
-  detail: { note?: string; reapply_at?: string; task?: string; code?: string; city?: string; respond_by?: string; urgent?: boolean; due?: string; fee?: string; project?: string };
+  detail: { note?: string; reapply_at?: string; task?: string; code?: string; city?: string; respond_by?: string; urgent?: boolean; due?: string; fee?: string; project?: string; payout?: string; total?: number };
   read_at: string | null;
   created_at: string;
 };
