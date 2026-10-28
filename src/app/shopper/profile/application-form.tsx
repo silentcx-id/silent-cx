@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { saveApplication, submitApplication } from "../actions";
+import { CityPicker } from "@/components/city-picker";
 import { StatusText, useAction } from "@/components/use-action";
 import { dict, type Lang } from "@/lib/i18n";
-import { EXPERIENCE, GENDERS, INDUSTRIES, PACT, QUIZ, VEHICLES, type Industry } from "@/lib/shopper-application";
+import { businessTypeLabel, type BusinessType } from "@/lib/catalog-types";
+import { EXPERIENCE, GENDERS, PACT, QUIZ, VEHICLES } from "@/lib/shopper-application";
 
 export type ApplicationInput = {
   fullName: string;
@@ -17,11 +19,11 @@ export type ApplicationInput = {
   vehicle: string;
   experience: string;
   experience_note: string;
-  industries: Industry[];
+  industries: string[];
 };
 
 // Formulir lamaran dua langkah: data diri (bisa disimpan sebagai draft), lalu kuis etika dan pakta kerahasiaan.
-export function ApplicationForm({ initial, cities, lang }: { initial: ApplicationInput; cities: string[]; lang: Lang }) {
+export function ApplicationForm({ initial, cities, types, lang }: { initial: ApplicationInput; cities: string[]; types: BusinessType[]; lang: Lang }) {
   const t = dict(lang).application;
   const { pending, status, setStatus, act } = useAction();
   const [step, setStep] = useState<"form" | "quiz">("form");
@@ -33,6 +35,8 @@ export function ApplicationForm({ initial, cities, lang }: { initial: Applicatio
   const toggle = <T extends string>(list: T[], item: T) => (list.includes(item) ? list.filter((x) => x !== item) : [...list, item]);
   // Kota yang sudah dipilih tapi kini tidak dilayani tetap tampil supaya bisa dilepas.
   const cityOptions = [...cities, ...v.reachable_cities.filter((c) => !cities.includes(c))];
+  // Jenis usaha yang aktif, ditambah yang sudah dipilih walaupun kini dinonaktifkan supaya bisa dilepas.
+  const typeOptions = types.filter((o) => o.active || v.industries.includes(o.key));
 
   const select = (id: keyof ApplicationInput, label: string, options: readonly { value: string; label: Record<Lang, string> }[]) => (
     <div className="field">
@@ -160,10 +164,7 @@ export function ApplicationForm({ initial, cities, lang }: { initial: Applicatio
       <section className="card grid gap-4 p-5">
         <h2 className="text-xl font-extrabold">{t.mobility}</h2>
         <div className="grid items-start gap-4 sm:grid-cols-2">
-          <div className="field">
-            <label htmlFor="domicile">{t.domicile}</label>
-            <input id="domicile" value={v.domicile} onChange={set("domicile")} maxLength={80} placeholder={t.domicileHint} required />
-          </div>
+          <CityPicker id="domicile" label={t.domicile} value={v.domicile} onChange={(domicile) => setV({ ...v, domicile })} cities={cities} lang={lang} required />
           {select("vehicle", t.vehicle, VEHICLES)}
         </div>
         <fieldset className="grid gap-2">
@@ -200,10 +201,10 @@ export function ApplicationForm({ initial, cities, lang }: { initial: Applicatio
         <fieldset className="grid gap-2">
           <legend className="mb-1 text-sm font-semibold">{t.industries}</legend>
           <div className="flex flex-wrap gap-2">
-            {INDUSTRIES.map((o) => (
-              <label key={o.value} className={`chip cursor-pointer px-3 py-1.5 font-sans text-sm ${v.industries.includes(o.value) ? "border-accent bg-accent/10" : ""}`}>
-                <input type="checkbox" className="size-4 accent-[var(--accent)]" checked={v.industries.includes(o.value)} onChange={() => setV({ ...v, industries: toggle(v.industries, o.value) })} />
-                {o.label[lang]}
+            {typeOptions.map((o) => (
+              <label key={o.key} className={`chip cursor-pointer px-3 py-1.5 font-sans text-sm ${v.industries.includes(o.key) ? "border-accent bg-accent/10" : ""}`}>
+                <input type="checkbox" className="size-4 accent-[var(--accent)]" checked={v.industries.includes(o.key)} onChange={() => setV({ ...v, industries: toggle(v.industries, o.key) })} />
+                {businessTypeLabel(types, o.key, lang)}
               </label>
             ))}
           </div>

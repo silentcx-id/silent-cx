@@ -161,6 +161,53 @@ export async function deleteCity(raw: unknown) {
   );
 }
 
+// Jenis usaha: kode dibuat otomatis dari nama saat ditambahkan, lalu tidak berubah lagi.
+const typeLabels = z.object({
+  label_id: z.string().trim().min(2, "Nama jenis usaha minimal 2 huruf.").max(60),
+  label_en: z.string().trim().max(60),
+});
+
+function typeKey(label: string) {
+  const base = label
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 32);
+  return base.length >= 2 ? base : `jenis_${base}`;
+}
+
+export async function addBusinessType(raw: unknown) {
+  await requireRole("admin", "/admin/catalog");
+  return run(
+    typeLabels,
+    raw,
+    async ({ label_id, label_en }) => {
+      const supabase = await createClient();
+      const { data: taken } = await supabase.from("business_types").select("key");
+      const keys = new Set((taken ?? []).map((r) => r.key as string));
+      let next = typeKey(label_id);
+      for (let i = 2; keys.has(next); i++) next = `${typeKey(label_id)}_${i}`;
+      // Jenis baru ditaruh sebelum "Lainnya".
+      check(await supabase.from("business_types").insert({ key: next, label_id, label_en, sort_order: 500 }));
+    },
+    PATHS,
+  );
+}
+
+export async function saveBusinessType(raw: unknown) {
+  await requireRole("admin", "/admin/catalog");
+  return run(
+    typeLabels.extend({ key, active: z.boolean() }),
+    raw,
+    async ({ key: k, ...fields }) => {
+      const supabase = await createClient();
+      check(await supabase.from("business_types").update(fields).eq("key", k));
+    },
+    PATHS,
+  );
+}
+
 const paymentSchema = z.object({
   bank_name: z.string().trim().max(60),
   account_number: z.string().trim().regex(/^[0-9 -]{0,30}$/, "Nomor rekening hanya angka."),

@@ -237,7 +237,7 @@ async function activate(c, project, outletNames, competitor) {
   await must(() => admin.rpc("admin_verify_payment", { p_invoice: project.invoice.id, p_approve: true, p_note: null }), "verifikasi bayar");
   await must(
     () =>
-      c.api.from("companies").insert({ client_id: c.id, name: c.company, industry: "F&B", address: `Jl. Merdeka No. ${accounts.length}`, city, instagram: "", pic_name: c.name, pic_position: "Pemilik", pic_phone: "081211112222" }),
+      c.api.from("companies").insert({ client_id: c.id, name: c.company, industry: "fnb", address: `Jl. Merdeka No. ${accounts.length}`, city, instagram: "", pic_name: c.name, pic_position: "Pemilik", pic_phone: "081211112222" }),
     "data perusahaan",
   );
   const outlets = await must(() => c.api.from("project_outlets").select("id, position").eq("project_id", project.projectId).eq("is_competitor", false).order("position"), "outlet");

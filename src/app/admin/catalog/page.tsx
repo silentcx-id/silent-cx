@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { AddonForm, CityManager, NewItemForm, PackageForm, PaymentForm } from "./catalog-forms";
+import { AddonForm, BusinessTypeManager, CityManager, NewItemForm, PackageForm, PaymentForm } from "./catalog-forms";
 import { Tabs } from "@/components/tabs";
-import { getCatalog, getPaymentSettings, promoActive } from "@/lib/catalog";
+import { getBusinessTypes, getCatalog, getPaymentSettings, promoActive } from "@/lib/catalog";
 import { rupiah } from "@/lib/format";
 import { requireRole } from "@/lib/session";
 
@@ -11,6 +11,7 @@ const TABS = [
   { id: "paket", label: "Paket" },
   { id: "addon", label: "Add-on" },
   { id: "kota", label: "Kota dilayani" },
+  { id: "jenis", label: "Jenis usaha" },
   { id: "pembayaran", label: "Pembayaran" },
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
@@ -18,14 +19,14 @@ type Tab = (typeof TABS)[number]["id"];
 export default async function CatalogPage({ searchParams }: PageProps<"/admin/catalog">) {
   const [, params] = await Promise.all([requireRole("admin", "/admin/catalog"), searchParams]);
   const tab: Tab = TABS.some((t) => t.id === params.tab) ? (params.tab as Tab) : "paket";
-  const [{ packages, addons, cities }, payment] = await Promise.all([getCatalog(), getPaymentSettings()]);
+  const [{ packages, addons, cities }, payment, types] = await Promise.all([getCatalog(), getPaymentSettings(), getBusinessTypes()]);
   const paymentReady = Boolean((payment.bank_name && payment.account_number) || payment.qris_url);
 
   return (
     <>
       <section className="grid max-w-3xl gap-2">
         <h1 className="text-[clamp(28px,4vw,40px)] font-extrabold leading-tight">Katalog</h1>
-        <p className="text-muted">Paket, harga, add-on, promo, kota yang dilayani, dan cara pembayaran. Perubahan langsung berlaku untuk pesanan baru; pesanan yang sudah dibuat tidak berubah.</p>
+        <p className="text-muted">Paket, harga, add-on, promo, kota yang dilayani, jenis usaha, dan cara pembayaran. Perubahan langsung berlaku untuk pesanan baru; pesanan yang sudah dibuat tidak berubah.</p>
       </section>
 
       {(!paymentReady || cities.length === 0) && (
@@ -95,9 +96,18 @@ export default async function CatalogPage({ searchParams }: PageProps<"/admin/ca
       {tab === "kota" && (
         <section className="grid gap-3">
           <p className="max-w-[70ch] text-sm text-muted">
-            Outlet di kota yang tidak ada di daftar ini tetap bisa dipesan, tapi pesanannya otomatis masuk antrian review dan client ditawari add-on Tugas luar kota.
+            Kota di daftar ini muncul sebagai pilihan di semua form. Client yang memilih Kota lain tetap bisa memesan; pesanannya otomatis masuk antrian review, client diberi tahu bahwa shopper akan dicari di kota itu, dan ditawari add-on Tugas luar kota.
           </p>
           <CityManager cities={cities} />
+        </section>
+      )}
+
+      {tab === "jenis" && (
+        <section className="grid gap-3">
+          <p className="max-w-[70ch] text-sm text-muted">
+            Pilihan jenis usaha di data perusahaan client, lamaran shopper, dan kuesioner. Jenis yang dinonaktifkan tidak muncul di pilihan baru, tetapi data lama yang memakainya tetap tampil.
+          </p>
+          <BusinessTypeManager types={types} />
         </section>
       )}
 

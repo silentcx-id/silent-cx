@@ -2,8 +2,9 @@
 
 import { z } from "zod";
 import { check, checkData, run } from "@/lib/action";
+import { BUSINESS_KEY } from "@/lib/catalog-types";
 import { requireRole } from "@/lib/session";
-import { EXPERIENCE_VALUES, GENDER_VALUES, INDUSTRY_VALUES, QUIZ, VEHICLE_VALUES } from "@/lib/shopper-application";
+import { EXPERIENCE_VALUES, GENDER_VALUES, QUIZ, VEHICLE_VALUES } from "@/lib/shopper-application";
 import { createClient } from "@/lib/supabase/server";
 
 const PATHS = ["/shopper", "/admin"];
@@ -20,7 +21,7 @@ const applicationSchema = z.object({
   vehicle: z.enum(VEHICLE_VALUES).or(z.literal("")),
   experience: z.enum(EXPERIENCE_VALUES).or(z.literal("")),
   experience_note: z.string().trim().max(500),
-  industries: z.array(z.enum(INDUSTRY_VALUES)).max(INDUSTRY_VALUES.length),
+  industries: z.array(z.string().regex(BUSINESS_KEY)).max(40),
 });
 
 export async function saveApplication(raw: unknown) {

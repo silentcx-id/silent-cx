@@ -1,5 +1,6 @@
 import "server-only";
-import type { Addon, City, Package, PackagePrice, PaymentSettings } from "./catalog-types";
+import { cache } from "react";
+import type { Addon, BusinessType, City, Package, PackagePrice, PaymentSettings } from "./catalog-types";
 import { createClient } from "./supabase/server";
 
 export * from "./catalog-types";
@@ -21,6 +22,14 @@ export async function getCatalog() {
     cities: (cities ?? []) as City[],
   };
 }
+
+// Jenis usaha, urut seperti di Katalog, termasuk yang nonaktif (untuk menampilkan nama data lama).
+// Form hanya menawarkan yang aktif.
+export const getBusinessTypes = cache(async (): Promise<BusinessType[]> => {
+  const supabase = await createClient();
+  const { data } = await supabase.from("business_types").select("key, label_id, label_en, sort_order, active").order("sort_order").order("label_id");
+  return (data ?? []) as BusinessType[];
+});
 
 export async function getPaymentSettings(): Promise<PaymentSettings> {
   const supabase = await createClient();

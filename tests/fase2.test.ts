@@ -81,7 +81,8 @@ describe("mengisi lamaran", () => {
 
   it("pilihan di luar daftar ditolak", async () => {
     await expect(save(applicant, { ...FORM, gender: "x" })).rejects.toThrow(/check constraint/);
-    await expect(save(applicant, { ...FORM, industries: ["judi"] })).rejects.toThrow(/check constraint/);
+    // Industri dicek terhadap daftar jenis usaha yang diatur admin (Putaran 3).
+    await expect(save(applicant, { ...FORM, industries: ["judi"] })).rejects.toThrow(/tidak ada di daftar/);
   });
 
   it("client dan admin tidak bisa mengisi lamaran", async () => {

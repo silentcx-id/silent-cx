@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CompetitorForm } from "./competitor-form";
 import { DetailsForm } from "./details-form";
+import { getBusinessTypes } from "@/lib/catalog";
 import { dateTime } from "@/lib/format";
 import { dict } from "@/lib/i18n";
 import { clientState, getClientProjects } from "@/lib/orders";
 import { getLang } from "@/lib/prefs";
 import { requireRole } from "@/lib/session";
+import { getActiveCities } from "@/lib/shopper";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Outlet & data" };
@@ -16,7 +18,7 @@ export default async function OutletsPage() {
   const t = dict(lang).orders;
   const { live, open } = clientState(await getClientProjects(viewer.id));
   const supabase = await createClient();
-  const { data: company } = await supabase.from("companies").select("*").eq("client_id", viewer.id).maybeSingle();
+  const [{ data: company }, types, cities] = await Promise.all([supabase.from("companies").select("*").eq("client_id", viewer.id).maybeSingle(), getBusinessTypes(), getActiveCities()]);
   // Jumlah kompetitor dari add-on benchmark kompetitor yang dibeli.
   const allowance = (live?.addons_snapshot ?? []).filter((a) => a.item_key === "competitor_benchmark").reduce((n, a) => n + a.quantity, 0);
 
@@ -40,6 +42,7 @@ export default async function OutletsPage() {
               allowance={allowance}
               competitors={live.project_outlets.filter((o) => o.is_competitor)}
               outlets={live.project_outlets.filter((o) => !o.is_competitor)}
+              cities={cities}
               lang={lang}
             />
           )}
@@ -47,6 +50,8 @@ export default async function OutletsPage() {
             projectId={live.id}
             lang={lang}
             completed={Boolean(live.details_completed_at)}
+            types={types}
+            cities={cities}
             objectives={live.objectives}
             outlets={live.project_outlets.filter((o) => !o.is_competitor)}
             company={{

@@ -19,24 +19,27 @@ import {
 import { StatusText, useAction } from "@/components/use-action";
 import { QUESTION_KINDS, type QuestionKind } from "@/lib/field";
 import { rupiah } from "@/lib/format";
-import { INDUSTRIES } from "@/lib/shopper-application";
+import type { BusinessType } from "@/lib/catalog-types";
 
 const input = "min-h-10 w-full rounded-lg border border-line bg-raise px-3 py-2 text-sm";
 const label = "grid gap-1 text-sm font-semibold";
 
-function IndustrySelect({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
+// Jenis usaha dari Katalog. Jenis yang sudah dinonaktifkan tetap tampil kalau sedang dipakai kuesioner ini.
+function IndustrySelect({ id, value, onChange, types }: { id: string; value: string; onChange: (v: string) => void; types: BusinessType[] }) {
   return (
     <select id={id} className={input} value={value} onChange={(e) => onChange(e.target.value)}>
-      {INDUSTRIES.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label.id}
-        </option>
-      ))}
+      {types
+        .filter((o) => o.active || o.key === value)
+        .map((o) => (
+          <option key={o.key} value={o.key}>
+            {o.label_id}
+          </option>
+        ))}
     </select>
   );
 }
 
-export function NewQuestionnaireForm() {
+export function NewQuestionnaireForm({ types }: { types: BusinessType[] }) {
   const router = useRouter();
   const { pending, status, act } = useAction();
   const [name, setName] = useState("");
@@ -55,7 +58,7 @@ export function NewQuestionnaireForm() {
       </label>
       <label className={label} htmlFor="new-type">
         Jenis bisnis
-        <IndustrySelect id="new-type" value={type} onChange={setType} />
+        <IndustrySelect id="new-type" value={type} onChange={setType} types={types} />
       </label>
       <div className="flex flex-wrap items-center gap-3">
         <button className="btn btn-primary" disabled={pending}>
@@ -108,7 +111,7 @@ export function FieldSettingsForm({ initial }: { initial: Settings }) {
 
 type Header = { id: string; name: string; business_type: string; description: string; photo_limit: number; active: boolean };
 
-export function QuestionnaireHeader({ questionnaire, usedBy }: { questionnaire: Header; usedBy: number }) {
+export function QuestionnaireHeader({ questionnaire, usedBy, types }: { questionnaire: Header; usedBy: number; types: BusinessType[] }) {
   const router = useRouter();
   const { pending, status, act } = useAction();
   const [f, setF] = useState({ ...questionnaire, photo_limit: String(questionnaire.photo_limit) });
@@ -121,7 +124,7 @@ export function QuestionnaireHeader({ questionnaire, usedBy }: { questionnaire: 
         </label>
         <label className={label} htmlFor="q-type">
           Jenis bisnis
-          <IndustrySelect id="q-type" value={f.business_type} onChange={(v) => setF({ ...f, business_type: v })} />
+          <IndustrySelect id="q-type" value={f.business_type} onChange={(v) => setF({ ...f, business_type: v })} types={types} />
         </label>
         <label className={label} htmlFor="q-photos">
           Batas foto

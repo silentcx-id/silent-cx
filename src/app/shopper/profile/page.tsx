@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ApplicationForm, type ApplicationInput } from "./application-form";
 import { BankForm } from "./bank-form";
 import { ApplicationSummary } from "@/components/application-summary";
+import { getBusinessTypes } from "@/lib/catalog";
 import { date, dateTime } from "@/lib/format";
 import { dict } from "@/lib/i18n";
 import { getLang } from "@/lib/prefs";
@@ -47,7 +48,11 @@ export default async function ShopperProfilePage() {
   });
 
   const editing = stage === "none" || stage === "draft" || stage === "reapply";
-  const [cities, bank] = await Promise.all([editing ? getActiveCities() : Promise.resolve([]), stage === "approved" ? getBankAccount(viewer.id) : Promise.resolve(null)]);
+  const [cities, bank, types] = await Promise.all([
+    editing ? getActiveCities() : Promise.resolve([]),
+    stage === "approved" ? getBankAccount(viewer.id) : Promise.resolve(null),
+    getBusinessTypes(),
+  ]);
 
   return (
     <>
@@ -67,7 +72,7 @@ export default async function ShopperProfilePage() {
             </div>
           )}
           <p className="text-sm text-muted">{t.privacy}</p>
-          <ApplicationForm initial={initial(app)} cities={cities} lang={lang} />
+          <ApplicationForm initial={initial(app)} cities={cities} types={types} lang={lang} />
         </>
       )}
 

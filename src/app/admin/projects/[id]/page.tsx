@@ -5,6 +5,7 @@ import { CancelForm, ReviewForm, VerifyForm } from "../project-actions";
 import { OutletSchedule, QuestionnairePicker, type AdminTask, type Candidate, type OutletTasks } from "./scheduling";
 import { InvoiceView } from "@/components/invoice-view";
 import { pickTab, Tabs } from "@/components/tabs";
+import { businessTypeLabel, getBusinessTypes } from "@/lib/catalog";
 import { wibDate } from "@/lib/field";
 import { dateTime, rupiah } from "@/lib/format";
 import { dict } from "@/lib/i18n";
@@ -96,10 +97,11 @@ export default async function ProjectDetail({ params, searchParams }: PageProps<
   const project = await getProject(id);
   if (!project) notFound();
   const supabase = await createClient();
-  const [{ data: client }, { data: company }, { data: cities }] = await Promise.all([
+  const [{ data: client }, { data: company }, { data: cities }, types] = await Promise.all([
     supabase.from("profiles").select("full_name, email, phone").eq("id", project.client_id).single(),
     supabase.from("companies").select("*").eq("client_id", project.client_id).maybeSingle(),
     supabase.from("service_cities").select("name").eq("active", true),
+    getBusinessTypes(),
   ]);
   const served = new Set((cities ?? []).map((c) => c.name.trim().toLowerCase()));
   const invoice = project.invoices[0];
@@ -197,7 +199,7 @@ export default async function ProjectDetail({ params, searchParams }: PageProps<
                   <div>
                     <dt className="text-muted">Perusahaan</dt>
                     <dd>
-                      {company.name || "—"} {company.industry && `· ${company.industry}`}
+                      {company.name || "—"} {company.industry && `· ${businessTypeLabel(types, company.industry, "id")}`}
                     </dd>
                   </div>
                   <div>

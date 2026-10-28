@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { addCity, createAddon, createPackage, deleteCity, prepareQrisUpload, saveAddon, savePackage, savePaymentSettings, setCityActive } from "./actions";
+import { addBusinessType, addCity, createAddon, createPackage, deleteCity, prepareQrisUpload, saveAddon, savePackage, saveBusinessType, savePaymentSettings, setCityActive } from "./actions";
 import { StatusText, useAction } from "@/components/use-action";
-import type { Addon, City, Package, PaymentSettings } from "@/lib/catalog-types";
+import type { Addon, BusinessType, City, Package, PaymentSettings } from "@/lib/catalog-types";
 import { rupiah, toWibInput } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 
@@ -351,6 +351,83 @@ export function CityManager({ cities }: { cities: City[] }) {
         </ul>
       )}
     </div>
+  );
+}
+
+// Daftar jenis usaha untuk dropdown di data perusahaan client, lamaran shopper, dan kuesioner.
+export function BusinessTypeManager({ types }: { types: BusinessType[] }) {
+  const { pending, status, act } = useAction();
+  const [draft, setDraft] = useState({ label_id: "", label_en: "" });
+  return (
+    <div className="grid gap-4">
+      <form
+        className="flex flex-wrap items-end gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          act(() => addBusinessType(draft), "Jenis usaha ditambahkan.", () => setDraft({ label_id: "", label_en: "" }));
+        }}
+      >
+        <label className={label} htmlFor="new-type">
+          Tambah jenis usaha
+          <input id="new-type" className={`${input} w-64`} value={draft.label_id} maxLength={60} onChange={(e) => setDraft({ ...draft, label_id: e.target.value })} placeholder="Contoh: Pendidikan" required />
+        </label>
+        <label className={label} htmlFor="new-type-en">
+          Nama Inggris (opsional)
+          <input id="new-type-en" className={`${input} w-64`} value={draft.label_en} maxLength={60} onChange={(e) => setDraft({ ...draft, label_en: e.target.value })} placeholder="Contoh: Education" />
+        </label>
+        <button className="btn btn-primary" disabled={pending}>
+          Tambah
+        </button>
+      </form>
+      <StatusText status={status} />
+      <ul className="grid gap-2 lg:grid-cols-2">
+        {types.map((t) => (
+          <li key={t.key}>
+            <BusinessTypeRow type={t} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function BusinessTypeRow({ type }: { type: BusinessType }) {
+  const { pending, status, act } = useAction();
+  const [v, setV] = useState({ label_id: type.label_id, label_en: type.label_en });
+  const changed = v.label_id !== type.label_id || v.label_en !== type.label_en;
+  return (
+    <form
+      className={`card grid gap-2 p-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end ${type.active ? "" : "opacity-60"}`}
+      onSubmit={(e) => {
+        e.preventDefault();
+        act(() => saveBusinessType({ key: type.key, active: type.active, ...v }), "Jenis usaha disimpan.");
+      }}
+    >
+      <label className={label} htmlFor={`bt-${type.key}`}>
+        Nama
+        <input id={`bt-${type.key}`} className={input} value={v.label_id} maxLength={60} onChange={(e) => setV({ ...v, label_id: e.target.value })} required />
+      </label>
+      <label className={label} htmlFor={`bt-en-${type.key}`}>
+        Inggris
+        <input id={`bt-en-${type.key}`} className={input} value={v.label_en} maxLength={60} onChange={(e) => setV({ ...v, label_en: e.target.value })} />
+      </label>
+      <span className="flex gap-2">
+        {changed && (
+          <button className="btn btn-sm btn-primary" disabled={pending}>
+            Simpan
+          </button>
+        )}
+        <button
+          type="button"
+          className="btn btn-sm"
+          disabled={pending}
+          onClick={() => act(() => saveBusinessType({ key: type.key, active: !type.active, ...v }), type.active ? "Jenis usaha dinonaktifkan." : "Jenis usaha diaktifkan.")}
+        >
+          {type.active ? "Nonaktifkan" : "Aktifkan"}
+        </button>
+      </span>
+      <StatusText status={status} />
+    </form>
   );
 }
 

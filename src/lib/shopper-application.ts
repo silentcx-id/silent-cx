@@ -25,28 +25,14 @@ export const EXPERIENCE = [
   { value: "over_3y", label: { id: "Lebih dari 3 tahun", en: "More than 3 years" } },
 ] as const satisfies readonly Option<string>[];
 
-export const INDUSTRIES = [
-  { value: "fnb", label: { id: "Kafe & restoran", en: "Cafés & restaurants" } },
-  { value: "retail", label: { id: "Retail & toko", en: "Retail & stores" } },
-  { value: "hospitality", label: { id: "Hotel & hospitality", en: "Hotels & hospitality" } },
-  { value: "banking", label: { id: "Bank & keuangan", en: "Banking & finance" } },
-  { value: "automotive", label: { id: "Otomotif", en: "Automotive" } },
-  { value: "health", label: { id: "Klinik & kesehatan", en: "Clinics & health" } },
-  { value: "beauty", label: { id: "Salon & kecantikan", en: "Salons & beauty" } },
-  { value: "telco", label: { id: "Telekomunikasi", en: "Telecom" } },
-  { value: "other", label: { id: "Lainnya", en: "Other" } },
-] as const satisfies readonly Option<string>[];
-
 export type Gender = (typeof GENDERS)[number]["value"];
 export type Vehicle = (typeof VEHICLES)[number]["value"];
 export type Experience = (typeof EXPERIENCE)[number]["value"];
-export type Industry = (typeof INDUSTRIES)[number]["value"];
 
 const values = <T extends string>(list: readonly Option<T>[]) => list.map((o) => o.value) as [T, ...T[]];
 export const GENDER_VALUES = values(GENDERS);
 export const VEHICLE_VALUES = values(VEHICLES);
 export const EXPERIENCE_VALUES = values(EXPERIENCE);
-export const INDUSTRY_VALUES = values(INDUSTRIES);
 
 export function optionLabel(list: readonly Option<string>[], value: string | null | undefined, lang: Lang): string {
   return list.find((o) => o.value === value)?.label[lang] ?? "—";
@@ -138,7 +124,8 @@ export type ShopperApplication = {
   vehicle: Vehicle | null;
   experience: Experience | null;
   experience_note: string;
-  industries: Industry[];
+  // Kode jenis usaha dari daftar yang diatur admin (business_types).
+  industries: string[];
   quiz_attempts: number;
   submitted_at: string | null;
   decided_at: string | null;

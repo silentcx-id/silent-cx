@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AddSectionForm, QuestionnaireHeader, SectionCard } from "../builder";
+import { getBusinessTypes } from "@/lib/catalog";
 import { requireRole } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -35,7 +36,7 @@ export default async function QuestionnaireDetail({ params }: PageProps<"/admin/
         ← Semua kuesioner
       </Link>
 
-      <QuestionnaireHeader questionnaire={{ id: q.id, name: q.name, business_type: q.business_type, description: q.description, photo_limit: q.photo_limit, active: q.active }} usedBy={used ?? 0} />
+      <QuestionnaireHeader questionnaire={{ id: q.id, name: q.name, business_type: q.business_type, description: q.description, photo_limit: q.photo_limit, active: q.active }} usedBy={used ?? 0} types={await getBusinessTypes()} />
 
       <section className="flex flex-wrap gap-3">
         <span className={`chip ${totalWeight === 100 ? "border-good/50 text-good" : "border-warn/50 text-warn"}`}>Total bobot {totalWeight}/100</span>

@@ -72,6 +72,15 @@ const { data: created, error: createError } = await retry(() =>
 if (createError) throw new Error(`Gagal membuat akun uji: ${createError.message}`);
 const shopperId = created.user.id;
 
+
+// Dropdown kota: pilih kota dari daftar, atau "Kota lain" lalu ketik namanya.
+async function pickCity(page, id, city) {
+  const listed = await page.locator(`${id} option`, { hasText: city }).count();
+  if (listed) return page.selectOption(id, city);
+  await page.selectOption(id, "__other");
+  await page.fill(`${id}-other`, city);
+}
+
 const browser = await chromium.launch();
 try {
   // 1. Pelamar baru mengisi lamaran.
@@ -81,12 +90,12 @@ try {
   check("formulir tidak meminta KTP atau selfie", !/KTP\b.*wajib|unggah selfie/i.test(await text(s.page)));
   await s.page.fill("#birth_date", "1995-04-12");
   await s.page.selectOption("#gender", "female");
-  await s.page.fill("#domicile", "Jakarta Selatan");
+  await pickCity(s.page, "#domicile", "Jakarta Selatan");
   await s.page.selectOption("#vehicle", "motorcycle");
   await s.page.getByLabel(city, { exact: true }).check();
   await s.page.fill("#occupation", "Karyawan swasta");
   await s.page.selectOption("#experience", "under_1y");
-  await s.page.getByLabel("Kafe & restoran").check();
+  await s.page.getByLabel("F&B", { exact: true }).check();
   await s.page.getByRole("button", { name: "Simpan draft" }).click();
   await s.page.getByText("Draft tersimpan.").first().waitFor({ timeout: 30000 });
   check("draft tersimpan", true);
@@ -132,7 +141,7 @@ try {
   // 4. Majukan 30 hari, lalu melamar ulang dengan isian yang tersalin.
   await admin.from("shopper_applications").update({ decided_at: new Date(Date.now() - 31 * 86400000).toISOString() }).eq("shopper_id", shopperId);
   await s.page.goto(`${BASE}/shopper/profile`, { waitUntil: "networkidle" });
-  check("setelah 30 hari bisa melamar lagi, isian tersalin", (await text(s.page)).includes("sudah bisa melamar lagi") && (await s.page.inputValue("#domicile")) === "Jakarta Selatan");
+  check("setelah 30 hari bisa melamar lagi, isian tersalin", (await text(s.page)).includes("sudah bisa melamar lagi") && (await s.page.inputValue("#domicile-other")) === "Jakarta Selatan");
   await s.page.getByRole("button", { name: /Lanjut ke kuis/ }).click();
   await s.page.getByText("Kuis etika dan kerahasiaan").first().waitFor({ timeout: 30000 });
   await answerQuiz(s.page, RIGHT);

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { saveCompetitors } from "../actions";
+import { CityPicker } from "@/components/city-picker";
 import { StatusText, useAction } from "@/components/use-action";
 import { dict, type Lang } from "@/lib/i18n";
 import type { ProjectOutlet } from "@/lib/orders";
@@ -9,7 +10,21 @@ import type { ProjectOutlet } from "@/lib/orders";
 type Item = { name: string; address: string; city: string; maps_url: string; paired_outlet_id: string };
 
 // Kompetitor sesuai jumlah add-on benchmark. Shopper tidak diberi tahu bahwa outlet ini kompetitor.
-export function CompetitorForm({ projectId, allowance, competitors, outlets, lang }: { projectId: string; allowance: number; competitors: ProjectOutlet[]; outlets: ProjectOutlet[]; lang: Lang }) {
+export function CompetitorForm({
+  projectId,
+  allowance,
+  competitors,
+  outlets,
+  cities,
+  lang,
+}: {
+  projectId: string;
+  allowance: number;
+  competitors: ProjectOutlet[];
+  outlets: ProjectOutlet[];
+  cities: string[];
+  lang: Lang;
+}) {
   const t = dict(lang).orders;
   const { pending, status, act } = useAction();
   const [items, setItems] = useState<Item[]>(
@@ -42,10 +57,16 @@ export function CompetitorForm({ projectId, allowance, competitors, outlets, lan
             <label htmlFor={`k-name-${i}`}>{t.competitorName}</label>
             <input id={`k-name-${i}`} value={c.name} onChange={set(i, "name")} maxLength={120} required />
           </div>
-          <div className="field">
-            <label htmlFor={`k-city-${i}`}>{t.competitorCity}</label>
-            <input id={`k-city-${i}`} value={c.city} onChange={set(i, "city")} maxLength={80} required />
-          </div>
+          <CityPicker
+            id={`k-city-${i}`}
+            label={t.competitorCity}
+            value={c.city}
+            onChange={(city) => setItems(items.map((x, j) => (j === i ? { ...x, city } : x)))}
+            cities={cities}
+            lang={lang}
+            note={dict(lang).common.cityOtherNote}
+            required
+          />
           <div className="field sm:col-span-2">
             <label htmlFor={`k-addr-${i}`}>{t.outletAddress}</label>
             <textarea id={`k-addr-${i}`} rows={2} value={c.address} onChange={set(i, "address")} maxLength={300} required />

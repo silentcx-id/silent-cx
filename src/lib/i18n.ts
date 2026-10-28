@@ -30,6 +30,13 @@ const id = {
     done: "Selesai",
     upcoming: "Berikutnya",
     menu: "Menu",
+    cityPick: "Pilih kota",
+    cityOther: "Kota lain",
+    cityOtherLabel: "Nama kota lain",
+    cityOtherPlaceholder: "Ketik nama kota",
+    // Tampil saat outlet ada di kota yang belum dilayani.
+    cityOtherNote: "Shopper akan kami cari di kota tersebut. Mohon kesediaannya menunggu konfirmasi dari tim SilentCX.",
+    businessPick: "Pilih jenis usaha",
   },
   landing: {
     title: "Lihat bisnis Anda dari mata pelanggan.",
@@ -512,6 +519,12 @@ const en: DeepPartial<Dict> = {
     done: "Done",
     upcoming: "Upcoming",
     menu: "Menu",
+    cityPick: "Choose a city",
+    cityOther: "Other city",
+    cityOtherLabel: "Other city name",
+    cityOtherPlaceholder: "Type the city name",
+    cityOtherNote: "We will look for a shopper in that city. Please wait for confirmation from the SilentCX team.",
+    businessPick: "Choose a business type",
   },
   landing: {
     title: "See your business through your customers' eyes.",

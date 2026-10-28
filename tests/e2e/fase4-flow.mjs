@@ -90,6 +90,15 @@ async function runVisit(api, userId, taskId, purchase) {
 }
 
 let projectId;
+
+// Dropdown kota: pilih kota dari daftar, atau "Kota lain" lalu ketik namanya.
+async function pickCity(page, id, city) {
+  const listed = await page.locator(`${id} option`, { hasText: city }).count();
+  if (listed) return page.selectOption(id, city);
+  await page.selectOption(id, "__other");
+  await page.fill(`${id}-other`, city);
+}
+
 const browser = await chromium.launch();
 try {
   for (const id of [shopperA, shopperB]) {
@@ -121,7 +130,7 @@ try {
   await c.page.goto(`${BASE}/app/outlets`, { waitUntil: "networkidle" });
   check("form kompetitor menyampaikan bahwa foto kompetitor tidak ditampilkan", (await text(c.page)).includes("Foto kunjungan ke kompetitor tidak ditampilkan"));
   await c.page.fill("#k-name-0", `Kompetitor Uji ${stamp}`);
-  await c.page.fill("#k-city-0", city);
+  await pickCity(c.page, "#k-city-0", city);
   await c.page.fill("#k-addr-0", "Jl. Pesaing No. 9");
   await c.page.getByRole("button", { name: "Simpan kompetitor" }).click();
   await c.page.getByText("Kompetitor tersimpan.").first().waitFor({ timeout: 30000 });

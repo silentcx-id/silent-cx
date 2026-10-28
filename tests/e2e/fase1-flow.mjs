@@ -59,6 +59,15 @@ const city = cities?.[0]?.name ?? "Kota Uji";
 const { data: payment } = await admin.from("app_settings").select("value").eq("key", "payment").single();
 const paymentReady = Boolean((payment?.value?.bank_name && payment?.value?.account_number) || payment?.value?.qris_url);
 
+
+// Dropdown kota: pilih kota dari daftar, atau "Kota lain" lalu ketik namanya.
+async function pickCity(page, id, city) {
+  const listed = await page.locator(`${id} option`, { hasText: city }).count();
+  if (listed) return page.selectOption(id, city);
+  await page.selectOption(id, "__other");
+  await page.fill(`${id}-other`, city);
+}
+
 const browser = await chromium.launch();
 try {
   // 1. Client memilih paket.
@@ -66,7 +75,7 @@ try {
   check("client baru di tahap Calon client", (await text(c.page)).includes("Calon client"));
   await c.page.goto(`${BASE}/app/paket?paket=insight`, { waitUntil: "networkidle" });
   await c.page.getByLabel("Laporan express").check();
-  await c.page.fill("#city-0", city);
+  await pickCity(c.page, "#city-0", city);
   await shot(c.page, "checkout");
   await c.page.getByRole("button", { name: "Buat pesanan" }).click();
   await c.page.waitForURL("**/app/billing", { timeout: 30000 });

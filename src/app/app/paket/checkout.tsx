@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { createOrder } from "../actions";
+import { CityPicker } from "@/components/city-picker";
 import { toast } from "@/components/toaster";
 import { displayPrice, promoActive, type Addon, type City, type Package } from "@/lib/catalog-types";
 import { rupiah } from "@/lib/format";
@@ -26,6 +27,7 @@ export function Checkout({ packages, addons, cities, initialKey, lang }: { packa
   const extraOutlets = selected.filter((a) => a.adds_outlets).reduce((n, a) => n + chosen[a.key], 0);
   const outletCount = tier + extraOutlets;
   const served = useMemo(() => new Set(cities.map((c) => c.name.trim().toLowerCase())), [cities]);
+  const cityNames = useMemo(() => cities.map((c) => c.name), [cities]);
   const cityList = Array.from({ length: outletCount }, (_, i) => cityValues[i] ?? "");
   const unserved = cityList.some((c) => c.trim().length >= 2 && !served.has(c.trim().toLowerCase()));
 
@@ -183,32 +185,25 @@ export function Checkout({ packages, addons, cities, initialKey, lang }: { packa
             <h2 className="font-extrabold">{t.citiesTitle}</h2>
             <p className="text-sm text-muted">{t.citiesHint}</p>
           </div>
-          <datalist id="served-cities">
-            {cities.map((c) => (
-              <option key={c.id} value={c.name} />
-            ))}
-          </datalist>
+          {/* Kota lain tetap bisa dipesan; pesanannya masuk antrian review admin. */}
           <div className="grid gap-3 sm:grid-cols-2">
-            {cityList.map((value, i) => {
-              const off = value.trim().length >= 2 && !served.has(value.trim().toLowerCase());
-              return (
-                <div key={i} className="field">
-                  <label htmlFor={`city-${i}`}>{t.cityLabel(i + 1)}</label>
-                  <input
-                    id={`city-${i}`}
-                    list="served-cities"
-                    value={value}
-                    autoComplete="off"
-                    onChange={(e) => {
-                      const next = [...cityList];
-                      next[i] = e.target.value;
-                      setCityValues(next);
-                    }}
-                  />
-                  {off && <small className="!text-warn">{t.cityUnserved}</small>}
-                </div>
-              );
-            })}
+            {cityList.map((value, i) => (
+              <CityPicker
+                key={i}
+                id={`city-${i}`}
+                label={t.cityLabel(i + 1)}
+                value={value}
+                onChange={(city) => {
+                  const next = [...cityList];
+                  next[i] = city;
+                  setCityValues(next);
+                }}
+                cities={cityNames}
+                lang={lang}
+                note={dict(lang).common.cityOtherNote}
+                required
+              />
+            ))}
           </div>
         </section>
       </div>

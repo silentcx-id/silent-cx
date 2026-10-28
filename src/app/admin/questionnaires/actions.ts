@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { check, checkData, run } from "@/lib/action";
 import { QUESTION_KIND_VALUES } from "@/lib/field";
-import { INDUSTRY_VALUES } from "@/lib/shopper-application";
+import { BUSINESS_KEY } from "@/lib/catalog-types";
 import { requireRole } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,7 +21,7 @@ async function admin() {
 export async function createQuestionnaire(raw: unknown) {
   const supabase = await admin();
   return run(
-    z.object({ name: title, business_type: z.enum(INDUSTRY_VALUES) }),
+    z.object({ name: title, business_type: z.string().regex(BUSINESS_KEY, "Pilih jenis usaha.") }),
     raw,
     async (q) => checkData<{ id: string }>(await supabase.from("questionnaires").insert(q).select("id").single()).id,
     PATHS,
@@ -34,7 +34,7 @@ export async function saveQuestionnaire(raw: unknown) {
     z.object({
       id,
       name: title,
-      business_type: z.enum(INDUSTRY_VALUES),
+      business_type: z.string().regex(BUSINESS_KEY, "Pilih jenis usaha."),
       description: z.string().trim().max(500),
       photo_limit: z.coerce.number().int().min(3, "Batas foto 3 sampai 20.").max(20, "Batas foto 3 sampai 20."),
       active: z.boolean(),

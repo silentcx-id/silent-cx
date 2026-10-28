@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FieldSettingsForm, NewQuestionnaireForm } from "./builder";
+import { businessTypeLabel, getBusinessTypes } from "@/lib/catalog";
 import { requireRole } from "@/lib/session";
-import { INDUSTRIES, optionLabel } from "@/lib/shopper-application";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Kuesioner" };
@@ -10,9 +10,10 @@ export const metadata: Metadata = { title: "Kuesioner" };
 export default async function QuestionnairesPage() {
   await requireRole("admin", "/admin/questionnaires");
   const supabase = await createClient();
-  const [{ data: list }, { data: field }] = await Promise.all([
+  const [{ data: list }, { data: field }, types] = await Promise.all([
     supabase.from("questionnaires").select("id, name, business_type, photo_limit, active, updated_at, questionnaire_sections(weight, questionnaire_questions(id))").order("name"),
     supabase.from("app_settings").select("value").eq("key", "field").maybeSingle(),
+    getBusinessTypes(),
   ]);
   const rows = await Promise.all(
     (list ?? []).map(async (q) => {
@@ -48,7 +49,7 @@ export default async function QuestionnairesPage() {
                     </span>
                   </span>
                   <span className="text-sm text-muted">
-                    {optionLabel(INDUSTRIES, q.business_type, "id")} · {q.sections} bagian · {q.questions} pertanyaan · maks. {q.photo_limit} foto
+                    {businessTypeLabel(types, q.business_type, "id")} · {q.sections} bagian · {q.questions} pertanyaan · maks. {q.photo_limit} foto
                   </span>
                 </Link>
               </li>
@@ -60,7 +61,7 @@ export default async function QuestionnairesPage() {
       <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
         <section className="card grid gap-4 p-5">
           <h2 className="text-xl font-extrabold">Buat kuesioner baru</h2>
-          <NewQuestionnaireForm />
+          <NewQuestionnaireForm types={types} />
         </section>
         <section className="card grid gap-4 p-5">
           <div className="grid gap-1">

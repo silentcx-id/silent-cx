@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { saveProjectDetails } from "../actions";
+import { CityPicker } from "@/components/city-picker";
 import { StatusText, useAction } from "@/components/use-action";
+import { businessTypeLabel, type BusinessType } from "@/lib/catalog-types";
 import { dict, type Lang } from "@/lib/i18n";
 import type { ProjectOutlet } from "@/lib/orders";
 
@@ -24,6 +26,8 @@ export function DetailsForm({
   outlets,
   objectives,
   completed,
+  types,
+  cities,
   lang,
 }: {
   projectId: string;
@@ -31,6 +35,8 @@ export function DetailsForm({
   outlets: ProjectOutlet[];
   objectives: string;
   completed: boolean;
+  types: BusinessType[];
+  cities: string[];
   lang: Lang;
 }) {
   const t = dict(lang).orders;
@@ -70,9 +76,23 @@ export function DetailsForm({
         <h2 className="text-xl font-extrabold">{t.company}</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           {field("c-name", t.companyName, c.name, setCompany("name"), { maxLength: 120, required: true })}
-          {field("c-industry", t.industry, c.industry, setCompany("industry"), { maxLength: 80 })}
+          <div className="field">
+            <label htmlFor="c-industry">{t.industry}</label>
+            <select id="c-industry" value={c.industry} onChange={(e) => setC({ ...c, industry: e.target.value })}>
+              <option value="">{dict(lang).common.businessPick}</option>
+              {/* Isian lama yang bukan kode dari daftar tetap tampil sampai client memilih ulang. */}
+              {types
+                .filter((o) => o.active || o.key === c.industry)
+                .map((o) => (
+                  <option key={o.key} value={o.key}>
+                    {businessTypeLabel(types, o.key, lang)}
+                  </option>
+                ))}
+              {c.industry && !types.some((o) => o.key === c.industry) && <option value={c.industry}>{c.industry}</option>}
+            </select>
+          </div>
           {field("c-address", t.companyAddress, c.address, setCompany("address"), { maxLength: 300 })}
-          {field("c-city", t.companyCity, c.city, setCompany("city"), { maxLength: 80 })}
+          <CityPicker id="c-city" label={t.companyCity} value={c.city} onChange={(city) => setC({ ...c, city })} cities={cities} lang={lang} />
           {field("c-ig", t.instagram, c.instagram, setCompany("instagram"), { maxLength: 80 })}
         </div>
         <div className="grid gap-4 sm:grid-cols-3">

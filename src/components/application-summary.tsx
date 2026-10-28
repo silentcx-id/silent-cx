@@ -1,8 +1,10 @@
+import { businessTypeLabel, getBusinessTypes } from "@/lib/catalog";
 import { dict, type Lang } from "@/lib/i18n";
-import { age, EXPERIENCE, GENDERS, INDUSTRIES, optionLabel, VEHICLES, type ShopperApplication } from "@/lib/shopper-application";
+import { age, EXPERIENCE, GENDERS, optionLabel, VEHICLES, type ShopperApplication } from "@/lib/shopper-application";
 
 // Isi lamaran shopper dalam bentuk ringkas. Dipakai di halaman shopper dan antrian seleksi admin.
-export function ApplicationSummary({ app, lang }: { app: ShopperApplication; lang: Lang }) {
+export async function ApplicationSummary({ app, lang }: { app: ShopperApplication; lang: Lang }) {
+  const types = await getBusinessTypes();
   const t = dict(lang).application;
   const years = age(app.birth_date);
   const rows: [string, React.ReactNode][] = [
@@ -26,7 +28,7 @@ export function ApplicationSummary({ app, lang }: { app: ShopperApplication; lan
     [t.occupation, app.occupation || "—"],
     [t.vehicle, optionLabel(VEHICLES, app.vehicle, lang)],
     [t.experience, optionLabel(EXPERIENCE, app.experience, lang)],
-    [t.industries, app.industries.length ? app.industries.map((i) => optionLabel(INDUSTRIES, i, lang)).join(", ") : "—"],
+    [t.industries, app.industries.length ? app.industries.map((i) => businessTypeLabel(types, i, lang)).join(", ") : "—"],
   ];
   return (
     <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">

@@ -309,3 +309,36 @@ Bagian ini juga sudah diuji otomatis dengan 14 tes database: nominal per tugas, 
 8. **Beranda admin.** Kotak Milestone di bawah antrian kerja sudah tidak ada. Menu yang belum dibangun, misalnya Konsultasi, bertuliskan "Segera hadir" tanpa nomor fase.
 
 Uji e2e `tests/e2e/fase2-flow.mjs` dan `tests/e2e/fase5-flow.mjs` sudah disesuaikan dengan halaman detail lamaran dan halaman payout per shopper.
+
+## Putaran 3: dropdown jenis usaha dan kota, contoh laporan
+
+Jalankan `npm run db:migrate` dulu. Migrasi `20261029000009_business_types.sql` membuat daftar jenis usaha, lalu mengubah isian jenis usaha perusahaan yang lama (misalnya "F&B") menjadi pilihan dari daftar.
+
+1. **Jenis usaha diatur admin.** Buka Katalog → tab **Jenis usaha**.
+   - Ada 9 jenis bawaan: F&B, Retail, Hospitality/Hotel, Perbankan & Keuangan, Otomotif, Kesehatan & Klinik, Kecantikan & Salon, Telekomunikasi, dan Lainnya.
+   - Tambahkan jenis baru, misalnya "Pendidikan". Jenis baru muncul sebelum Lainnya.
+   - Ganti namanya, lalu tekan **Simpan**.
+   - Tekan **Nonaktifkan**. Jenis itu hilang dari pilihan baru di semua form, tetapi data lama yang memakainya tetap menampilkan namanya.
+2. **Dropdown jenis usaha dipakai di tiga tempat:**
+   - data perusahaan client (Outlet & data);
+   - industri yang diminati di lamaran shopper;
+   - jenis bisnis kuesioner, saat membuat baru maupun mengedit.
+3. **Dropdown kota.** Pilihannya diambil dari Katalog → Kota dilayani, dan dipakai di:
+   - kota tiap outlet saat memesan paket;
+   - kota kantor di data perusahaan;
+   - kota kompetitor;
+   - domisili di lamaran shopper.
+4. **Kota lain.** Di dropdown kota, pilih **Kota lain**. Akan muncul kotak untuk mengetik nama kota.
+   - Untuk outlet dan kompetitor, muncul keterangan: "Shopper akan kami cari di kota tersebut. Mohon kesediaannya menunggu konfirmasi dari tim SilentCX."
+   - Pesanan dengan kota lain tetap masuk antrian **Perlu review** di admin, seperti sebelumnya.
+5. **Contoh laporan.** Sebagai calon client, buka Laporan → **Unduh contoh laporan (PDF)**. Laporan memakai nama yang jelas fiktif: PT ABC dengan outlet Cafe 123 Cabang A, B, dan C, serta kompetitor Cafe XYZ.
+
+Bagian ini juga diuji otomatis dengan 9 tes database:
+- isi bawaan daftar;
+- hak baca dan ubah;
+- kode yang tidak bisa diganti;
+- nama yang tidak boleh kembar;
+- rujukan dari lamaran, kuesioner, dan data perusahaan;
+- isian lama yang tetap aman.
+
+Uji e2e fase1, fase2, dan fase4 sudah disesuaikan dengan dropdown kota.
