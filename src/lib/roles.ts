@@ -15,7 +15,7 @@ export const ROLE_HOME: Record<Role, string> = {
   admin: "/admin",
 };
 
-export type IconName = "home" | "box" | "wallet" | "store" | "eye" | "report" | "chat" | "task" | "check" | "user" | "users" | "layers" | "calendar" | "settings";
+export type IconName = "home" | "box" | "wallet" | "store" | "eye" | "report" | "chat" | "task" | "check" | "user" | "users" | "layers" | "calendar" | "settings" | "pen";
 
 type Label = Record<Lang, string>;
 
@@ -53,6 +53,7 @@ export const ROLE_MENU: Record<Role, MenuItem[]> = {
     { slug: "qc", label: { id: "Quality control", en: "Quality control" }, icon: "eye", phase: 4 },
     { slug: "reports", label: { id: "Laporan", en: "Reports" }, icon: "report", phase: 4 },
     { slug: "payouts", label: { id: "Keuangan", en: "Finance" }, icon: "wallet", phase: 5 },
+    { slug: "content", label: { id: "Konten", en: "Content" }, icon: "pen", phase: 6 },
     { slug: "consultations", label: { id: "Konsultasi", en: "Consultations" }, icon: "calendar", phase: 5 },
   ],
 };

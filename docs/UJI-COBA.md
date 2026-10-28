@@ -342,3 +342,44 @@ Bagian ini juga diuji otomatis dengan 9 tes database:
 - isian lama yang tetap aman.
 
 Uji e2e fase1, fase2, dan fase4 sudah disesuaikan dengan dropdown kota.
+
+## Putaran 4: CMS halaman publik
+
+Jalankan `npm run db:migrate` dulu. Migrasi `20261029000010_site_content.sql` menyiapkan tempat penyimpanan draf dan versi terbit. Sebelum ada yang diterbitkan, landing page memakai draf isi bawaan yang sudah lengkap.
+
+1. **Landing page baru.** Buka halaman utama tanpa login. Ada 10 bagian:
+   - Hero;
+   - Masalah yang diselesaikan;
+   - Cara kerja (4 langkah);
+   - Apa saja yang diaudit;
+   - Paket audit (otomatis dari Katalog);
+   - Contoh laporan;
+   - Mengapa SilentCX;
+   - FAQ;
+   - Ajakan jadi mystery shopper;
+   - Kontak.
+
+   Coba juga di HP dan dalam Bahasa Inggris.
+2. **Contoh laporan tanpa login.** Tombol **Unduh contoh laporan (PDF)** membuka PDF berdata fiktif (PT ABC / Cafe 123).
+3. **Menu Konten.** Login sebagai admin, lalu buka **Konten**.
+   - Klik satu bagian untuk membuka isinya. Setiap teks punya kolom Indonesia dan Inggris. Kolom Inggris yang kosong tampil sebagai versi Indonesia.
+   - Tombol ↑ ↓ mengubah urutan bagian. Tombol **Tampil / Disembunyikan** menampilkan atau menyembunyikan bagian itu.
+   - Butir daftar (langkah, area audit, alasan, FAQ, dan lainnya) bisa ditambah, dihapus, dan diurutkan.
+   - Hero, Contoh laporan, dan Ajakan shopper bisa diberi gambar (JPG, PNG, atau WEBP, maksimal 2 MB).
+   - Tab **Info situs** berisi nomor WhatsApp, email, dan Instagram bisnis, judul dan deskripsi untuk Google, serta judul di halaman masuk dan daftar. Kontak yang kosong tidak ditampilkan.
+4. **Draf, pratinjau, terbit.**
+   - Ubah sesuatu, lalu tekan **Simpan draf**. Halaman utama belum berubah.
+   - Tekan **Simpan & pratinjau**. Tab baru menampilkan landing page versi draf dengan pita kuning "Pratinjau draf".
+   - Tekan **Terbitkan** dan konfirmasi. Halaman utama langsung berubah.
+   - **Buang draf** mengembalikan editor ke versi yang sedang tampil.
+   - Kalau ada perubahan yang belum disimpan, browser memperingatkan sebelum halaman ditutup.
+5. **Halaman masuk dan daftar.** Judul besar di samping form mengikuti isian di Info situs.
+
+Bagian ini juga diuji otomatis dengan 9 tes database:
+- draf belum terlihat pengunjung;
+- terbit dan terbit ulang;
+- buang draf;
+- hanya admin yang bisa membaca draf, menyimpan, atau menerbitkan;
+- tabel konten tidak bisa diakses langsung.
+
+Uji e2e `tests/e2e/putaran4-cms.mjs` mengubah konten sebentar, lalu mengembalikannya seperti semula.
