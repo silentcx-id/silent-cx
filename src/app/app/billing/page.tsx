@@ -15,12 +15,18 @@ export default async function BillingPage() {
   const [viewer, lang] = await Promise.all([requireRole("client", "/app/billing"), getLang()]);
   const t = dict(lang).orders;
   const [projects, settings] = await Promise.all([getClientProjects(viewer.id), getPaymentSettings()]);
-  const withInvoice = projects.filter((p) => p.invoices[0]);
+  // Invoice pesanan (paket); tagihan tambahan ditampilkan terpisah di atas.
+  const order = (p: (typeof projects)[number]) => p.invoices.find((i) => i.kind === "order");
+  const withInvoice = projects.filter((p) => order(p));
   const current = withInvoice[0];
-  const invoice = current?.invoices[0];
+  const invoice = current ? order(current) : undefined;
   const rejected = invoice?.payment_proofs.find((p) => p.status === "rejected");
-  // Tagihan tambahan kelebihan pembelian (terbit bersama laporan).
-  const extras = projects.flatMap((p) => p.invoices.filter((i) => i.kind === "excess" && i.status !== "cancelled").map((i) => ({ invoice: i, code: p.code })));
+  // Tagihan tambahan: kelebihan pembelian (terbit bersama laporan) dan konsultasi tambahan yang masih berjalan.
+  const extras = projects.flatMap((p) =>
+    p.invoices
+      .filter((i) => (i.kind === "excess" && i.status !== "cancelled") || (i.kind === "consultation" && ["unpaid", "verifying", "paid"].includes(i.status)))
+      .map((i) => ({ invoice: i, code: p.code })),
+  );
 
   return (
     <>
@@ -32,10 +38,10 @@ export default async function BillingPage() {
         <section key={x.id} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,420px)] xl:items-start">
           <div className="card grid gap-3 border-accent p-5">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-xl font-extrabold">{t.excessTitle}</h2>
+              <h2 className="text-xl font-extrabold">{x.kind === "consultation" ? t.consultationTitle : t.excessTitle}</h2>
               <InvoiceStatusChip status={x.status} lang={lang} />
             </div>
-            <p className="text-sm text-muted">{t.excessLede}</p>
+            <p className="text-sm text-muted">{x.kind === "consultation" ? t.consultationLede : t.excessLede}</p>
             {x.status === "unpaid" && (
               <>
                 {x.status_note && (
@@ -122,11 +128,11 @@ export default async function BillingPage() {
             {withInvoice.slice(1).map((p) => (
               <li key={p.id} className="card flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
                 <span className="font-mono">
-                  {p.invoices[0].code} · {p.package_snapshot.name}
+                  {order(p)!.code} · {p.package_snapshot.name}
                 </span>
                 <span className="text-muted">{dateTime(p.created_at, lang)}</span>
-                <span className="tabular-nums">{rupiah(p.invoices[0].total)}</span>
-                <InvoiceStatusChip status={p.invoices[0].status} lang={lang} />
+                <span className="tabular-nums">{rupiah(order(p)!.total)}</span>
+                <InvoiceStatusChip status={order(p)!.status} lang={lang} />
               </li>
             ))}
           </ul>

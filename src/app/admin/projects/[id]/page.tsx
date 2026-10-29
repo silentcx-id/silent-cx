@@ -318,7 +318,7 @@ function Fact({ label, value }: { label: string; value: string }) {
 function VerifyCard({ invoice, proof }: { invoice: Invoice; proof: PaymentProof }) {
   return (
     <section className="card grid gap-4 border-accent p-5">
-      <h2 className="text-xl font-extrabold">{invoice.kind === "excess" ? "Verifikasi tagihan tambahan" : "Verifikasi pembayaran"}</h2>
+      <h2 className="text-xl font-extrabold">{invoice.kind === "excess" ? "Verifikasi tagihan tambahan" : invoice.kind === "consultation" ? "Verifikasi konsultasi tambahan" : "Verifikasi pembayaran"}</h2>
       <dl className="grid gap-2 text-sm sm:grid-cols-2">
         <div>
           <dt className="text-muted">Tagihan</dt>
@@ -341,7 +341,7 @@ function VerifyCard({ invoice, proof }: { invoice: Invoice; proof: PaymentProof 
           <dd>{dateTime(proof.uploaded_at, "id")}</dd>
         </div>
       </dl>
-      <VerifyForm invoiceId={invoice.id} proofId={proof.id} extra={invoice.kind === "excess"} />
+      <VerifyForm invoiceId={invoice.id} proofId={proof.id} extra={invoice.kind !== "order"} />
     </section>
   );
 }

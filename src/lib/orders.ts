@@ -37,8 +37,8 @@ export type Invoice = {
   paid_at: string | null;
   status_note: string | null;
   created_at: string;
-  // order = pesanan paket; excess = tagihan tambahan kelebihan pembelian (Fase 4).
-  kind: "order" | "excess";
+  // order = pesanan paket; excess = tagihan tambahan kelebihan pembelian (Fase 4); consultation = sesi konsultasi tambahan.
+  kind: "order" | "excess" | "consultation";
   invoice_lines: InvoiceLine[];
   payment_proofs: PaymentProof[];
 };

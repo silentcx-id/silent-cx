@@ -30,6 +30,12 @@ export function NotificationList({ items, lang }: { items: Notification[]; lang:
     if (n.kind === "payout.paid") return t.payoutPaid(code, rupiah(n.detail.total ?? 0));
     if (n.kind === "payout.need_bank") return t.payoutNeedBank(code);
     if (n.kind === "payout.proof_replaced") return t.payoutProofReplaced(code, n.detail.note ?? "—");
+    if (n.kind === "consultation.link") return t.consultationLink(code, n.detail.starts_at ? dateTime(n.detail.starts_at, lang) : "—");
+    if (n.kind === "consultation.rescheduled") return t.consultationRescheduled(code, n.detail.starts_at ? dateTime(n.detail.starts_at, lang) : "—", n.detail.note ?? "—");
+    if (n.kind === "consultation.cancelled") return t.consultationCancelled(code, n.detail.note ?? "—");
+    if (n.kind === "consultation.done") return t.consultationDone(code);
+    if (n.kind === "consultation.no_show") return t.consultationNoShow(code);
+    if (n.kind === "consultation.credited") return t.consultationCredited(Number(n.detail.count ?? 0));
     return n.kind;
   };
   // Notifikasi yang bisa dibuka langsung ke halaman terkait.
@@ -38,6 +44,7 @@ export function NotificationList({ items, lang }: { items: Notification[]; lang:
     if (n.kind === "report.published" && n.detail.project) return { href: `/app/reports/${n.detail.project}`, label: t.openReport };
     if (n.kind === "payout.paid" || n.kind === "payout.proof_replaced") return { href: "/shopper/payments", label: t.openPayments };
     if (n.kind === "payout.need_bank") return { href: "/shopper/profile", label: t.openProfile };
+    if (n.kind.startsWith("consultation.")) return { href: n.detail.consultation ? `/app/consultation/${n.detail.consultation}` : "/app/consultation", label: t.openConsultation };
     return null;
   };
 

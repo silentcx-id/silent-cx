@@ -383,3 +383,63 @@ Bagian ini juga diuji otomatis dengan 9 tes database:
 - tabel konten tidak bisa diakses langsung.
 
 Uji e2e `tests/e2e/putaran4-cms.mjs` mengubah konten sebentar, lalu mengembalikannya seperti semula.
+
+## Fase 5: Konsultasi
+
+Persiapan: jalankan `npm run db:migrate`. Jatah sesi muncul otomatis untuk laporan yang sudah terbit, termasuk laporan lama. Jatah berlaku 30 hari sejak laporan terbit, jadi jatah dari laporan lama mungkin sudah kedaluwarsa. Untuk mencoba dari awal, terbitkan laporan proyek Insight atau Performance yang baru.
+
+Aturan:
+
+| Paket | Jatah | Durasi |
+|---|---|---|
+| Essential | Tidak ada, bisa beli add-on | — |
+| Insight | 1 sesi | 30 menit |
+| Performance | 1 sesi | 60 menit |
+| Add-on Konsultasi tambahan | per sesi | 60 menit |
+
+1. **Admin membuka jadwal kosong.** Buka menu **Konsultasi** → tab **Kalender**.
+   - Klik tanggal di kalender, lalu isi form **Buka jadwal kosong** (jam mulai dan selesai, kelipatan 30 menit, WIB).
+   - Rentang kosong tampil hijau di kalender. Rentang yang bertumpuk ditolak.
+   - Tombol **Hapus** menghapus rentang. Rentang yang masih berisi sesi tidak bisa dihapus.
+2. **Client booking.** Login sebagai client yang laporannya sudah terbit, lalu buka **Konsultasi**.
+   - Ada daftar jatah sesi beserta batas berlakunya.
+   - Tanggal yang punya jam kosong bertanda hijau. Klik tanggalnya, pilih jam mulai, isi topik (opsional), lalu **Booking sesi**.
+   - Jam yang ditawarkan menyesuaikan durasi sesi dan paling cepat 24 jam dari sekarang. Jam yang sudah dibooking client lain tidak muncul.
+   - Kalau client punya beberapa jatah dengan durasi berbeda, pilih dulu jatah yang mau dipakai.
+3. **Kartu sesi terjadwal.** Kartu menampilkan tanggal, jam, durasi, dan topik.
+   - Sebelum admin menempelkan link, tertulis "Link meeting dikirim admin sebelum sesi dimulai".
+   - **Tambah ke kalender (.ics)** mengunduh undangan untuk Google Calendar atau Outlook.
+   - **Geser jadwal** bisa dipakai satu kali, paling lambat 24 jam sebelum sesi.
+4. **Admin menempelkan link.**
+   - Sesi tanpa link tampil merah di kalender, di tab **Sesi terjadwal**, dan di kartu **Konsultasi tanpa link meeting** di beranda admin.
+   - Klik sesinya, tempel link (harus diawali https://), lalu simpan. Client mendapat notifikasi dan tombol **Buka link meeting**.
+5. **Admin mengubah atau membatalkan sesi.**
+   - **Ubah jadwal** (alasan wajib) boleh di luar jadwal kosong, asal tidak bertumpuk. Kesempatan geser milik client tidak berkurang.
+   - **Batalkan sesi** (alasan wajib) mengembalikan jatah ke client dan memperpanjang masa berlakunya minimal 7 hari.
+6. **Menutup sesi.** Setelah jam sesi lewat, halaman sesi menampilkan form **Tutup sesi**.
+   - **Tandai selesai** wajib diisi ringkasan; action plan opsional.
+   - **Client tidak hadir** membuat jatah tetap terpakai.
+   - Client membaca ringkasan lewat **Riwayat → Lihat ringkasan**.
+7. **Beli sesi tambahan.** Kartu **Konsultasi tambahan** di halaman Konsultasi client.
+   - Hanya bisa dibeli setelah laporan proyek terbit.
+   - Pilih jumlah sesi lalu **Buat tagihan**. Client diarahkan ke **Tagihan**, dengan batas bayar 2x24 jam dan alur bukti bayar seperti biasa.
+   - Admin memverifikasi di **Proyek & verifikasi → Verifikasi bukti**.
+   - Setelah lunas, jatah 60 menit bertambah dan berlaku 30 hari sejak pembayaran diverifikasi.
+8. **Tab lain admin.** **Jatah belum dibooking** menampilkan client yang belum booking, diurutkan dari yang paling cepat berakhir (kuning kalau kurang dari 7 hari). **Riwayat** berisi sesi yang selesai atau tidak hadir.
+9. **Di HP.** Kalender berubah menjadi daftar tanggal yang berisi jadwal.
+
+Fitur ini diuji otomatis dengan 23 tes database:
+- jatah per paket;
+- 30 hari;
+- jam kosong sesuai durasi;
+- tumpukan jadwal;
+- batas 24 jam;
+- geser satu kali;
+- link https;
+- batal;
+- tutup sesi;
+- beli add-on;
+- kedaluwarsa tagihan;
+- akses antar-client.
+
+Uji e2e `tests/e2e/fase5-konsultasi.mjs` memakai akun dan jadwal sementara, lalu menghapusnya.
