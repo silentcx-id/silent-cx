@@ -10,8 +10,8 @@ export const metadata: Metadata = { title: "Antrian kerja" };
 export default async function AdminHome() {
   const [, lang] = await Promise.all([requireRole("admin", "/admin"), getLang()]);
   const t = dict(lang);
+  // Invoice dan tawaran yang lewat batas ditandai kedaluwarsa oleh jadwal database (pg_cron, setiap 5 menit).
   const supabase = await createClient();
-  await Promise.all([supabase.rpc("expire_overdue"), supabase.rpc("expire_offers")]);
   const count = (q: PromiseLike<{ count: number | null }>) => q.then((r) => r.count ?? 0);
   const [pendingShoppers, reviews, payments, unassigned, submitted, payoutQueue, noLink] = await Promise.all([
     // Hanya lamaran yang sudah dikirim (lulus kuis dan pakta); draft belum perlu keputusan.

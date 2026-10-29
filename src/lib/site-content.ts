@@ -3,6 +3,7 @@
 // Teks selalu punya versi Indonesia; versi Inggris boleh kosong dan jatuh ke Indonesia.
 import type { Lang } from "./i18n";
 import { isLandingIcon, type LandingIcon } from "./landing-icons";
+import { DEFAULT_PRIVACY, DEFAULT_TERMS } from "./legal-defaults";
 
 export type Text = { id: string; en: string };
 // meta = keterangan tambahan (jabatan pada testimoni); icon = ikon kartu; image = gambar galeri.
@@ -40,7 +41,14 @@ export type SiteInfo = {
   authHeadline: Text;
 };
 
-export type SiteContent = { order: SectionKey[]; sections: Record<SectionKey, Section>; site: SiteInfo };
+// Halaman hukum (/privasi dan /syarat). updated = tanggal "Terakhir diperbarui" (YYYY-MM-DD), sekaligus versi
+// yang dicatat saat pengguna menyetujuinya ketika mendaftar.
+export type LegalDoc = { title: Text; updated: string; body: Text };
+export const LEGAL_KEYS = ["privacy", "terms"] as const;
+export type LegalKey = (typeof LEGAL_KEYS)[number];
+export const LEGAL_PATH: Record<LegalKey, string> = { privacy: "/privasi", terms: "/syarat" };
+
+export type SiteContent = { order: SectionKey[]; sections: Record<SectionKey, Section>; site: SiteInfo; legal: Record<LegalKey, LegalDoc> };
 
 // Isian apa saja yang dipakai tiap bagian, untuk editor dan tampilan.
 // `items` berisi label daftar (misalnya "Pertanyaan") kalau bagian itu punya daftar yang bisa ditambah atau dihapus.
@@ -98,11 +106,11 @@ function section(s: Partial<Section>): Section {
 // Kontak dan media sosial contoh. Nomor telepon sengaja tidak bisa dihubungi (0800…/000).
 export const SAMPLE_SITE = {
   whatsapp: "080000000000",
-  email: "halo@silentcx.id",
+  email: "halo@silentcx.com",
   instagram: "@silentcx.id",
   address: "Jl. Contoh No. 123, Jakarta Selatan 12345 (alamat contoh)",
   phone: "(021) 000 0000",
-  website: "silentcx.id",
+  website: "silentcx.com",
   tiktok: "@silentcx.id",
   facebook: "https://facebook.com/silentcx.id",
   linkedin: "https://www.linkedin.com/company/silentcx",
@@ -233,7 +241,22 @@ export const DEFAULT_CONTENT: SiteContent = {
     ),
     authHeadline: tx("Lihat bisnis Anda dari mata pelanggan.", "See your business through your customers' eyes."),
   },
+  legal: {
+    privacy: { title: tx("Kebijakan Privasi", "Privacy Policy"), updated: "2026-10-29", body: tx(DEFAULT_PRIVACY) },
+    terms: { title: tx("Syarat & Ketentuan", "Terms & Conditions"), updated: "2026-10-29", body: tx(DEFAULT_TERMS) },
+  },
 };
+
+// Isian yang masih harus dilengkapi admin di halaman hukum, misalnya "[Nama badan usaha]".
+export function legalPlaceholders(c: SiteContent): string[] {
+  const found = LEGAL_KEYS.flatMap((k) => c.legal[k].body.id.match(/\[[^\]\n]{2,80}\]/g) ?? []);
+  return [...new Set(found)];
+}
+
+// Versi dokumen yang disetujui saat daftar, misalnya "privasi 2026-10-29, syarat 2026-10-29".
+export function legalVersion(c: SiteContent): string {
+  return `privasi ${c.legal.privacy.updated}, syarat ${c.legal.terms.updated}`;
+}
 
 // Teks sesuai bahasa; versi Inggris yang kosong jatuh ke Indonesia.
 export function pick(text: Text, lang: Lang): string {
@@ -286,6 +309,14 @@ export function normalizeContent(raw: unknown): SiteContent {
       ];
     }),
   ) as Record<SectionKey, Section>;
+  const legalRaw = (r.legal ?? {}) as Partial<Record<LegalKey, Partial<LegalDoc>>>;
+  const legal = Object.fromEntries(
+    LEGAL_KEYS.map((k) => {
+      const d = DEFAULT_CONTENT.legal[k];
+      const x = legalRaw[k] ?? {};
+      return [k, { title: asText(x.title, d.title), updated: typeof x.updated === "string" && /^\d{4}-\d{2}-\d{2}$/.test(x.updated) ? x.updated : d.updated, body: asText(x.body, d.body) }];
+    }),
+  ) as Record<LegalKey, LegalDoc>;
   const s = (r.site ?? {}) as Partial<SiteInfo>;
   const d = DEFAULT_CONTENT.site;
   const str = (v: unknown, f: string) => (typeof v === "string" ? v : f);
@@ -308,5 +339,6 @@ export function normalizeContent(raw: unknown): SiteContent {
       seoDescription: asText(s.seoDescription, d.seoDescription),
       authHeadline: asText(s.authHeadline, d.authHeadline),
     },
+    legal,
   };
 }

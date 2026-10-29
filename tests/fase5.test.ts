@@ -177,8 +177,13 @@ describe("mencatat payout", () => {
     await expect(replace(`${sari}/transfer-1.jpg`, "Salah file")).rejects.toThrow(/bukti transfer yang baru/);
     await expect(t.as(sari, "select public.admin_replace_payout_proof($1, $2, 'x')", [payout, `${sari}/y.jpg`])).rejects.toThrow(/Hanya admin/);
     await replace(`${sari}/transfer-2.jpg`, "Salah file");
-    const po = await one<{ proof_path: string; note: string; proof_replaced_at: string | null }>("select proof_path, note, proof_replaced_at from public.payouts where id = $1", [payout]);
-    expect(po).toMatchObject({ proof_path: `${sari}/transfer-2.jpg`, note: "Salah file" });
+    // Catatan transfer asli tetap; alasan penggantian disimpan terpisah (migration 013).
+    const po = await one<{ proof_path: string; note: string | null; replace_note: string; proof_replaced_at: string | null }>(
+      "select proof_path, note, replace_note, proof_replaced_at from public.payouts where id = $1",
+      [payout],
+    );
+    expect(po).toMatchObject({ proof_path: `${sari}/transfer-2.jpg`, replace_note: "Salah file" });
+    expect(po.note).not.toBe("Salah file");
     expect(po.proof_replaced_at).not.toBeNull();
     const log = await one<{ detail: Record<string, unknown> }>("select detail from public.activity_log where action = 'payout.proof_replaced' and target_id = $1", [payout]);
     expect(log.detail.old_proof).toBe(`${sari}/transfer-1.jpg`);

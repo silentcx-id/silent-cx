@@ -22,7 +22,7 @@ export default async function PayoutsPage({ searchParams }: PageProps<"/admin/pa
     supabase.from("app_settings").select("value").eq("key", "admin_contact").maybeSingle(),
     supabase
       .from("payouts")
-      .select("id, code, shopper_id, total, fee_total, reimburse_total, bank_name, account_number, account_holder, paid_at, note, proof_replaced_at, profiles!payouts_shopper_id_fkey(full_name)")
+      .select("id, code, shopper_id, total, fee_total, reimburse_total, bank_name, account_number, account_holder, paid_at, note, replace_note, proof_replaced_at, profiles!payouts_shopper_id_fkey(full_name)")
       .order("paid_at", { ascending: false })
       .limit(30),
   ]);

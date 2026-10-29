@@ -10,9 +10,13 @@
     "test": "vitest run",
     "check": "tsc --noEmit && eslint && vitest run",
     "db:migrate": "node --env-file=.env.local scripts/db-migrate.mjs",
+    "db:migrate:prod": "node --env-file=.env.prod scripts/db-migrate.mjs",
     "demo:akun": "node --env-file=.env.local scripts/demo-accounts.mjs",
     "demo:data": "node --env-file=.env.local scripts/demo-data.mjs",
+    "admin:buat": "node --env-file=.env.local scripts/admin-create.mjs",
+    "admin:buat:prod": "node --env-file=.env.prod scripts/admin-create.mjs",
     "env:cek": "node --env-file-if-exists=.env.local scripts/check-env.mjs",
+    "env:cek:prod": "node --env-file-if-exists=.env.prod scripts/check-env.mjs",
     "contoh:laporan": "esbuild scripts/sample-report.mts --bundle --platform=node --format=esm --packages=external --jsx=automatic --log-level=warning --outfile=e2e-output/.sample-report.mjs && node e2e-output/.sample-report.mjs"
   },
   "dependencies": {

@@ -15,12 +15,18 @@ export type Viewer = {
   statusNote: string | null;
 };
 
+// Id dan email dari token sesi (diverifikasi lokal, tanpa panggilan jaringan), untuk memulai query lain
+// bersamaan dengan pengambilan profil. Hak akses tetap dijaga RLS dan requireRole.
+export const getSessionUser = cache(async () => {
+  if (!isSupabaseConfigured) return null;
+  return currentUser(await createClient());
+});
+
 // Pengguna yang sedang masuk beserta profilnya, atau null jika belum masuk.
 export const getViewer = cache(async (): Promise<Viewer | null> => {
-  if (!isSupabaseConfigured) return null;
-  const supabase = await createClient();
-  const user = await currentUser(supabase);
+  const user = await getSessionUser();
   if (!user) return null;
+  const supabase = await createClient();
 
   const { data: profile } = await supabase.from("profiles").select("full_name, email, role, status, status_note").eq("id", user.id).single();
   if (!profile || !isRole(profile.role)) return null;

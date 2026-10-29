@@ -57,13 +57,14 @@ export function PackageForm({ pkg }: { pkg: Package }) {
     features: pkg.features.join("\n"),
     visits: String(pkg.visits),
     purchase_allowance: String(pkg.purchase_allowance),
+    consultation_minutes: String(pkg.consultation_minutes ?? 0),
     recommended: pkg.recommended,
     active: pkg.active,
     sort_order: String(pkg.sort_order),
   });
   const [prices, setPrices] = useState(pkg.prices.map((p) => ({ outlets: String(p.outlets), price: String(p.price) })));
   const promo = usePromo(pkg);
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
 
   return (
     <form
@@ -103,6 +104,17 @@ export function PackageForm({ pkg }: { pkg: Package }) {
         <label className={label}>
           Batas biaya pembelian per kunjungan (Rp)
           <input className={input} inputMode="numeric" value={f.purchase_allowance} onChange={set("purchase_allowance")} />
+        </label>
+        <label className={label}>
+          Konsultasi gratis setelah laporan terbit
+          <select className={input} value={f.consultation_minutes} onChange={set("consultation_minutes")}>
+            <option value="0">Tidak termasuk</option>
+            {[30, 45, 60, 90, 120].map((m) => (
+              <option key={m} value={m}>
+                1 sesi {m} menit
+              </option>
+            ))}
+          </select>
         </label>
         <label className={`${label} sm:col-span-2`}>
           Fitur (satu per baris)

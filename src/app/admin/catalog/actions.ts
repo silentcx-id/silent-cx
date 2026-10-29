@@ -34,6 +34,8 @@ const packageSchema = z.object({
   features: z.array(z.string().trim().min(1).max(200)).max(40),
   visits: z.coerce.number().int().min(1).max(20),
   purchase_allowance: money,
+  // Sama dengan batasan kolom packages.consultation_minutes.
+  consultation_minutes: z.coerce.number().refine((n) => [0, 30, 45, 60, 90, 120].includes(n), "Durasi konsultasi tidak valid."),
   recommended: z.boolean(),
   active: z.boolean(),
   sort_order: z.coerce.number().int().min(0).max(999),

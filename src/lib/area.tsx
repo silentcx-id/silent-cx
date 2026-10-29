@@ -7,7 +7,7 @@ import { clientState, getClientProjects } from "./orders";
 import { getNotificationCenter } from "./notifications";
 import { getLang } from "./prefs";
 import { menuItem, ROLE_HOME, type Role } from "./roles";
-import { requireRole } from "./session";
+import { getSessionUser, requireRole } from "./session";
 
 // Fitur yang dibuka paket dan add-on dari proyek client yang sudah aktif.
 async function clientEntitlements(clientId: string) {
@@ -17,10 +17,13 @@ async function clientEntitlements(clientId: string) {
 // Layout bersama tiap area role: memastikan role, lalu membungkus halaman dengan PortalShell.
 export function areaLayout(role: Role, home: string) {
   return async function AreaLayout({ children }: { children: React.ReactNode }) {
-    const [viewer, lang] = await Promise.all([requireRole(role, home), getLang()]);
-    const [entitlements, notifications] = await Promise.all([
-      role === "client" ? clientEntitlements(viewer.id) : undefined,
-      getNotificationCenter(viewer.id),
+    // Profil, lonceng, dan fitur paket diambil bersamaan; kalau role tidak cocok, requireRole mengalihkan halaman.
+    const user = await getSessionUser();
+    const [viewer, lang, entitlements, notifications] = await Promise.all([
+      requireRole(role, home),
+      getLang(),
+      role === "client" && user ? clientEntitlements(user.id) : undefined,
+      user ? getNotificationCenter(user.id) : { items: [], unread: 0 },
     ]);
     return (
       <PortalShell viewer={viewer} lang={lang} entitlements={entitlements} notifications={notifications}>

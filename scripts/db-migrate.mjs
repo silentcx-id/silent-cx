@@ -1,5 +1,5 @@
 // Menjalankan migrasi database yang belum terpasang. Aman dijalankan berulang.
-// Jalankan: npm run db:migrate   (butuh SUPABASE_DB_URL di .env.local, lihat docs/SETUP.md)
+// Jalankan: npm run db:migrate (staging, .env.local) atau npm run db:migrate:prod (produksi, .env.prod). Lihat docs/SETUP.md.
 import { createClient } from "@supabase/supabase-js";
 import { readdirSync, readFileSync } from "node:fs";
 import postgres from "postgres";
@@ -10,6 +10,8 @@ if (!dbUrl) {
   process.exit(1);
 }
 
+// Nama host (tanpa password) supaya jelas project mana yang sedang dimigrasi: staging (.env.local) atau produksi (.env.prod).
+console.log(`Database: ${new URL(dbUrl).hostname}`);
 const sql = postgres(dbUrl, { ssl: "require", max: 1, onnotice: () => {} });
 const dir = new URL("../supabase/migrations/", import.meta.url);
 const files = readdirSync(dir).filter((f) => f.endsWith(".sql")).sort();

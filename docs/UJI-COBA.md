@@ -532,3 +532,70 @@ Perlu `npm run db:migrate` (migration `20261029000012_notification_center.sql`).
    - Kalau rekening belum diisi, form langsung tampil seperti biasa.
 
 Diuji otomatis: `tests/notifikasi.test.ts` (13 tes), `tests/e2e/putaran6-notifikasi.mjs` (28 cek, tidak mengubah data). Uji real time dan kartu rekening dengan data sungguhan ada di `tests/e2e/fase2-flow.mjs`, yang MENGUBAH data (akun sementara), jadi dijalankan hanya dengan izin.
+
+## Putaran 7: Lupa password, Akun saya, halaman hukum, dan kecepatan
+
+Perlu `npm run db:migrate` (migration `20261030000013_launch_readiness.sql`, yang juga memuat perubahan Putaran 8). Di Supabase: **Authentication > Emails > Templates > Reset Password**, ganti tautannya menjadi
+`<a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery">Buat password baru</a>`.
+
+1. **Lupa password.**
+   - Di halaman Masuk, klik **Lupa password?**, lalu isi email.
+   - Pesan yang muncul sama untuk email terdaftar maupun tidak. Tombol **Kirim ulang tautan** menghitung mundur 60 detik.
+   - Klik tautan di email (boleh di HP). Halaman **Buat password baru** menampilkan email akun Anda.
+   - Isi password baru dua kali, lalu **Simpan password**. Anda langsung masuk ke dashboard dan muncul pesan "Password baru tersimpan".
+   - Tautan yang sama tidak bisa dipakai lagi. Halaman `/reset-password` yang dibuka langsung, tanpa tautan, atau lebih dari 15 menit setelah tautan dibuka, meminta tautan baru.
+2. **Akun saya** (menu baru di ketiga role).
+   - Email tampil tetapi tidak bisa diubah. Nama dan nomor WhatsApp bisa diubah lalu **Simpan perubahan**.
+   - **Ganti password** wajib mengisi password saat ini. Kalau salah, muncul "Password saat ini salah".
+   - Setelah diganti, perangkat lain yang sedang masuk keluar otomatis paling lambat 1 jam.
+3. **Halaman hukum.**
+   - `/privasi` dan `/syarat` tampil, dan ditautkan di footer landing.
+   - Isinya diatur di **Konten → Halaman hukum**: judul, tanggal "Terakhir diperbarui", dan isi. Di isi, baris "## " menjadi subjudul dan baris "- " menjadi butir daftar.
+   - Selama masih ada isian bertanda [kurung siku], editor menampilkan peringatan kuning beserta daftar isiannya.
+   - Setelah diubah, tekan **Terbitkan** supaya tampil ke pengunjung.
+4. **Persetujuan saat daftar.**
+   - Form daftar pemilik bisnis dan shopper punya centang wajib "Saya menyetujui Syarat & Ketentuan dan Kebijakan Privasi". Kedua tautannya terbuka di tab baru, jadi isian form tidak hilang.
+   - Tanpa centang, pendaftaran ditolak dan isian tetap terisi.
+   - Versi dokumen (tanggal terakhir diperbarui) dan waktu persetujuan tercatat di profil dan log aktivitas.
+5. **Kecepatan.** Dashboard terbuka lebih cepat karena:
+   - login diperiksa di server tanpa memanggil Supabase;
+   - lonceng dan data paket diambil bersamaan;
+   - pengingat jatuh tempo dan kedaluwarsa invoice serta tawaran diproses jadwal database, tidak lagi setiap kali halaman dibuka.
+
+   Di **Integrations > Cron** Supabase ada dua jadwal: `silentcx-expire` (5 menit) dan `silentcx-invoice-reminders` (15 menit).
+
+Persiapan produksi (project Supabase baru, Vercel, Resend untuk silentcx.com) ada di `docs/SETUP.md` langkah 8.
+
+Diuji otomatis: `tests/putaran7.test.ts` (12 tes) dan `tests/e2e/putaran7-akun.mjs` (42 cek). E2e ini tidak mengubah data: tautan reset dibuat tanpa email, password tidak disimpan, dan pendaftaran hanya dicoba sampai ditolak. Menyimpan password baru dan mengubah nama sungguhan diuji manual.
+
+## Putaran 8: Siap deploy
+
+Perubahan database ada di migration yang sama dengan Putaran 7 (`20261030000013_launch_readiness.sql`), jadi cukup satu kali `npm run db:migrate`.
+
+1. **Menu di HP.**
+   - Menu terlipat di balik satu tombol yang menampilkan halaman aktif. Ketuk tombol itu dan semua menu tampil tanpa perlu digeser.
+   - Setelah pindah halaman, menu tertutup lagi.
+   - Tidak ada lagi ruang kosong di bawah menu pada halaman yang isinya pendek.
+2. **Saat halaman dimuat**, tampil kerangka abu-abu sehingga klik menu langsung terasa ada responsnya. Kalau server bermasalah, tampil halaman "Maaf, halaman ini gagal dimuat" dengan tombol **Coba lagi**, bukan halaman error bawaan berbahasa Inggris.
+3. **Bahasa.** Tombol ID/EN disembunyikan, dan semua tampil dalam Bahasa Indonesia. Nyalakan lagi lewat `ENGLISH_ENABLED` di `src/lib/i18n.ts` setelah semua teks diterjemahkan.
+4. **Email notifikasi.**
+   - Penerima: client dan shopper, tidak termasuk admin.
+   - Kejadian yang dikirim lewat email:
+     - tawaran tugas;
+     - kunjungan perlu revisi;
+     - lamaran disetujui atau ditolak;
+     - fee ditransfer;
+     - tagihan siap dibayar;
+     - pembayaran diverifikasi atau ditolak;
+     - tagihan jatuh tempo;
+     - laporan terbit.
+   - Email masuk 1–2 menit setelah notifikasi muncul di lonceng, dan berisi tombol ke halaman terkait.
+   - Hanya berjalan kalau langkah `docs/SETUP.md` 8b-2 sudah dilakukan. Di staging tanpa `RESEND_API_KEY`, tidak ada email yang terkirim.
+5. **Captcha.** Form masuk, daftar, lupa password, kirim ulang, dan ganti password menampilkan kotak verifikasi Cloudflare setelah `NEXT_PUBLIC_TURNSTILE_SITE_KEY` diisi. Tanpa kunci itu, form berjalan seperti biasa.
+6. **Pesanan.** Selama kota outlet belum dipilih, di bawah tombol **Buat pesanan** muncul "Pilih kota untuk setiap outlet dulu." dengan tautan ke isian kota.
+7. **Beranda client.** Tahap akun (Calon client → Menunggu verifikasi → Client aktif) tampil sebagai teks kecil dengan titik emas di tahap aktif. Tampilannya tidak lagi menyerupai tombol.
+8. **Katalog → Paket.** Ada pilihan **Konsultasi gratis setelah laporan terbit**: tidak termasuk, atau 1 sesi 30, 45, 60, 90, atau 120 menit.
+9. **Keuangan → ganti bukti transfer.** Catatan transfer asli tetap tersimpan. Alasan penggantian tampil terpisah, baik untuk admin maupun shopper.
+10. **Keamanan.** Situs tidak bisa ditampilkan di dalam iframe situs lain, dan header keamanan dasar terpasang di semua halaman.
+
+Diuji otomatis: `tests/putaran8.test.ts` (12 tes) dan `tests/e2e/putaran8-siap-deploy.mjs` (28 cek, tidak mengubah data).

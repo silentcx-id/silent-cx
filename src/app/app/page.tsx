@@ -41,10 +41,19 @@ export default async function ClientHome() {
 
   return (
     <>
-      <ol className="flex flex-wrap gap-2" aria-label="Tahap dashboard">
-        {STAGES.map((s) => (
-          <li key={s} aria-current={s === stage ? "step" : undefined} className={`chip ${s === stage ? "border-accent bg-accent text-accent-ink" : "text-muted"}`}>
-            {t.client.stages[s]}
+      {/* Penanda tahap, bukan tombol: teks kecil dengan panah, tahap aktif ditandai titik emas. */}
+      <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs uppercase tracking-wide" aria-label="Tahap akun">
+        {STAGES.map((s, i) => (
+          <li key={s} aria-current={s === stage ? "step" : undefined} className="flex items-center gap-2">
+            {i > 0 && (
+              <span aria-hidden="true" className="text-muted">
+                →
+              </span>
+            )}
+            <span className={s === stage ? "flex items-center gap-1.5 font-bold text-mark" : "text-muted"}>
+              {s === stage && <span aria-hidden="true" className="size-1.5 rounded-full bg-accent" />}
+              {t.client.stages[s]}
+            </span>
           </li>
         ))}
       </ol>

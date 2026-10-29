@@ -1,12 +1,16 @@
-import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-// Mengambil pengguna yang sedang masuk. Gangguan jaringan sesaat ke Supabase Auth (koneksi putus, 5xx)
-// dicoba ulang, supaya pengguna tidak terlempar ke halaman masuk hanya karena satu permintaan gagal.
-// Sesi yang memang tidak berlaku (token kedaluwarsa/dicabut) langsung dikembalikan sebagai null.
-export async function currentUser(supabase: SupabaseClient, attempts = 4): Promise<User | null> {
+export type SessionUser = { id: string; email: string };
+
+// Pengguna yang sedang masuk, dari token sesi. Token ES256 diverifikasi lokal dengan kunci publik project
+// (getClaims), jadi tidak perlu satu panggilan ke Supabase Auth di setiap halaman; token kedaluwarsa diperbarui otomatis.
+// Gangguan jaringan sesaat (misalnya saat memperbarui token) dicoba ulang, supaya pengguna tidak terlempar
+// ke halaman masuk hanya karena satu permintaan gagal. Sesi yang memang tidak berlaku dikembalikan sebagai null.
+export async function currentUser(supabase: SupabaseClient, attempts = 4): Promise<SessionUser | null> {
   for (let i = 1; ; i++) {
-    const { data, error } = await supabase.auth.getUser();
-    if (data.user) return data.user;
+    const { data, error } = await supabase.auth.getClaims();
+    const claims = data?.claims;
+    if (claims?.sub) return { id: claims.sub, email: typeof claims.email === "string" ? claims.email : "" };
     const transient = error && (error.name === "AuthRetryableFetchError" || (error.status ?? 0) >= 500 || error.status === 0);
     if (!transient) {
       // Tidak ada sesi itu wajar (pengunjung belum masuk); selain itu dicatat agar sesi yang terputus bisa ditelusuri.

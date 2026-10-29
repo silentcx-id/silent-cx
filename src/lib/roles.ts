@@ -36,6 +36,7 @@ export const ROLE_MENU: Record<Role, MenuItem[]> = {
     { slug: "benchmark", label: { id: "Benchmark outlet", en: "Outlet benchmark" }, icon: "layers", phase: 4, entitlement: "benchmarking" },
     { slug: "competitor", label: { id: "Benchmark kompetitor", en: "Competitor benchmark" }, icon: "eye", phase: 4, entitlement: "competitor" },
     { slug: "consultation", label: { id: "Konsultasi", en: "Consultation" }, icon: "chat", phase: 5 },
+    { slug: "account", label: { id: "Akun saya", en: "My account" }, icon: "settings", phase: 0 },
   ],
   shopper: [
     { slug: "", label: { id: "Beranda", en: "Home" }, icon: "home", phase: 0 },
@@ -43,6 +44,7 @@ export const ROLE_MENU: Record<Role, MenuItem[]> = {
     { slug: "assignments", label: { id: "Tugas", en: "Assignments" }, icon: "task", phase: 3, activeOnly: true },
     { slug: "submissions", label: { id: "Riwayat & QC", en: "History & QC" }, icon: "check", phase: 4, activeOnly: true },
     { slug: "payments", label: { id: "Pembayaran", en: "Payments" }, icon: "wallet", phase: 5, activeOnly: true },
+    { slug: "account", label: { id: "Akun saya", en: "My account" }, icon: "settings", phase: 0 },
   ],
   admin: [
     { slug: "", label: { id: "Antrian kerja", en: "Work queue" }, icon: "home", phase: 0 },
@@ -55,6 +57,7 @@ export const ROLE_MENU: Record<Role, MenuItem[]> = {
     { slug: "payouts", label: { id: "Keuangan", en: "Finance" }, icon: "wallet", phase: 5 },
     { slug: "content", label: { id: "Konten", en: "Content" }, icon: "pen", phase: 6 },
     { slug: "consultations", label: { id: "Konsultasi", en: "Consultations" }, icon: "calendar", phase: 5 },
+    { slug: "account", label: { id: "Akun saya", en: "My account" }, icon: "settings", phase: 0 },
   ],
 };
 

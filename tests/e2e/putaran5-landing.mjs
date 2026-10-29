@@ -51,7 +51,7 @@ try {
   check("tidak ada tombol tema", (await page.getByRole("button", { name: /^(Gelap|Terang)$/ }).count()) === 0);
   const footer = page.locator("footer");
   const footerText = (await footer.textContent()) ?? "";
-  check("footer menampilkan alamat, telepon, WhatsApp, email, dan situs web", ["Jl. Contoh No. 123", "(021) 000 0000", "WhatsApp", "halo@silentcx.id", "silentcx.id"].every((x) => footerText.includes(x)));
+  check("footer menampilkan alamat, telepon, WhatsApp, email, dan situs web", ["Jl. Contoh No. 123", "(021) 000 0000", "WhatsApp", "halo@silentcx.com", "silentcx.com"].every((x) => footerText.includes(x)));
   check("footer menampilkan 6 ikon media sosial", (await footer.locator('ul[aria-label="Media sosial"] a').count()) === 6);
   check("tautan Instagram dari nama akun", (await footer.getByRole("link", { name: "Instagram" }).getAttribute("href")) === "https://instagram.com/silentcx.id");
   await footer.screenshot({ path: new URL("landing-footer.png", OUT).pathname.slice(1) });

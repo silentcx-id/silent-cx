@@ -17,6 +17,7 @@ export default async function ShopperPayoutPage({ params }: PageProps<"/admin/pa
       <Link href="/admin/payouts" className="text-sm text-muted hover:text-fg">
         ← Antrian payout
       </Link>
+      {group && <h1 className="text-3xl font-extrabold">Payout {group.name}</h1>}
       {group ? (
         <ShopperPayout shopperId={group.id} name={group.name} phone={group.phone} bank={group.bank} tasks={group.tasks} />
       ) : (

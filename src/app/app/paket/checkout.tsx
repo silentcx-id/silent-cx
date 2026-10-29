@@ -29,6 +29,7 @@ export function Checkout({ packages, addons, cities, initialKey, lang }: { packa
   const served = useMemo(() => new Set(cities.map((c) => c.name.trim().toLowerCase())), [cities]);
   const cityNames = useMemo(() => cities.map((c) => c.name), [cities]);
   const cityList = Array.from({ length: outletCount }, (_, i) => cityValues[i] ?? "");
+  const citiesMissing = cityList.some((c) => c.trim().length < 2);
   const unserved = cityList.some((c) => c.trim().length >= 2 && !served.has(c.trim().toLowerCase()));
 
   const basePrice = pkg.prices.find((p) => p.outlets === tier)?.price ?? 0;
@@ -180,7 +181,7 @@ export function Checkout({ packages, addons, cities, initialKey, lang }: { packa
           </ul>
         </section>
 
-        <section className="grid gap-3">
+        <section id="kota-outlet" className="grid scroll-mt-24 gap-3">
           <div className="grid gap-1">
             <h2 className="font-extrabold">{t.citiesTitle}</h2>
             <p className="text-sm text-muted">{t.citiesHint}</p>
@@ -238,9 +239,18 @@ export function Checkout({ packages, addons, cities, initialKey, lang }: { packa
             {error}
           </p>
         )}
-        <button type="button" className="btn btn-primary" disabled={pending || cityList.some((c) => c.trim().length < 2)} onClick={submit}>
+        <button type="button" className="btn btn-primary" disabled={pending || citiesMissing} onClick={submit}>
           {pending ? t.placing : t.placeOrder}
         </button>
+        {/* Alasan tombol belum aktif, di dekat tombolnya; tautan langsung ke isian kota. */}
+        {citiesMissing && (
+          <p className="text-sm text-muted">
+            {t.citiesMissing}{" "}
+            <a href="#kota-outlet" className="font-semibold text-mark underline underline-offset-4">
+              {t.citiesMissingLink}
+            </a>
+          </p>
+        )}
       </aside>
     </div>
   );

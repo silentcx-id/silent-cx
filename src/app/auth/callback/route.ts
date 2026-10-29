@@ -1,10 +1,13 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { RESET_COOKIE, resetCookieValue } from "@/lib/reset-token";
 import { isRole } from "@/lib/roles";
 import { homeAfterLogin } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 
-// Tujuan tautan email konfirmasi akun (dan nanti reset password).
+const RESET_PATH = "/reset-password";
+
+// Tujuan tautan email konfirmasi akun dan reset password.
 // Mendukung dua bentuk tautan Supabase: ?code= (PKCE) dan ?token_hash=&type=.
 export async function GET(request: NextRequest) {
   const url = request.nextUrl;
@@ -34,6 +37,13 @@ export async function GET(request: NextRequest) {
   }
 
   const { data } = await supabase.auth.getUser();
+  // Tautan reset password: buka halaman password baru, dengan penanda yang hanya berlaku 15 menit.
+  if (data.user && (type === "recovery" || next === RESET_PATH)) {
+    const res = NextResponse.redirect(new URL(RESET_PATH, url.origin));
+    const grant = resetCookieValue(data.user.id);
+    res.cookies.set(RESET_COOKIE, grant.value, { httpOnly: true, sameSite: "lax", secure: url.protocol === "https:", path: "/", maxAge: grant.maxAge });
+    return res;
+  }
   const { data: profile } = data.user ? await supabase.from("profiles").select("role").eq("id", data.user.id).single() : { data: null };
   const dest = profile && isRole(profile.role) ? homeAfterLogin(profile.role, next) : "/login";
   return NextResponse.redirect(new URL(dest, url.origin));

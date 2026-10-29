@@ -44,14 +44,11 @@ try {
   await page.goto(BASE + "/", { waitUntil: "networkidle" });
   check("bahasa bawaan Indonesia", (await page.getAttribute("html", "lang")) === "id");
   check("tidak ada tombol tema", (await page.getByRole("button", { name: /^(Gelap|Terang|Dark|Light)$/ }).count()) === 0);
-  await page.getByRole("button", { name: "EN", exact: true }).first().click();
-  await page.waitForFunction(() => document.documentElement.lang === "en");
-  check("tombol EN mengganti bahasa", (await page.textContent("h1"))?.includes("customers") ?? false, await page.textContent("h1"));
+  // Pilihan bahasa disembunyikan sampai terjemahan Inggris lengkap (ENGLISH_ENABLED di src/lib/i18n.ts).
+  check("tombol ID/EN disembunyikan", (await page.getByRole("button", { name: "EN", exact: true }).count()) === 0);
+  await ctx.addCookies([{ name: "lang", value: "en", url: BASE }]);
   await page.reload({ waitUntil: "networkidle" });
-  check("bahasa tersimpan setelah reload", (await page.getAttribute("html", "lang")) === "en");
-  await page.screenshot({ path: new URL("fase0-en.png", OUT).pathname.slice(1), fullPage: true });
-  await page.getByRole("button", { name: "ID", exact: true }).first().click();
-  await page.waitForFunction(() => document.documentElement.lang === "id");
+  check("cookie bahasa lama tidak mengubah tampilan", (await page.getAttribute("html", "lang")) === "id");
 
   // Login salah memberi pesan yang jelas (atau petunjuk setup kalau Supabase belum disambungkan).
   await page.goto(BASE + "/login", { waitUntil: "networkidle" });

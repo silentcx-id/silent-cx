@@ -87,17 +87,16 @@ export function sortProject(p: Project): Project {
   };
 }
 
-// Pesanan client, terbaru dulu. Invoice yang lewat batas bayar diperbarui dulu menjadi kedaluwarsa.
+// Pesanan client, terbaru dulu. Invoice yang lewat batas bayar ditandai kedaluwarsa oleh jadwal database
+// (pg_cron, setiap 5 menit); pembayaran invoice yang sudah lewat batas tetap ditolak database.
 export const getClientProjects = cache(async (clientId: string): Promise<Project[]> => {
   const supabase = await createClient();
-  await supabase.rpc("expire_overdue");
   const { data } = await supabase.from("projects").select(PROJECT_SELECT).eq("client_id", clientId).order("created_at", { ascending: false });
   return ((data ?? []) as Project[]).map(sortProject);
 });
 
 export async function getProject(id: string): Promise<Project | null> {
   const supabase = await createClient();
-  await supabase.rpc("expire_overdue");
   const { data } = await supabase.from("projects").select(PROJECT_SELECT).eq("id", id).maybeSingle();
   return data ? sortProject(data as Project) : null;
 }

@@ -26,6 +26,7 @@ type Mine = {
     paid_at: string;
     note: string | null;
     proof_replaced_at: string | null;
+    replace_note: string | null;
     items: Item[];
   }[];
 };
@@ -142,6 +143,11 @@ export default async function PaymentsPage() {
                 {x.note && (
                   <span className="text-sm text-muted">
                     {p.note} {x.note}
+                  </span>
+                )}
+                {x.replace_note && (
+                  <span className="text-sm text-muted">
+                    {p.replaceNote} {x.replace_note}
                   </span>
                 )}
                 <span className="flex flex-wrap gap-2">

@@ -17,10 +17,9 @@ export async function getNotifications(userId: string, limit = 10): Promise<Noti
 }
 
 // Isi lonceng: notifikasi terbaru dan jumlah yang belum dibaca.
-// Pengingat tagihan jatuh tempo dibuat di sini juga, supaya terkirim setiap kali ada yang membuka aplikasi.
+// Pengingat tagihan jatuh tempo dibuat terjadwal oleh database (pg_cron, migration 013).
 export async function getNotificationCenter(userId: string): Promise<NotificationCenter> {
   const supabase = await createClient();
-  await supabase.rpc("remind_due_invoices");
   const [items, { count }] = await Promise.all([
     getNotifications(userId),
     supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", userId).is("read_at", null),

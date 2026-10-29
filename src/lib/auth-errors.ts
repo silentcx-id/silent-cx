@@ -1,4 +1,4 @@
-type AuthError = { name?: string; status?: number; code?: string };
+type AuthError = { name?: string; status?: number; code?: string; message?: string };
 
 export function isNetworkError(error: AuthError) {
   return error.name === "AuthRetryableFetchError" || error.status === 0 || (error.status ?? 0) >= 500;
@@ -11,4 +11,9 @@ export function emailSendProblem(error: AuthError): "rateLimited" | "emailNotAll
   if (error.code === "email_address_not_authorized") return "emailNotAllowed";
   if (isNetworkError(error)) return "network";
   return null;
+}
+
+// Token captcha (Turnstile) tidak ada, kedaluwarsa, atau ditolak Supabase.
+export function isCaptchaError(error: AuthError) {
+  return error.code === "captcha_failed" || /captcha/i.test(error.message ?? "");
 }

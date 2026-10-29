@@ -456,9 +456,19 @@ export function Landing({ content, packages, lang, banner }: Props) {
           )}
         </div>
         <div className="border-t border-line">
-          <p className="mx-auto max-w-6xl px-4 py-5 text-xs text-muted sm:px-6">
-            © {new Date().getFullYear()} SilentCX. {L.rights}
-          </p>
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-5 text-xs text-muted sm:px-6">
+            <p>
+              © {new Date().getFullYear()} SilentCX. {L.rights}
+            </p>
+            <nav aria-label={t.legal.terms} className="flex flex-wrap gap-x-5 gap-y-1">
+              <Link href="/syarat" className="hover:text-fg">
+                {pick(content.legal.terms.title, lang)}
+              </Link>
+              <Link href="/privasi" className="hover:text-fg">
+                {pick(content.legal.privacy.title, lang)}
+              </Link>
+            </nav>
+          </div>
         </div>
       </footer>
     </div>

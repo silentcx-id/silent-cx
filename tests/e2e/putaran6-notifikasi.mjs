@@ -56,6 +56,8 @@ try {
     await bell.click();
     await panel.getByRole("link", { name: /Lihat semua notifikasi/ }).click();
     await s.page.waitForURL(`**${home}/notifications`);
+    // Selama dimuat tampil kerangka abu-abu; tunggu judul halaman.
+    await s.page.locator("main h1").first().waitFor();
     check(`${email}: halaman semua notifikasi terbuka`, ((await s.page.textContent("main")) ?? "").includes("Semua pemberitahuan untuk akun Anda"));
 
     if (home === "/shopper") {

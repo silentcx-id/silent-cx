@@ -2,6 +2,10 @@
 // Struktur dua bahasa disiapkan sejak Fase 0, terjemahan Inggris dirapikan di Fase 6.
 
 export const LANGS = ["id", "en"] as const;
+
+// Terjemahan Inggris belum lengkap, jadi pilihan bahasa disembunyikan dan semua tampil dalam Bahasa Indonesia.
+// Nyalakan lagi (true) setelah semua teks dashboard, email, dan PDF diterjemahkan.
+export const ENGLISH_ENABLED = false;
 export type Lang = (typeof LANGS)[number];
 
 export function isLang(value: unknown): value is Lang {
@@ -93,12 +97,52 @@ const id = {
     resent: (email: string) => `Email konfirmasi dikirim ulang ke ${email}. Cek juga folder Spam atau Promosi.`,
     rateLimited: "Terlalu banyak permintaan email. Tunggu sebentar lalu coba lagi.",
     emailNotAllowed: "Server email belum bisa mengirim ke alamat ini. Hubungi tim SilentCX.",
+    captcha: "Verifikasi keamanan belum selesai atau sudah kedaluwarsa. Centang kotak verifikasi lalu coba lagi.",
+    forgotLink: "Lupa password?",
+    forgotTitle: "Lupa password",
+    forgotLede: "Masukkan email akun Anda. Kami kirim tautan untuk membuat password baru.",
+    sendReset: "Kirim tautan",
+    resetSent: (email: string) => `Kalau ${email} terdaftar, tautan untuk membuat password baru sudah dikirim. Tautan berlaku 1 jam. Cek juga folder Spam atau Promosi.`,
+    resendReset: "Kirim ulang tautan",
+    backToLogin: "Kembali ke halaman masuk",
+    resetTitle: "Buat password baru",
+    resetLede: "Buat password baru untuk akun Anda. Setelah tersimpan, Anda langsung masuk, dan perangkat lain keluar otomatis paling lambat 1 jam.",
+    resetExpired: "Tautan reset sudah tidak berlaku. Minta tautan baru.",
+    passwordReset: "Password baru tersimpan. Perangkat lain keluar otomatis paling lambat 1 jam.",
   },
   password: {
     rule: "Minimal 8 karakter, berisi huruf dan angka.",
     short: "Password minimal 8 karakter.",
     long: "Password maksimal 72 karakter.",
     mix: "Password harus berisi huruf dan angka.",
+    newPassword: "Password baru",
+    confirmPassword: "Ulangi password baru",
+    mismatch: "Kedua password baru tidak sama.",
+    same: "Password baru harus berbeda dari password lama.",
+    save: "Simpan password",
+    saving: "Menyimpan…",
+  },
+  legal: {
+    updated: "Terakhir diperbarui",
+    privacy: "Kebijakan Privasi",
+    terms: "Syarat & Ketentuan",
+    agreeBefore: "Saya menyetujui",
+    agreeAnd: "dan",
+    agreeRequired: "Centang persetujuan Syarat & Ketentuan dan Kebijakan Privasi untuk melanjutkan.",
+  },
+  account: {
+    title: "Akun saya",
+    lede: "Data akun dan password untuk masuk ke SilentCX.",
+    dataTitle: "Data akun",
+    emailFixed: "Email dipakai untuk masuk dan tidak bisa diubah sendiri. Hubungi tim SilentCX kalau perlu diganti.",
+    save: "Simpan perubahan",
+    saved: "Data akun tersimpan.",
+    passwordTitle: "Ganti password",
+    passwordLede: "Setelah password diganti, perangkat lain yang sedang masuk keluar otomatis paling lambat 1 jam.",
+    currentPassword: "Password saat ini",
+    wrongCurrent: "Password saat ini salah.",
+    changed: "Password diganti. Perangkat lain keluar otomatis paling lambat 1 jam.",
+    forgot: "Lupa password saat ini? Keluar, lalu pakai Lupa password di halaman masuk.",
   },
   roles: { client: "Pemilik bisnis", shopper: "Mystery shopper", admin: "Admin SilentCX" },
   status: { pending: "Menunggu seleksi", active: "Aktif", rejected: "Ditolak", suspended: "Ditangguhkan" },
@@ -280,6 +324,8 @@ const id = {
     reviewNotice: "Pesanan ini akan dikonfirmasi admin dulu sebelum bisa dibayar.",
     placeOrder: "Buat pesanan",
     placing: "Membuat pesanan…",
+    citiesMissing: "Pilih kota untuk setiap outlet dulu.",
+    citiesMissingLink: "Pilih kota",
     openOrderExists: "Anda masih punya pesanan yang belum selesai. Selesaikan atau tunggu konfirmasi pesanan itu dulu.",
     noPackages: "Belum ada paket yang tersedia. Hubungi tim SilentCX.",
     billingTitle: "Tagihan",
@@ -550,6 +596,7 @@ const id = {
     proof: "Lihat bukti transfer",
     proofReplaced: "Bukti diganti admin",
     note: "Catatan admin:",
+    replaceNote: "Alasan bukti diganti:",
     contact: (name: string) => `Hubungi ${name}`,
     contactHint: "Ada masalah dengan pembayaran ini? Hubungi admin langsung lewat WhatsApp.",
     contactMessage: (code: string, total: string) => `Halo, saya shopper SilentCX. Saya ingin menanyakan pembayaran ${code} sebesar ${total}.`,

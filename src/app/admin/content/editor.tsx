@@ -6,7 +6,22 @@ import { StatusText, useAction } from "@/components/use-action";
 import { shrinkImage } from "@/lib/shrink-image";
 import { LANDING_ICONS, type LandingIcon } from "@/lib/landing-icons";
 import { SOCIALS } from "@/lib/site-links";
-import { SAMPLE_MARK, SAMPLE_SITE, SECTION_META, type Item, type Section, type SectionKey, type SiteContent, type SiteInfo, type Text } from "@/lib/site-content";
+import {
+  LEGAL_KEYS,
+  LEGAL_PATH,
+  legalPlaceholders,
+  SAMPLE_MARK,
+  SAMPLE_SITE,
+  SECTION_META,
+  type Item,
+  type LegalDoc,
+  type LegalKey,
+  type Section,
+  type SectionKey,
+  type SiteContent,
+  type SiteInfo,
+  type Text,
+} from "@/lib/site-content";
 import { createClient } from "@/lib/supabase/client";
 
 const input = "min-h-10 w-full rounded-lg border border-line bg-raise px-3 py-2 text-sm";
@@ -29,7 +44,7 @@ const sampleSiteFields = (c: SiteContent) => (Object.keys(SAMPLE_SITE) as (keyof
 export function ContentEditor({ initial, unpublished, hasPublished }: { initial: SiteContent; unpublished: boolean; hasPublished: boolean }) {
   const { pending, status, act } = useAction();
   const [c, setC] = useState(initial);
-  const [tab, setTab] = useState<"sections" | "site">("sections");
+  const [tab, setTab] = useState<"sections" | "site" | "legal">("sections");
   const dirty = JSON.stringify(c) !== JSON.stringify(initial);
 
   // Mengingatkan sebelum meninggalkan halaman kalau ada perubahan yang belum disimpan.
@@ -112,11 +127,19 @@ export function ContentEditor({ initial, unpublished, hasPublished }: { initial:
         </p>
       )}
 
-      <nav aria-label="Bagian editor" className="flex gap-1 border-b border-line">
+      {legalPlaceholders(c).length > 0 && (
+        <p role="note" className="rounded-xl border border-warn/50 bg-warn/10 p-4 text-sm">
+          <strong>Kebijakan Privasi dan Syarat & Ketentuan masih draf.</strong> Lengkapi isian bertanda kurung siku di tab Halaman hukum:{" "}
+          {legalPlaceholders(c).join(", ")}. Mintalah peninjauan penasihat hukum sebelum situs dibuka untuk umum.
+        </p>
+      )}
+
+      <nav aria-label="Bagian editor" className="flex gap-1 overflow-x-auto border-b border-line">
         {(
           [
             ["sections", "Bagian halaman"],
             ["site", "Info situs"],
+            ["legal", "Halaman hukum"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -149,6 +172,9 @@ export function ContentEditor({ initial, unpublished, hasPublished }: { initial:
       )}
 
       {tab === "site" && <SiteForm site={c.site} onChange={(site) => setC({ ...c, site })} />}
+
+      {tab === "legal" &&
+        LEGAL_KEYS.map((k) => <LegalForm key={k} k={k} doc={c.legal[k]} onChange={(doc) => setC({ ...c, legal: { ...c.legal, [k]: doc } })} />)}
     </div>
   );
 }
@@ -355,11 +381,11 @@ function SiteForm({ site, onChange }: { site: SiteInfo; onChange: (s: SiteInfo) 
         </label>
         <label className="grid gap-1 text-sm font-semibold">
           Email bisnis
-          <input className={input} type="email" value={site.email} maxLength={120} placeholder="halo@silentcx.id" onChange={set("email")} />
+          <input className={input} type="email" value={site.email} maxLength={120} placeholder="halo@silentcx.com" onChange={set("email")} />
         </label>
         <label className="grid gap-1 text-sm font-semibold">
           Situs web
-          <input className={input} value={site.website} maxLength={200} placeholder="silentcx.id" onChange={set("website")} />
+          <input className={input} value={site.website} maxLength={200} placeholder="silentcx.com" onChange={set("website")} />
         </label>
       </div>
       <label className="grid gap-1 text-sm font-semibold">
@@ -382,6 +408,45 @@ function SiteForm({ site, onChange }: { site: SiteInfo; onChange: (s: SiteInfo) 
       <Bilingual label="Judul halaman di Google" value={site.seoTitle} onChange={(seoTitle) => onChange({ ...site, seoTitle })} max={70} required />
       <Bilingual label="Deskripsi halaman di Google" value={site.seoDescription} onChange={(seoDescription) => onChange({ ...site, seoDescription })} max={170} long />
       <Bilingual label="Judul di halaman masuk dan daftar" value={site.authHeadline} onChange={(authHeadline) => onChange({ ...site, authHeadline })} max={120} />
+    </section>
+  );
+}
+
+// Satu halaman hukum. Mengubah tanggal "Terakhir diperbarui" berarti versi baru: pendaftar berikutnya menyetujui versi ini.
+function LegalForm({ k, doc, onChange }: { k: LegalKey; doc: LegalDoc; onChange: (d: LegalDoc) => void }) {
+  return (
+    <section className="card grid gap-5 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-extrabold">{doc.title.id || k}</h2>
+        <a href={LEGAL_PATH[k]} target="_blank" rel="noreferrer" className="text-sm font-semibold text-mark underline underline-offset-4">
+          Lihat versi terbit ↗
+        </a>
+      </div>
+      <Bilingual label="Judul" value={doc.title} onChange={(title) => onChange({ ...doc, title })} max={120} required />
+      <label className="grid gap-1 text-sm font-semibold sm:max-w-xs">
+        Terakhir diperbarui
+        <input className={input} type="date" value={doc.updated} onChange={(e) => onChange({ ...doc, updated: e.target.value })} />
+        <span className="text-xs font-normal text-muted">Ganti tanggal ini setiap kali isinya berubah. Tanggal ini dicatat sebagai versi yang disetujui pendaftar.</span>
+      </label>
+      <fieldset className="grid gap-1.5">
+        <legend className="mb-1 text-sm font-semibold">
+          Isi<span className="text-bad"> *</span>
+        </legend>
+        <p className="text-xs text-muted">Baris diawali &quot;## &quot; menjadi subjudul, baris diawali &quot;- &quot; menjadi butir daftar, dan baris kosong memisahkan paragraf.</p>
+        <div className="grid gap-2 lg:grid-cols-2">
+          {(["id", "en"] as const).map((lang) => (
+            <label key={lang} className="grid gap-1 text-xs text-muted">
+              {lang === "id" ? "Indonesia" : "Inggris (opsional)"}
+              <textarea
+                className={`${input} min-h-[28rem] font-mono text-fg`}
+                value={doc.body[lang]}
+                maxLength={40000}
+                onChange={(e) => onChange({ ...doc, body: { ...doc.body, [lang]: e.target.value } })}
+              />
+            </label>
+          ))}
+        </div>
+      </fieldset>
     </section>
   );
 }

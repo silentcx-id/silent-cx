@@ -36,6 +36,7 @@ export type PaidRow = {
   paid_at: string;
   note: string | null;
   proof_replaced_at: string | null;
+  replace_note: string | null;
 };
 
 // Sisa waktu sampai batas 48 jam, dibulatkan ke jam.
@@ -194,6 +195,7 @@ export function PaidPayout({ payout, shopperName, paidLabel }: { payout: PaidRow
             {paidLabel} · {payout.bank_name} {payout.account_number} · fee {rupiah(payout.fee_total)} + reimburse {rupiah(payout.reimburse_total)}
           </span>
           {payout.note && <span className="text-sm text-muted">Catatan: {payout.note}</span>}
+          {payout.replace_note && <span className="text-sm text-muted">Alasan ganti bukti: {payout.replace_note}</span>}
         </span>
         <span className="flex flex-wrap items-center gap-2">
           <span className="font-display text-xl font-extrabold tabular-nums">{rupiah(payout.total)}</span>

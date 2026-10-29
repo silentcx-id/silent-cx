@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import { logout } from "@/app/(auth)/actions";
 import { Logo } from "./logo";
 import { NotificationBell } from "./notification-bell";
 import { PortalNav } from "./portal-nav";
 import { PrefsSwitch } from "./prefs-switch";
+import { StatusFlash } from "./status-flash";
 import { dict, type Lang } from "@/lib/i18n";
 import type { NotificationCenter } from "@/lib/notifications";
 import { ROLE_HOME } from "@/lib/roles";
@@ -27,7 +29,8 @@ export function PortalShell({
   return (
     <div className="flex min-h-dvh flex-col">
       <div className="tape" aria-hidden="true" />
-      <div className="mx-auto grid w-full max-w-[1680px] flex-1 md:grid-cols-[248px_minmax(0,1fr)]">
+      {/* Di HP baris menu setinggi isinya saja; sisa layar untuk halaman. */}
+      <div className="mx-auto grid w-full max-w-[1680px] flex-1 grid-rows-[auto_1fr] md:grid-cols-[248px_minmax(0,1fr)] md:grid-rows-1">
         <aside className="grid content-start gap-5 border-b border-line px-4 py-4 md:sticky md:top-0 md:h-[calc(100dvh-10px)] md:border-b-0 md:border-r md:px-4 md:py-6">
           <div className="flex items-center justify-between gap-3">
             <Logo href={ROLE_HOME[viewer.role]} />
@@ -51,6 +54,9 @@ export function PortalShell({
             </form>
           </header>
           <main className="grid min-w-0 content-start gap-8 px-4 pb-16 pt-2 sm:px-8">{children}</main>
+          <Suspense>
+            <StatusFlash messages={{ password: t.auth.passwordReset }} />
+          </Suspense>
         </div>
       </div>
     </div>

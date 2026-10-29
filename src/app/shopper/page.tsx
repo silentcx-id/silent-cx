@@ -17,7 +17,6 @@ export default async function ShopperHome() {
   const [viewer, lang] = await Promise.all([requireRole("shopper", "/shopper"), getLang()]);
   const t = dict(lang);
   const s = t.shopper;
-  const app = await getLatestApplication(viewer.id);
 
   if (viewer.status === "active") {
     const supabase = await createClient();
@@ -77,6 +76,8 @@ export default async function ShopperHome() {
   }
 
   // Pelamar: belum mengisi atau masih draft, sedang ditinjau, atau ditolak (dan kapan boleh melamar lagi).
+  // Lamaran hanya dibutuhkan selama akun belum aktif.
+  const app = await getLatestApplication(viewer.id);
   const stage = applicationStage(app);
   const rejected = stage === "rejected";
   const reviewing = stage === "submitted";

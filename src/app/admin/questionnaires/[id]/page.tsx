@@ -35,6 +35,7 @@ export default async function QuestionnaireDetail({ params }: PageProps<"/admin/
       <Link href="/admin/questionnaires" className="text-sm text-muted hover:text-fg">
         ← Semua kuesioner
       </Link>
+      <h1 className="text-3xl font-extrabold">{q.name}</h1>
 
       <QuestionnaireHeader questionnaire={{ id: q.id, name: q.name, business_type: q.business_type, description: q.description, photo_limit: q.photo_limit, active: q.active }} usedBy={used ?? 0} types={await getBusinessTypes()} />
 

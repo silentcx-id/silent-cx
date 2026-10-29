@@ -5,7 +5,7 @@ import { z } from "zod";
 import { check, checkData, run } from "@/lib/action";
 import { requireRole } from "@/lib/session";
 import { LANDING_ICONS } from "@/lib/landing-icons";
-import { SECTION_KEYS } from "@/lib/site-content";
+import { LEGAL_KEYS, SECTION_KEYS } from "@/lib/site-content";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SUPABASE_URL } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
@@ -42,6 +42,12 @@ const section = z.object({
   items: z.array(item).max(20, "Maksimal 20 butir per daftar."),
 });
 
+const legalDoc = z.object({
+  title: text(120).refine((t) => t.id.length > 0, "Judul halaman hukum wajib diisi."),
+  updated: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Tanggal diperbarui harus berupa tanggal."),
+  body: text(40000).refine((t) => t.id.length > 0, "Isi halaman hukum wajib diisi."),
+});
+
 const contentSchema = z.object({
   order: z
     .array(z.enum(SECTION_KEYS))
@@ -58,7 +64,7 @@ const contentSchema = z.object({
       .string()
       .trim()
       .max(200)
-      .regex(/^((https?:\/\/)?[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?)?$/i, "Alamat situs web tidak valid, contoh: silentcx.id"),
+      .regex(/^((https?:\/\/)?[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?)?$/i, "Alamat situs web tidak valid, contoh: silentcx.com"),
     tiktok: social("TikTok"),
     facebook: social("Facebook"),
     linkedin: social("LinkedIn"),
@@ -68,6 +74,7 @@ const contentSchema = z.object({
     seoDescription: text(170),
     authHeadline: text(120),
   }),
+  legal: z.object(Object.fromEntries(LEGAL_KEYS.map((k) => [k, legalDoc])) as Record<(typeof LEGAL_KEYS)[number], typeof legalDoc>),
 });
 
 async function saveDraft(content: z.infer<typeof contentSchema>) {
