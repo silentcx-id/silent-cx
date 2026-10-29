@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640" width="960" height="640" role="img" aria-label="Contoh laporan SilentCX: Ringkasan skor CX">
+  <rect width="960" height="640" fill="#FFFFFF"/>
+  <rect width="960" height="64" fill="#06080C"/>
+  <rect y="64" width="960" height="6" fill="#E5A93C"/>
+  <g transform="translate(36 18)">
+    <rect width="28" height="28" rx="7" fill="#E5A93C"/>
+    <circle cx="12.5" cy="12.5" r="6.5" fill="none" stroke="#06080C" stroke-width="3"/>
+    <path d="M17.5 17.5 23 23" stroke="#06080C" stroke-width="3.2" stroke-linecap="round"/>
+  </g>
+  <text x="76" y="40" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="#F4F2EC">Silent<tspan fill="#E5A93C">CX</tspan></text>
+  <text x="924" y="40" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="400" fill="#9AA0AB" text-anchor="end">Laporan Audit CX · PT ABC · PRJ-0013</text>
+  <text x="48" y="118" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#1B1F27" text-anchor="start">Ringkasan skor CX</text>
+  
+  <circle cx="220" cy="300" r="92" fill="none" stroke="#ECE6D8" stroke-width="22"/>
+  <circle cx="220" cy="300" r="92" fill="none" stroke="#E5A93C" stroke-width="22" stroke-linecap="round" stroke-dasharray="420.8226191336599 578.0530482605219" transform="rotate(-90 220 300)"/>
+  <text x="220" y="312" font-family="Arial, Helvetica, sans-serif" font-size="50" font-weight="700" fill="#1B1F27" text-anchor="middle">72,8</text>
+  <text x="220" y="340" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="400" fill="#6B717C" text-anchor="middle">dari 100</text>
+  <text x="220" y="438" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#1B1F27" text-anchor="middle">Skor CX keseluruhan</text>
+  <rect x="150" y="456" width="140" height="28" rx="14" fill="#FDF3DF"/>
+  <text x="220" y="475" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="#B9822A" text-anchor="middle">Cukup baik</text>
+  <text x="430" y="166" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="#6B717C" text-anchor="start">Ringkasan untuk manajemen</text>
+  <text x="430" y="196" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="400" fill="#1B1F27"><tspan x="430" dy="0">Dari tiga outlet, Cabang A memimpin dengan skor</tspan><tspan x="430" dy="23.2">81,2, sedangkan Cabang C tertinggal di 62,5 terutama</tspan><tspan x="430" dy="23.2">karena kecepatan pelayanan dan kebersihan area</tspan><tspan x="430" dy="23.2">duduk. Upselling hampir tidak dilakukan di semua</tspan><tspan x="430" dy="23.2">outlet. Prioritas manajemen: standar waktu saji</tspan><tspan x="430" dy="23.2">lintas outlet dan pelatihan upselling singkat.</tspan></text>
+  <rect x="430" y="440" width="150" height="84" rx="12" fill="#F8F5EE"/>
+  <text x="446" y="468" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" fill="#6B717C" text-anchor="start">Paket</text><text x="446" y="494" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#1B1F27"><tspan x="446" dy="0">SilentCX</tspan><tspan x="446" dy="18.75">Performance</tspan></text><rect x="592" y="440" width="150" height="84" rx="12" fill="#F8F5EE"/>
+  <text x="608" y="468" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" fill="#6B717C" text-anchor="start">Outlet</text><text x="608" y="494" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#1B1F27"><tspan x="608" dy="0">3 outlet · 4</tspan><tspan x="608" dy="18.75">kunjungan</tspan></text><rect x="754" y="440" width="150" height="84" rx="12" fill="#F8F5EE"/>
+  <text x="770" y="468" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" fill="#6B717C" text-anchor="start">Terbit</text><text x="770" y="494" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#1B1F27"><tspan x="770" dy="0">4 Nov 2026</tspan></text>
+  <line x1="48" y1="596" x2="912" y2="596" stroke="#ECE6D8" stroke-width="1.5"/>
+  <text x="48" y="620" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="400" fill="#6B717C" text-anchor="start">Contoh laporan dengan data fiktif · Periode kunjungan 28 Okt – 1 Nov 2026</text>
+  <text x="912" y="620" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="400" fill="#6B717C" text-anchor="end">Halaman 1 / 6</text>
+</svg>

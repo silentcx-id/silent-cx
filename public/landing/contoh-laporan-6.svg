@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640" width="960" height="640" role="img" aria-label="Contoh laporan SilentCX: Rekomendasi prioritas">
+  <rect width="960" height="640" fill="#FFFFFF"/>
+  <rect width="960" height="64" fill="#06080C"/>
+  <rect y="64" width="960" height="6" fill="#E5A93C"/>
+  <g transform="translate(36 18)">
+    <rect width="28" height="28" rx="7" fill="#E5A93C"/>
+    <circle cx="12.5" cy="12.5" r="6.5" fill="none" stroke="#06080C" stroke-width="3"/>
+    <path d="M17.5 17.5 23 23" stroke="#06080C" stroke-width="3.2" stroke-linecap="round"/>
+  </g>
+  <text x="76" y="40" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="#F4F2EC">Silent<tspan fill="#E5A93C">CX</tspan></text>
+  <text x="924" y="40" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="400" fill="#9AA0AB" text-anchor="end">Laporan Audit CX · PT ABC · PRJ-0013</text>
+  <text x="48" y="118" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#1B1F27" text-anchor="start">Rekomendasi prioritas</text>
+  <rect x="48" y="146" width="276" height="420" rx="14" fill="#F8F5EE"/>
+  <rect x="48" y="146" width="276" height="6" rx="3" fill="#C0392B"/>
+  <text x="72" y="186" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" fill="#1B1F27" text-anchor="start">Sekarang</text><circle cx="80" cy="213" r="9" fill="none" stroke="#C0392B" stroke-width="2.5"/><path d="M75.5 213l3 3 5-6" fill="none" stroke="#C0392B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><text x="100" y="218" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="400" fill="#1B1F27"><tspan x="100" dy="0">Terapkan naskah upselling</tspan><tspan x="100" dy="21.75">satu kalimat di semua</tspan><tspan x="100" dy="21.75">outlet.</tspan></text><circle cx="80" cy="308.25" r="9" fill="none" stroke="#C0392B" stroke-width="2.5"/><path d="M75.5 308.25l3 3 5-6" fill="none" stroke="#C0392B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><text x="100" y="313.25" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="400" fill="#1B1F27"><tspan x="100" dy="0">Jadwalkan pembersih meja</tspan><tspan x="100" dy="21.75">tiap 15 menit di jam ramai</tspan><tspan x="100" dy="21.75">Cabang C.</tspan></text><rect x="340" y="146" width="276" height="420" rx="14" fill="#F8F5EE"/>
+  <rect x="340" y="146" width="276" height="6" rx="3" fill="#E5A93C"/>
+  <text x="364" y="186" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" fill="#1B1F27" text-anchor="start">Segera</text><circle cx="372" cy="213" r="9" fill="none" stroke="#E5A93C" stroke-width="2.5"/><path d="M367.5 213l3 3 5-6" fill="none" stroke="#E5A93C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><text x="392" y="218" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="400" fill="#1B1F27"><tspan x="392" dy="0">Samakan standar waktu saji</tspan><tspan x="392" dy="21.75">10 menit di semua outlet.</tspan></text><circle cx="372" cy="286.5" r="9" fill="none" stroke="#E5A93C" stroke-width="2.5"/><path d="M367.5 286.5l3 3 5-6" fill="none" stroke="#E5A93C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><text x="392" y="291.5" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="400" fill="#1B1F27"><tspan x="392" dy="0">Pantau dengan audit ulang</tspan><tspan x="392" dy="21.75">bulan depan.</tspan></text><rect x="632" y="146" width="276" height="420" rx="14" fill="#F8F5EE"/>
+  <rect x="632" y="146" width="276" height="6" rx="3" fill="#2E8540"/>
+  <text x="656" y="186" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" fill="#1B1F27" text-anchor="start">Nanti</text><circle cx="664" cy="213" r="9" fill="none" stroke="#2E8540" stroke-width="2.5"/><path d="M659.5 213l3 3 5-6" fill="none" stroke="#2E8540" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><text x="684" y="218" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="400" fill="#1B1F27"><tspan x="684" dy="0">Jadikan Cabang A outlet</tspan><tspan x="684" dy="21.75">percontohan untuk pelatihan</tspan><tspan x="684" dy="21.75">pelayanan.</tspan></text>
+  <line x1="48" y1="596" x2="912" y2="596" stroke="#ECE6D8" stroke-width="1.5"/>
+  <text x="48" y="620" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="400" fill="#6B717C" text-anchor="start">Contoh laporan dengan data fiktif · Periode kunjungan 28 Okt – 1 Nov 2026</text>
+  <text x="912" y="620" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="400" fill="#6B717C" text-anchor="end">Halaman 6 / 6</text>
+</svg>

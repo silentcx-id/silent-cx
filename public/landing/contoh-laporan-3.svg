@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640" width="960" height="640" role="img" aria-label="Contoh laporan SilentCX: Perbandingan outlet dan kompetitor">
+  <rect width="960" height="640" fill="#FFFFFF"/>
+  <rect width="960" height="64" fill="#06080C"/>
+  <rect y="64" width="960" height="6" fill="#E5A93C"/>
+  <g transform="translate(36 18)">
+    <rect width="28" height="28" rx="7" fill="#E5A93C"/>
+    <circle cx="12.5" cy="12.5" r="6.5" fill="none" stroke="#06080C" stroke-width="3"/>
+    <path d="M17.5 17.5 23 23" stroke="#06080C" stroke-width="3.2" stroke-linecap="round"/>
+  </g>
+  <text x="76" y="40" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="#F4F2EC">Silent<tspan fill="#E5A93C">CX</tspan></text>
+  <text x="924" y="40" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="400" fill="#9AA0AB" text-anchor="end">Laporan Audit CX · PT ABC · PRJ-0013</text>
+  <text x="48" y="118" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#1B1F27" text-anchor="start">Perbandingan outlet dan kompetitor</text>
+  <line x1="70" y1="520" x2="660" y2="520" stroke="#ECE6D8" stroke-width="2"/><rect x="90" y="276.4" width="92" height="243.6" rx="10" fill="#2E8540" />
+  <text x="136" y="264.4" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#1B1F27" text-anchor="middle">81,2</text>
+  <text x="136" y="546" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#1B1F27" text-anchor="middle">Cabang A</text>
+  <text x="136" y="566" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" fill="#6B717C" text-anchor="middle">Jakarta</text><rect x="240" y="295.6" width="92" height="224.4" rx="10" fill="#E5A93C" />
+  <text x="286" y="283.6" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#1B1F27" text-anchor="middle">74,8</text>
+  <text x="286" y="546" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#1B1F27" text-anchor="middle">Cabang B</text>
+  <text x="286" y="566" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" fill="#6B717C" text-anchor="middle">Bandung</text><rect x="390" y="332.5" width="92" height="187.5" rx="10" fill="#E5A93C" />
+  <text x="436" y="320.5" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#1B1F27" text-anchor="middle">62,5</text>
+  <text x="436" y="546" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#1B1F27" text-anchor="middle">Cabang C</text>
+  <text x="436" y="566" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" fill="#6B717C" text-anchor="middle">Surabaya</text><rect x="540" y="309.7" width="92" height="210.3" rx="10" fill="none" stroke="#6B717C" stroke-width="2.5" stroke-dasharray="7 6"/>
+  <text x="586" y="297.7" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#1B1F27" text-anchor="middle">70,1</text>
+  <text x="586" y="546" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#1B1F27" text-anchor="middle">Cafe XYZ</text>
+  <text x="586" y="566" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" fill="#6B717C" text-anchor="middle">Kompetitor</text><text x="680" y="160" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="#6B717C" text-anchor="start">Peringkat outlet</text><rect x="680" y="176" width="232" height="62" rx="12" fill="#FDF3DF"/>
+  <circle cx="708" cy="207" r="15" fill="#E5A93C"/><text x="708" y="212" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#06080C" text-anchor="middle">1</text>
+  <text x="734" y="203" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="#1B1F27" text-anchor="start">Cafe 123 Cabang A</text><text x="734" y="222" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" fill="#6B717C" text-anchor="start">Skor 81,2</text><rect x="680" y="250" width="232" height="62" rx="12" fill="#F8F5EE"/>
+  <circle cx="708" cy="281" r="15" fill="#06080C"/><text x="708" y="286" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">2</text>
+  <text x="734" y="277" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="#1B1F27" text-anchor="start">Cafe 123 Cabang B</text><text x="734" y="296" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" fill="#6B717C" text-anchor="start">Skor 74,8</text><rect x="680" y="324" width="232" height="62" rx="12" fill="#F8F5EE"/>
+  <circle cx="708" cy="355" r="15" fill="#06080C"/><text x="708" y="360" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">3</text>
+  <text x="734" y="351" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="#1B1F27" text-anchor="start">Cafe 123 Cabang C</text><text x="734" y="370" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" fill="#6B717C" text-anchor="start">Skor 62,5</text>
+  <text x="680" y="420" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="400" fill="#6B717C"><tspan x="680" dy="0">Garis putus-putus: kompetitor</tspan><tspan x="680" dy="18.849999999999998">langsung (add-on benchmark</tspan><tspan x="680" dy="18.849999999999998">kompetitor).</tspan></text>
+  <line x1="48" y1="596" x2="912" y2="596" stroke="#ECE6D8" stroke-width="1.5"/>
+  <text x="48" y="620" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="400" fill="#6B717C" text-anchor="start">Contoh laporan dengan data fiktif · Periode kunjungan 28 Okt – 1 Nov 2026</text>
+  <text x="912" y="620" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="400" fill="#6B717C" text-anchor="end">Halaman 3 / 6</text>
+</svg>

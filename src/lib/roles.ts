@@ -15,7 +15,7 @@ export const ROLE_HOME: Record<Role, string> = {
   admin: "/admin",
 };
 
-export type IconName = "home" | "box" | "wallet" | "store" | "eye" | "report" | "chat" | "task" | "check" | "user" | "users" | "layers" | "calendar" | "settings" | "pen";
+export type IconName = "bell" | "home" | "box" | "wallet" | "store" | "eye" | "report" | "chat" | "task" | "check" | "user" | "users" | "layers" | "calendar" | "settings" | "pen";
 
 type Label = Record<Lang, string>;
 

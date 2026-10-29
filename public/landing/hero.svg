@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="20 40 760 600" width="760" height="600" role="img" aria-label="Ilustrasi: mystery shopper memeriksa outlet dan papan skor CX">
+  <defs>
+    <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E5A93C" stop-opacity="0.35"/><stop offset="1" stop-color="#E5A93C" stop-opacity="0"/></linearGradient>
+  </defs>
+  <polygon points="400.0,216.4 759.2,423.8 429.4,614.2 70.2,406.8" fill="#141821" /><polygon points="70.2,423.8 429.4,631.2 429.4,614.2 70.2,406.8" fill="#0B0E13" /><polygon points="759.2,440.8 429.4,631.2 429.4,614.2 759.2,423.8" fill="#10141B" />
+  <polygon points="400.0,216.4 759.2,423.8 429.4,614.2 70.2,406.8" fill="none" stroke="#E5A93C" stroke-width="2" opacity="0.7"/>
+  <polygon points="140.9,393.2 170.3,410.2 158.6,417.0 129.1,400.0" fill="#2A303B" /><polygon points="205.7,430.6 235.1,447.6 223.3,454.4 193.9,437.4" fill="#2A303B" /><polygon points="270.4,468.0 299.9,485.0 288.1,491.8 258.7,474.8" fill="#2A303B" /><polygon points="335.2,505.4 364.7,522.4 352.9,529.2 323.4,512.2" fill="#2A303B" /><polygon points="400.0,542.8 429.4,559.8 417.7,566.6 388.2,549.6" fill="#2A303B" />
+  <polygon points="400.0,134.8 547.2,219.8 429.4,287.8 282.2,202.8" fill="#2A303B" /><polygon points="282.2,311.6 429.4,396.6 429.4,287.8 282.2,202.8" fill="#1B1F28" /><polygon points="547.2,328.6 429.4,396.6 429.4,287.8 547.2,219.8" fill="#151920" />
+  <polygon points="282.2,202.8 429.4,287.8 429.4,267.4 282.2,182.4" fill="#E5A93C" />
+  <text transform="matrix(0.8660254037844387 0.5 0 -1 302.83194969538596 210.28) scale(34) scale(1 -1)" font-family="Arial, Helvetica, sans-serif" font-size="0.42" font-weight="700" fill="#06080C">CAFE 123</text>
+  <polygon points="282.2,204.5 300.6,215.1 280.0,244.0 261.6,233.4" fill="#E5A93C" /><polygon points="300.6,215.1 319.0,225.8 298.4,254.7 280.0,244.0" fill="#06080C" /><polygon points="319.0,225.8 337.4,236.4 316.8,265.3 298.4,254.7" fill="#E5A93C" /><polygon points="337.4,236.4 355.8,247.0 335.2,275.9 316.8,265.3" fill="#06080C" /><polygon points="355.8,247.0 374.2,257.6 353.6,286.5 335.2,275.9" fill="#E5A93C" /><polygon points="374.2,257.6 392.6,268.3 372.0,297.1 353.6,286.5" fill="#06080C" /><polygon points="392.6,268.3 411.0,278.9 390.4,307.8 372.0,297.1" fill="#E5A93C" /><polygon points="411.0,278.9 429.4,289.5 408.8,318.4 390.4,307.8" fill="#06080C" />
+  <polygon points="299.9,315.0 347.0,342.2 347.0,270.8 299.9,243.6" fill="#BFD4DE" opacity="0.55"/>
+  <polygon points="364.7,359.2 405.9,383.0 405.9,304.8 364.7,281.0" fill="#0B0E13" />
+  <polygon points="529.6,318.4 453.0,362.6 453.0,301.4 529.6,257.2" fill="#BFD4DE" opacity="0.35"/>
+  <polygon points="600.2,216.4 688.6,267.4 612.0,311.6 523.7,260.6" fill="#242A35" /><polygon points="523.7,417.0 612.0,468.0 612.0,311.6 523.7,260.6" fill="#161A22" /><polygon points="688.6,423.8 612.0,468.0 612.0,311.6 688.6,267.4" fill="#11151C" />
+  <polygon points="532.5,394.9 547.2,403.4 547.2,379.6 532.5,371.1" fill="#2F3542" /><polygon points="559.0,410.2 573.7,418.7 573.7,394.9 559.0,386.4" fill="#2F3542" /><polygon points="585.5,425.5 600.2,434.0 600.2,410.2 585.5,401.7" fill="#2F3542" /><polygon points="532.5,354.1 547.2,362.6 547.2,338.8 532.5,330.3" fill="#2F3542" /><polygon points="559.0,369.4 573.7,377.9 573.7,354.1 559.0,345.6" fill="#E5A93C" /><polygon points="585.5,384.7 600.2,393.2 600.2,369.4 585.5,360.9" fill="#2F3542" /><polygon points="532.5,313.3 547.2,321.8 547.2,298.0 532.5,289.5" fill="#2F3542" /><polygon points="559.0,328.6 573.7,337.1 573.7,313.3 559.0,304.8" fill="#2F3542" /><polygon points="585.5,343.9 600.2,352.4 600.2,328.6 585.5,320.1" fill="#2F3542" />
+  <polygon points="417.7,349.0 523.7,410.2 516.3,414.4 410.3,353.3" fill="#2A303B" /><polygon points="410.3,462.1 516.3,523.3 516.3,414.4 410.3,353.3" fill="#F4F2EC" /><polygon points="523.7,519.0 516.3,523.3 516.3,414.4 523.7,410.2" fill="#C9C3B6" /><g transform="matrix(0.8660254037844387 0.5 0 -1 410.30570230503486 462.05) scale(34)">
+      <g transform="scale(1 -1) translate(0 -3.2)">
+        <rect x="0.25" y="0.25" width="3.1" height="0.06" fill="#E5A93C"/>
+        <text x="0.3" y="0.62" font-family="Arial, Helvetica, sans-serif" font-size="0.26" font-weight="700" fill="#06080C">Skor CX</text>
+        <text x="0.3" y="1.32" font-family="Arial, Helvetica, sans-serif" font-size="0.72" font-weight="700" fill="#06080C">86</text>
+        <text x="1.22" y="1.32" font-family="Arial, Helvetica, sans-serif" font-size="0.22" fill="#6B717C">/100</text>
+        <g transform="translate(0 1.25)"><rect x="0.45" y="0" width="0.32" height="0.806" transform="translate(0 0.694)" rx="0.05" fill="#E5A93C"/><rect x="0.95" y="0" width="0.32" height="1.0530000000000002" transform="translate(0 0.44699999999999984)" rx="0.05" fill="#2E8540"/><rect x="1.45" y="0" width="0.32" height="0.611" transform="translate(0 0.889)" rx="0.05" fill="#C0392B"/><rect x="1.95" y="0" width="0.32" height="1.1700000000000002" transform="translate(0 0.32999999999999985)" rx="0.05" fill="#2E8540"/><rect x="2.45" y="0" width="0.32" height="0.962" transform="translate(0 0.538)" rx="0.05" fill="#E5A93C"/></g>
+      </g></g>
+  <g transform="translate(341.1 420.4)">
+      <ellipse cx="0" cy="2" rx="18" ry="7" fill="#06080C" opacity="0.35"/>
+      <rect x="-9" y="-36" width="7" height="36" rx="3" fill="#1B1E25"/><rect x="2" y="-36" width="7" height="36" rx="3" fill="#1B1E25"/>
+      <path d="M-14 -38 q0 -30 14 -30 q14 0 14 30 z" fill="#E5A93C"/>
+      <rect x="-14" y="-44" width="28" height="12" rx="4" fill="#E5A93C"/>
+      <circle cx="0" cy="-78" r="11" fill="#E0B98C"/>
+      <path d="M-11 -80 q2 -14 13 -12 q10 2 9 12 q-6 -6 -22 0z" fill="#1B1E25"/>
+    </g>
+  <g transform="translate(311.1 356.4)">
+    <rect x="10" y="10" width="26" height="9" rx="4" transform="rotate(40)" fill="#B9822A"/>
+    <circle r="20" fill="#BFD4DE" fill-opacity="0.3" stroke="#E5A93C" stroke-width="6"/>
+    <path d="M-9 -8 a12 12 0 0 1 11 -6" stroke="#FFFFFF" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+  </g>
+  <g transform="translate(405.9 546.2)">
+      <ellipse cx="0" cy="2" rx="18" ry="7" fill="#06080C" opacity="0.35"/>
+      <rect x="-9" y="-36" width="7" height="36" rx="3" fill="#1B1E25"/><rect x="2" y="-36" width="7" height="36" rx="3" fill="#1B1E25"/>
+      <path d="M-14 -38 q0 -30 14 -30 q14 0 14 30 z" fill="#3A4150"/>
+      <rect x="-14" y="-44" width="28" height="12" rx="4" fill="#3A4150"/>
+      <circle cx="0" cy="-78" r="11" fill="#E0B98C"/>
+      <path d="M-11 -80 q2 -14 13 -12 q10 2 9 12 q-6 -6 -22 0z" fill="#1B1E25"/>
+    </g>
+  <line x1="305.8" y1="124.0" x2="305.8" y2="277.6" stroke="#E5A93C" stroke-width="1.5" stroke-dasharray="3 5" opacity="0.6"/>
+    <g transform="translate(232.8 64.0)">
+      <rect width="146" height="56" rx="12" fill="#161A22" stroke="#242A35" stroke-width="1.5"/>
+      <rect x="10" y="10" width="36" height="36" rx="9" fill="#E5A93C"/>
+      <g transform="translate(16 16)" fill="none" stroke="#06080C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-7 8-13a8 8 0 0 0-16 0c0 6 8 13 8 13zM12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></g>
+      <text x="56" y="34" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#F4F2EC">Check-in GPS</text>
+    </g>
+  <line x1="576.7" y1="294.0" x2="576.7" y2="488.4" stroke="#E5A93C" stroke-width="1.5" stroke-dasharray="3 5" opacity="0.6"/>
+    <g transform="translate(503.7 234.0)">
+      <rect width="146" height="56" rx="12" fill="#161A22" stroke="#242A35" stroke-width="1.5"/>
+      <rect x="10" y="10" width="36" height="36" rx="9" fill="#E5A93C"/>
+      <g transform="translate(16 16)" fill="none" stroke="#06080C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7h4l2-3h8l2 3h4v13H2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></g>
+      <text x="56" y="34" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#F4F2EC">Bukti foto</text>
+    </g>
+  <line x1="170.3" y1="331.4" x2="170.3" y2="417.0" stroke="#E5A93C" stroke-width="1.5" stroke-dasharray="3 5" opacity="0.6"/>
+    <g transform="translate(97.3 271.4)">
+      <rect width="146" height="56" rx="12" fill="#161A22" stroke="#242A35" stroke-width="1.5"/>
+      <rect x="10" y="10" width="36" height="36" rx="9" fill="#E5A93C"/>
+      <g transform="translate(16 16)" fill="none" stroke="#06080C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></g>
+      <text x="56" y="34" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#F4F2EC">Lolos QC</text>
+    </g>
+</svg>

@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MilestoneTrack } from "@/components/milestone-track";
-import { NotificationList } from "@/components/notification-list";
 import { windowLabel, type ShopperTaskRow } from "@/lib/field";
 import { date, dateTime } from "@/lib/format";
 import { dict } from "@/lib/i18n";
 import { getLang } from "@/lib/prefs";
 import { requireRole } from "@/lib/session";
-import { applicationStage, getBankAccount, getLatestApplication, getNotifications, reapplyDate } from "@/lib/shopper";
+import { applicationStage, getBankAccount, getLatestApplication, reapplyDate } from "@/lib/shopper";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Beranda" };
@@ -18,8 +17,7 @@ export default async function ShopperHome() {
   const [viewer, lang] = await Promise.all([requireRole("shopper", "/shopper"), getLang()]);
   const t = dict(lang);
   const s = t.shopper;
-  const [app, notifications] = await Promise.all([getLatestApplication(viewer.id), getNotifications(viewer.id)]);
-  const notes = notifications.length > 0 && <NotificationList items={notifications} lang={lang} />;
+  const app = await getLatestApplication(viewer.id);
 
   if (viewer.status === "active") {
     const supabase = await createClient();
@@ -44,7 +42,6 @@ export default async function ShopperHome() {
             </Link>
           </section>
         )}
-        {notes}
         <section className="grid gap-3">
           <h2 className="eyebrow">Milestone</h2>
           <MilestoneTrack role="shopper" current={milestone} lang={lang} />
@@ -107,7 +104,6 @@ export default async function ShopperHome() {
           </Link>
         </section>
       )}
-      {notes}
       <section className="grid gap-3">
         <h2 className="eyebrow">Milestone</h2>
         <MilestoneTrack role="shopper" current={reviewing || rejected ? 2 : 1} lang={lang} />

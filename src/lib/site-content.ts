@@ -2,11 +2,13 @@
 // Disimpan sebagai satu dokumen JSON: draf yang sedang diedit dan versi terbit yang dilihat pengunjung.
 // Teks selalu punya versi Indonesia; versi Inggris boleh kosong dan jatuh ke Indonesia.
 import type { Lang } from "./i18n";
+import { isLandingIcon, type LandingIcon } from "./landing-icons";
 
 export type Text = { id: string; en: string };
-export type Item = { title: Text; body: Text };
+// meta = keterangan tambahan (jabatan pada testimoni); icon = ikon kartu; image = gambar galeri.
+export type Item = { title: Text; body: Text; meta: Text; icon: LandingIcon | ""; image: string };
 
-export const SECTION_KEYS = ["hero", "problems", "steps", "audited", "packages", "sample", "why", "faq", "shopper", "contact"] as const;
+export const SECTION_KEYS = ["hero", "problems", "steps", "audited", "why", "sample", "packages", "testimonials", "faq", "shopper", "contact", "cta"] as const;
 export type SectionKey = (typeof SECTION_KEYS)[number];
 
 export type Section = {
@@ -24,6 +26,15 @@ export type SiteInfo = {
   whatsapp: string;
   email: string;
   instagram: string;
+  // Kontak di footer: alamat kantor, telepon, situs web, dan media sosial lain (lihat site-links.ts).
+  address: string;
+  phone: string;
+  website: string;
+  tiktok: string;
+  facebook: string;
+  linkedin: string;
+  youtube: string;
+  x: string;
   seoTitle: Text;
   seoDescription: Text;
   authHeadline: Text;
@@ -41,33 +52,67 @@ export type SectionMeta = {
   cta?: string;
   cta2?: string;
   image?: boolean;
-  items?: { label: string; title: string; body: string };
+  items?: { label: string; title: string; body: string; meta?: string; icon?: boolean; image?: boolean };
 };
 
 export const SECTION_META: Record<SectionKey, SectionMeta> = {
   hero: { label: "Hero", hint: "Bagian paling atas: judul utama dan dua tombol daftar.", eyebrow: true, lede: true, cta: "Tombol pemilik bisnis", cta2: "Tombol mystery shopper", image: true },
-  problems: { label: "Masalah yang diselesaikan", hint: "Masalah yang dialami pemilik bisnis sebelum memakai SilentCX.", lede: true, items: { label: "Masalah", title: "Masalah", body: "Penjelasan" } },
+  problems: { label: "Masalah yang diselesaikan", hint: "Masalah yang dialami pemilik bisnis sebelum memakai SilentCX.", lede: true, items: { label: "Masalah", title: "Masalah", body: "Penjelasan", icon: true } },
   steps: { label: "Cara kerja", hint: "Langkah dari memesan sampai menerima laporan.", lede: true, items: { label: "Langkah", title: "Judul langkah", body: "Penjelasan" } },
-  audited: { label: "Apa saja yang diaudit", hint: "Area yang dinilai shopper di setiap kunjungan.", lede: true, items: { label: "Area", title: "Area", body: "Penjelasan" } },
+  audited: { label: "Apa saja yang diaudit", hint: "Area yang dinilai shopper di setiap kunjungan.", lede: true, items: { label: "Area", title: "Area", body: "Penjelasan", icon: true } },
   packages: { label: "Paket dan harga", hint: "Daftar paket dan harganya diambil otomatis dari Katalog. Di sini hanya judul dan pengantarnya.", lede: true },
-  sample: { label: "Contoh laporan", hint: "Ajakan melihat contoh laporan PDF dengan data fiktif.", lede: true, cta: "Tombol unduh contoh", image: true },
-  why: { label: "Mengapa SilentCX", hint: "Alasan memilih SilentCX.", lede: true, items: { label: "Alasan", title: "Alasan", body: "Penjelasan" } },
+  why: { label: "Mengapa SilentCX", hint: "Alasan memilih SilentCX. Tampil di pita gelap.", lede: true, items: { label: "Alasan", title: "Alasan", body: "Penjelasan", icon: true } },
+  sample: {
+    label: "Contoh laporan",
+    hint: "Galeri gambar contoh laporan yang bergeser otomatis, ditambah tombol unduh PDF dengan data fiktif.",
+    lede: true,
+    cta: "Tombol unduh contoh",
+    items: { label: "Gambar", title: "Judul gambar", body: "Keterangan", image: true },
+  },
+  testimonials: {
+    label: "Testimoni",
+    hint: "Kartu testimoni client di pita gelap. Lebih dari 3 testimoni bergeser otomatis satu per satu.",
+    lede: true,
+    items: { label: "Testimoni", title: "Nama", body: "Kutipan", meta: "Jabatan dan nama usaha" },
+  },
   faq: { label: "FAQ", hint: "Pertanyaan yang sering diajukan calon client.", items: { label: "Pertanyaan", title: "Pertanyaan", body: "Jawaban" } },
-  shopper: { label: "Ajakan jadi mystery shopper", hint: "Ajakan untuk calon shopper.", lede: true, cta: "Tombol daftar shopper", image: true, items: { label: "Poin", title: "Poin", body: "Penjelasan" } },
-  contact: { label: "Kontak", hint: "Tombol WhatsApp, email, dan Instagram diambil dari Info situs.", lede: true, cta: "Tombol WhatsApp" },
+  shopper: { label: "Ajakan jadi mystery shopper", hint: "Ajakan untuk calon shopper.", lede: true, cta: "Tombol daftar shopper", image: true, items: { label: "Poin", title: "Poin", body: "Penjelasan", icon: true } },
+  contact: { label: "Kontak", hint: "Tombol WhatsApp, email, dan Instagram diambil dari Info situs. Footer menampilkan semua kontak dan media sosial dari Info situs.", lede: true, cta: "Tombol WhatsApp" },
+  cta: { label: "Ajakan penutup", hint: "Pita ajakan sebelum footer, dengan satu tombol ke halaman daftar pemilik bisnis.", lede: true, cta: "Tombol" },
 };
 
+// Urutan bawaan di halaman.
+export const DEFAULT_ORDER: SectionKey[] = ["hero", "problems", "steps", "audited", "why", "sample", "packages", "testimonials", "faq", "shopper", "contact", "cta"];
+
 const tx = (id: string, en = ""): Text => ({ id, en });
-const item = (title: Text, body: Text): Item => ({ title, body });
 const blank = tx("");
+const item = (title: Text, body: Text, icon: LandingIcon | "" = "", extra: Partial<Item> = {}): Item => ({ title, body, meta: blank, icon, image: "", ...extra });
+
+// Testimoni bawaan berisi contoh fiktif yang namanya ditandai ini; editor memperingatkan admin selama masih dipakai.
+export const SAMPLE_MARK = "(contoh)";
 
 function section(s: Partial<Section>): Section {
   return { visible: true, eyebrow: blank, title: blank, lede: blank, cta: blank, cta2: blank, image: "", items: [], ...s };
 }
 
+// Kontak dan media sosial contoh. Nomor telepon sengaja tidak bisa dihubungi (0800…/000).
+export const SAMPLE_SITE = {
+  whatsapp: "080000000000",
+  email: "halo@silentcx.id",
+  instagram: "@silentcx.id",
+  address: "Jl. Contoh No. 123, Jakarta Selatan 12345 (alamat contoh)",
+  phone: "(021) 000 0000",
+  website: "silentcx.id",
+  tiktok: "@silentcx.id",
+  facebook: "https://facebook.com/silentcx.id",
+  linkedin: "https://www.linkedin.com/company/silentcx",
+  youtube: "https://www.youtube.com/@silentcx",
+  x: "@silentcx_id",
+} satisfies Partial<SiteInfo>;
+
 // Draf awal. Admin mengoreksinya di menu Konten tanpa menyentuh kode.
 export const DEFAULT_CONTENT: SiteContent = {
-  order: [...SECTION_KEYS],
+  order: [...DEFAULT_ORDER],
   sections: {
     hero: section({
       eyebrow: tx("Mystery shopping untuk bisnis Indonesia", "Mystery shopping for Indonesian businesses"),
@@ -78,14 +123,15 @@ export const DEFAULT_CONTENT: SiteContent = {
       ),
       cta: tx("Daftar sebagai pemilik bisnis", "Sign up as a business owner"),
       cta2: tx("Jadi mystery shopper", "Become a mystery shopper"),
+      image: "/landing/hero.svg",
     }),
     problems: section({
       title: tx("Yang sering tidak terlihat dari balik meja manajer", "What managers rarely see from behind the desk"),
       lede: tx("Laporan penjualan tidak menunjukkan bagaimana pelanggan dilayani. Di sinilah pengalaman pelanggan sering bocor.", "Sales reports don't show how customers are treated. That's where customer experience leaks."),
       items: [
-        item(tx("Standar layanan hanya ada di atas kertas", "Service standards exist only on paper"), tx("SOP sudah dibuat, tapi tidak ada yang memastikan staf menjalankannya saat tidak diawasi.", "SOPs are written, but nobody checks that staff follow them when unsupervised.")),
-        item(tx("Kualitas berbeda di tiap cabang", "Quality differs between branches"), tx("Cabang yang satu ramah dan cepat, cabang lain lambat dan kurang rapi. Sulit tahu mana yang perlu dibenahi.", "One branch is friendly and fast, another slow and untidy. It's hard to know which needs fixing.")),
-        item(tx("Pelanggan pergi tanpa mengeluh", "Customers leave without complaining"), tx("Kebanyakan pelanggan yang kecewa tidak menulis ulasan. Mereka hanya tidak kembali.", "Most disappointed customers don't write a review. They just don't come back.")),
+        item(tx("Standar layanan hanya ada di atas kertas", "Service standards exist only on paper"), tx("SOP sudah dibuat, tapi tidak ada yang memastikan staf menjalankannya saat tidak diawasi.", "SOPs are written, but nobody checks that staff follow them when unsupervised."), "clipboard"),
+        item(tx("Kualitas berbeda di tiap cabang", "Quality differs between branches"), tx("Cabang yang satu ramah dan cepat, cabang lain lambat dan kurang rapi. Sulit tahu mana yang perlu dibenahi.", "One branch is friendly and fast, another slow and untidy. It's hard to know which needs fixing."), "branches"),
+        item(tx("Pelanggan pergi tanpa mengeluh", "Customers leave without complaining"), tx("Kebanyakan pelanggan yang kecewa tidak menulis ulasan. Mereka hanya tidak kembali.", "Most disappointed customers don't write a review. They just don't come back."), "frown"),
       ],
     }),
     steps: section({
@@ -102,12 +148,12 @@ export const DEFAULT_CONTENT: SiteContent = {
       title: tx("Apa saja yang diaudit", "What we audit"),
       lede: tx("Kuesioner disesuaikan dengan jenis usaha Anda. Area yang umum dinilai:", "The questionnaire is tailored to your business type. Commonly assessed areas:"),
       items: [
-        item(tx("Sapaan dan sikap pelayanan", "Greeting and attitude"), tx("Apakah pelanggan disapa, dibantu, dan dihargai.", "Whether customers are greeted, helped, and respected.")),
-        item(tx("Pengetahuan produk", "Product knowledge"), tx("Kemampuan staf menjelaskan dan merekomendasikan produk.", "Staff's ability to explain and recommend products.")),
-        item(tx("Kecepatan dan ketepatan", "Speed and accuracy"), tx("Waktu tunggu dan kesesuaian pesanan.", "Waiting time and order accuracy.")),
-        item(tx("Kebersihan dan suasana", "Cleanliness and atmosphere"), tx("Kondisi area pelanggan, toilet, dan tampilan outlet.", "Condition of customer areas, restrooms, and the outlet's look.")),
-        item(tx("Upselling dan closing", "Upselling and closing"), tx("Apakah staf menawarkan produk tambahan dan menutup transaksi dengan baik.", "Whether staff offer add-ons and close the sale well.")),
-        item(tx("Kepatuhan SOP", "SOP compliance"), tx("Langkah-langkah standar yang Anda tetapkan untuk tim.", "The standard steps you set for your team.")),
+        item(tx("Sapaan dan sikap pelayanan", "Greeting and attitude"), tx("Apakah pelanggan disapa, dibantu, dan dihargai.", "Whether customers are greeted, helped, and respected."), "smile"),
+        item(tx("Pengetahuan produk", "Product knowledge"), tx("Kemampuan staf menjelaskan dan merekomendasikan produk.", "Staff's ability to explain and recommend products."), "book"),
+        item(tx("Kecepatan dan ketepatan", "Speed and accuracy"), tx("Waktu tunggu dan kesesuaian pesanan.", "Waiting time and order accuracy."), "clock"),
+        item(tx("Kebersihan dan suasana", "Cleanliness and atmosphere"), tx("Kondisi area pelanggan, toilet, dan tampilan outlet.", "Condition of customer areas, restrooms, and the outlet's look."), "sparkle"),
+        item(tx("Upselling dan closing", "Upselling and closing"), tx("Apakah staf menawarkan produk tambahan dan menutup transaksi dengan baik.", "Whether staff offer add-ons and close the sale well."), "tag"),
+        item(tx("Kepatuhan SOP", "SOP compliance"), tx("Langkah-langkah standar yang Anda tetapkan untuk tim.", "The standard steps you set for your team."), "check"),
       ],
     }),
     packages: section({
@@ -118,14 +164,32 @@ export const DEFAULT_CONTENT: SiteContent = {
       title: tx("Lihat contoh laporannya", "See a sample report"),
       lede: tx("Contoh laporan dengan data fiktif: skor per area, perbandingan outlet, temuan, rekomendasi, dan benchmark kompetitor.", "A sample report with fictional data: scores per area, outlet comparison, findings, recommendations, and a competitor benchmark."),
       cta: tx("Unduh contoh laporan (PDF)", "Download sample report (PDF)"),
+      items: [
+        item(tx("Ringkasan skor CX", "CX score summary"), tx("Skor keseluruhan, perubahan, dan ringkasan untuk manajemen.", "Overall score, change, and a management summary."), "", { image: "/landing/contoh-laporan-1.svg" }),
+        item(tx("Skor per area", "Scores by area"), tx("Area mana yang kuat dan mana yang perlu dibenahi.", "Which areas are strong and which need work."), "", { image: "/landing/contoh-laporan-2.svg" }),
+        item(tx("Perbandingan outlet", "Outlet comparison"), tx("Peringkat cabang untuk paket multi-outlet.", "Branch ranking for multi-outlet packages."), "", { image: "/landing/contoh-laporan-3.svg" }),
+        item(tx("Temuan dan tingkat keparahan", "Findings and severity"), tx("Setiap temuan diberi label kritis, mayor, atau minor.", "Every finding is labelled critical, major, or minor."), "", { image: "/landing/contoh-laporan-4.svg" }),
+        item(tx("Bukti kunjungan", "Visit evidence"), tx("Foto, struk, dan check-in lokasi yang lolos QC.", "Photos, receipts, and location check-ins that passed QC."), "", { image: "/landing/contoh-laporan-5.svg" }),
+        item(tx("Rekomendasi prioritas", "Priority recommendations"), tx("Langkah perbaikan: sekarang, segera, dan nanti.", "Next steps: now, soon, and later."), "", { image: "/landing/contoh-laporan-6.svg" }),
+      ],
     }),
     why: section({
       title: tx("Mengapa SilentCX", "Why SilentCX"),
+      lede: tx("Audit yang bisa dipercaya, dari kunjungan sampai rekomendasi.", "Audits you can trust, from the visit to the recommendation."),
       items: [
-        item(tx("Benar-benar rahasia", "Truly confidential"), tx("Identitas shopper dan jadwal kunjungan tidak pernah dibagikan, jadi staf melayani seperti biasa.", "Shopper identities and visit schedules are never shared, so staff serve as usual.")),
-        item(tx("Bukti foto dan GPS", "Photo and GPS evidence"), tx("Setiap kunjungan dilengkapi check-in lokasi, foto, dan struk pembelian.", "Every visit includes a location check-in, photos, and a purchase receipt.")),
-        item(tx("Diperiksa sebelum dilaporkan", "Checked before reporting"), tx("Tim QC mencocokkan jawaban dengan bukti. Hanya data yang valid yang masuk laporan.", "Our QC team matches answers with evidence. Only valid data makes it into the report.")),
-        item(tx("Rekomendasi yang bisa dijalankan", "Actionable recommendations"), tx("Bukan sekadar angka: setiap temuan disertai langkah perbaikan yang jelas.", "Not just numbers: every finding comes with clear next steps.")),
+        item(tx("Benar-benar rahasia", "Truly confidential"), tx("Identitas shopper dan jadwal kunjungan tidak pernah dibagikan, jadi staf melayani seperti biasa.", "Shopper identities and visit schedules are never shared, so staff serve as usual."), "shield"),
+        item(tx("Bukti foto dan GPS", "Photo and GPS evidence"), tx("Setiap kunjungan dilengkapi check-in lokasi, foto, dan struk pembelian.", "Every visit includes a location check-in, photos, and a purchase receipt."), "camera"),
+        item(tx("Diperiksa sebelum dilaporkan", "Checked before reporting"), tx("Tim QC mencocokkan jawaban dengan bukti. Hanya data yang valid yang masuk laporan.", "Our QC team matches answers with evidence. Only valid data makes it into the report."), "search"),
+        item(tx("Rekomendasi yang bisa dijalankan", "Actionable recommendations"), tx("Bukan sekadar angka: setiap temuan disertai langkah perbaikan yang jelas.", "Not just numbers: every finding comes with clear next steps."), "lightbulb"),
+      ],
+    }),
+    testimonials: section({
+      title: tx("Kata client kami", "What our clients say"),
+      items: [
+        item(tx("Rina (contoh)"), tx("Kami baru sadar sapaan kasir di cabang B jauh tertinggal. Dua minggu setelah briefing ulang, skor cabang itu naik.", "We hadn't noticed the cashier greeting at branch B was far behind. Two weeks after a re-briefing, that branch's score went up."), "", { meta: tx("Pemilik, Cafe 123", "Owner, Cafe 123") }),
+        item(tx("Budi (contoh)"), tx("Laporannya jelas dan ada fotonya. Tim operasional langsung tahu apa yang harus diperbaiki duluan.", "The report is clear and has photos. Our operations team knew right away what to fix first."), "", { meta: tx("Manajer Operasional, PT ABC", "Operations Manager, PT ABC") }),
+        item(tx("Sari (contoh)"), tx("Perbandingan antar outlet membantu kami menentukan cabang mana yang perlu pelatihan tambahan.", "The outlet comparison helped us decide which branch needed extra training."), "", { meta: tx("Area Manager, Cafe XYZ", "Area Manager, Cafe XYZ") }),
+        item(tx("Dimas (contoh)"), tx("Rekomendasinya praktis, bukan sekadar angka. Cocok untuk dibahas di rapat mingguan.", "The recommendations are practical, not just numbers. Great for our weekly meeting."), "", { meta: tx("Pemilik, Toko Contoh", "Owner, Toko Contoh") }),
       ],
     }),
     faq: section({
@@ -143,9 +207,9 @@ export const DEFAULT_CONTENT: SiteContent = {
       lede: tx("Dapat fee untuk setiap kunjungan, dan biaya pembelian diganti. Daftar tanpa KTP dan selfie.", "Earn a fee for every visit, and get your purchases reimbursed. Sign up without ID cards or selfies."),
       cta: tx("Daftar jadi shopper", "Sign up as a shopper"),
       items: [
-        item(tx("Waktu fleksibel", "Flexible time"), tx("Terima tugas yang sesuai jadwal dan kota Anda.", "Accept assignments that fit your schedule and city.")),
-        item(tx("Dibayar cepat", "Paid quickly"), tx("Fee dan reimburse ditransfer paling lambat 48 jam setelah kunjungan disetujui.", "Fees and reimbursements are paid within 48 hours after the visit is approved.")),
-        item(tx("Panduan jelas", "Clear guidance"), tx("Setiap tugas punya brief, kuesioner, dan daftar foto yang perlu diambil.", "Every assignment comes with a brief, a questionnaire, and a photo checklist.")),
+        item(tx("Waktu fleksibel", "Flexible time"), tx("Terima tugas yang sesuai jadwal dan kota Anda.", "Accept assignments that fit your schedule and city."), "calendar"),
+        item(tx("Dibayar cepat", "Paid quickly"), tx("Fee dan reimburse ditransfer paling lambat 48 jam setelah kunjungan disetujui.", "Fees and reimbursements are paid within 48 hours after the visit is approved."), "wallet"),
+        item(tx("Panduan jelas", "Clear guidance"), tx("Setiap tugas punya brief, kuesioner, dan daftar foto yang perlu diambil.", "Every assignment comes with a brief, a questionnaire, and a photo checklist."), "file"),
       ],
     }),
     contact: section({
@@ -153,11 +217,15 @@ export const DEFAULT_CONTENT: SiteContent = {
       lede: tx("Hubungi tim SilentCX. Kami bantu memilih paket yang sesuai untuk bisnis Anda.", "Contact the SilentCX team. We'll help you choose the right package for your business."),
       cta: tx("Chat lewat WhatsApp", "Chat on WhatsApp"),
     }),
+    cta: section({
+      title: tx("Siap melihat bisnis Anda dari mata pelanggan?", "Ready to see your business through your customers' eyes?"),
+      lede: tx("Pilih paket, dan shopper kami mulai berkunjung setelah data outlet lengkap.", "Choose a package, and our shoppers start visiting once your outlet details are complete."),
+      cta: tx("Mulai audit", "Start an audit"),
+    }),
   },
   site: {
-    whatsapp: "",
-    email: "",
-    instagram: "",
+    // Kontak contoh supaya footer terlihat lengkap; editor memperingatkan admin selama masih dipakai.
+    ...SAMPLE_SITE,
     seoTitle: tx("SilentCX · Mystery shopping dan audit pengalaman pelanggan", "SilentCX · Mystery shopping and customer experience audits"),
     seoDescription: tx(
       "Audit pengalaman pelanggan lewat mystery shopping: kunjungan rahasia, bukti foto dan GPS, dan laporan skor CX dengan rekomendasi.",
@@ -183,7 +251,13 @@ export function normalizeContent(raw: unknown): SiteContent {
   if (!raw || typeof raw !== "object") return DEFAULT_CONTENT;
   const r = raw as Partial<SiteContent>;
   const savedOrder = Array.isArray(r.order) ? r.order.filter((k): k is SectionKey => (SECTION_KEYS as readonly string[]).includes(k)) : [];
-  const order = [...new Set([...savedOrder, ...SECTION_KEYS])];
+  // Bagian baru yang belum ada di dokumen tersimpan disisipkan sesuai posisi bawaannya.
+  const order = [...new Set(savedOrder)];
+  DEFAULT_ORDER.forEach((k, i) => {
+    if (order.includes(k)) return;
+    const before = DEFAULT_ORDER.slice(0, i).reverse().find((x) => order.includes(x));
+    order.splice(before ? order.indexOf(before) + 1 : 0, 0, k);
+  });
   const sections = Object.fromEntries(
     SECTION_KEYS.map((k) => {
       const d = DEFAULT_CONTENT.sections[k];
@@ -198,7 +272,16 @@ export function normalizeContent(raw: unknown): SiteContent {
           cta: asText(s.cta, d.cta),
           cta2: asText(s.cta2, d.cta2),
           image: typeof s.image === "string" ? s.image : d.image,
-          items: Array.isArray(s.items) ? s.items.map((x) => ({ title: asText(x?.title, blank), body: asText(x?.body, blank) })) : d.items,
+          // Butir lama tanpa ikon memakai ikon bawaan di posisi yang sama.
+          items: Array.isArray(s.items)
+            ? s.items.map((x, i) => ({
+                title: asText(x?.title, blank),
+                body: asText(x?.body, blank),
+                meta: asText(x?.meta, blank),
+                icon: isLandingIcon(x?.icon) ? x.icon : x?.icon === "" ? ("" as const) : (d.items[i]?.icon ?? ""),
+                image: typeof x?.image === "string" ? x.image : "",
+              }))
+            : d.items,
         },
       ];
     }),
@@ -213,6 +296,14 @@ export function normalizeContent(raw: unknown): SiteContent {
       whatsapp: str(s.whatsapp, d.whatsapp),
       email: str(s.email, d.email),
       instagram: str(s.instagram, d.instagram),
+      address: str(s.address, d.address),
+      phone: str(s.phone, d.phone),
+      website: str(s.website, d.website),
+      tiktok: str(s.tiktok, d.tiktok),
+      facebook: str(s.facebook, d.facebook),
+      linkedin: str(s.linkedin, d.linkedin),
+      youtube: str(s.youtube, d.youtube),
+      x: str(s.x, d.x),
       seoTitle: asText(s.seoTitle, d.seoTitle),
       seoDescription: asText(s.seoDescription, d.seoDescription),
       authHeadline: asText(s.authHeadline, d.authHeadline),

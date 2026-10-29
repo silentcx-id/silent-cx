@@ -5,13 +5,6 @@ import { createClient } from "./supabase/server";
 export * from "./shopper-application";
 
 export type BankAccount = { bank_name: string; account_number: string; account_holder: string };
-export type Notification = {
-  id: number;
-  kind: string;
-  detail: { note?: string; reapply_at?: string; task?: string; code?: string; city?: string; respond_by?: string; urgent?: boolean; due?: string; fee?: string; project?: string; payout?: string; total?: number; consultation?: string; starts_at?: string; count?: number };
-  read_at: string | null;
-  created_at: string;
-};
 
 // Lamaran terbaru milik shopper (draft, ditinjau, disetujui, atau ditolak), atau null kalau belum pernah mengisi.
 export async function getLatestApplication(shopperId: string): Promise<ShopperApplication | null> {
@@ -50,13 +43,3 @@ export async function getActiveCities(): Promise<string[]> {
   return (data ?? []).map((c) => c.name);
 }
 
-export async function getNotifications(userId: string, limit = 8): Promise<Notification[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("notifications")
-    .select("id, kind, detail, read_at, created_at")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
-  return (data ?? []) as Notification[];
-}

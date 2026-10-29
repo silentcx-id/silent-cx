@@ -1,14 +1,27 @@
 import { logout } from "@/app/(auth)/actions";
 import { Logo } from "./logo";
+import { NotificationBell } from "./notification-bell";
 import { PortalNav } from "./portal-nav";
 import { PrefsSwitch } from "./prefs-switch";
 import { dict, type Lang } from "@/lib/i18n";
-import type { Theme } from "@/lib/prefs";
+import type { NotificationCenter } from "@/lib/notifications";
 import { ROLE_HOME } from "@/lib/roles";
 import type { Viewer } from "@/lib/session";
 
-// Kerangka semua dashboard: pita kuning-hitam, menu role, identitas akun, dan pilihan bahasa/tema.
-export function PortalShell({ viewer, lang, theme, entitlements, children }: { viewer: Viewer; lang: Lang; theme: Theme; entitlements?: string[]; children: React.ReactNode }) {
+// Kerangka semua dashboard: pita kuning-hitam, menu role, identitas akun, lonceng notifikasi, dan pilihan bahasa.
+export function PortalShell({
+  viewer,
+  lang,
+  entitlements,
+  notifications,
+  children,
+}: {
+  viewer: Viewer;
+  lang: Lang;
+  entitlements?: string[];
+  notifications: NotificationCenter;
+  children: React.ReactNode;
+}) {
   const t = dict(lang);
   const locked = viewer.role === "shopper" && viewer.status !== "active";
   return (
@@ -31,7 +44,8 @@ export function PortalShell({ viewer, lang, theme, entitlements, children }: { v
         </aside>
         <div className="grid min-w-0 content-start">
           <header className="flex flex-wrap items-center justify-end gap-3 px-4 py-3 sm:px-8">
-            <PrefsSwitch lang={lang} theme={theme} />
+            <NotificationBell userId={viewer.id} lang={lang} initial={notifications} allHref={`${ROLE_HOME[viewer.role]}/notifications`} />
+            <PrefsSwitch lang={lang} />
             <form action={logout}>
               <button className="btn btn-sm">{t.common.logout}</button>
             </form>

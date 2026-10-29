@@ -2,19 +2,19 @@ import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { PrefsSwitch } from "@/components/prefs-switch";
 import { dict } from "@/lib/i18n";
-import { getLang, getTheme } from "@/lib/prefs";
+import { getLang } from "@/lib/prefs";
 import { getPublishedContent } from "@/lib/site";
 import { pick } from "@/lib/site-content";
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
-  const [lang, theme, content] = await Promise.all([getLang(), getTheme(), getPublishedContent()]);
+  const [lang, content] = await Promise.all([getLang(), getPublishedContent()]);
   const t = dict(lang);
   return (
     <div className="flex min-h-dvh flex-col">
       <div className="tape" aria-hidden="true" />
       <header className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
         <Logo />
-        <PrefsSwitch lang={lang} theme={theme} />
+        <PrefsSwitch lang={lang} />
       </header>
       <main className="mx-auto grid w-full max-w-5xl flex-1 items-start gap-10 px-4 pb-16 pt-6 sm:px-6 md:grid-cols-[1fr_minmax(0,440px)] md:pt-14">
         <section className="hidden md:grid md:gap-4 md:pt-6">

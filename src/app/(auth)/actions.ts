@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { emailSendProblem, isNetworkError } from "@/lib/auth-errors";
 import { dict } from "@/lib/i18n";
 import { passwordProblem } from "@/lib/password";
 import { getLang } from "@/lib/prefs";
@@ -11,13 +12,10 @@ import { homeAfterLogin } from "@/lib/session";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
-export type FormState = { error?: string; notice?: string; values?: Record<string, string> };
+// unconfirmed: email yang belum dikonfirmasi, untuk tombol kirim ulang; next: tujuan setelah konfirmasi.
+export type FormState = { error?: string; notice?: string; values?: Record<string, string>; unconfirmed?: string; next?: string };
 
 const text = (form: FormData, key: string) => String(form.get(key) ?? "").trim();
-
-function isNetworkError(error: { name?: string; status?: number }) {
-  return error.name === "AuthRetryableFetchError" || error.status === 0 || (error.status ?? 0) >= 500;
-}
 
 export async function login(_prev: FormState, form: FormData): Promise<FormState> {
   const t = dict(await getLang()).auth;
@@ -31,7 +29,7 @@ export async function login(_prev: FormState, form: FormData): Promise<FormState
   const { data, error } = await supabase.auth.signInWithPassword({ email, password: String(form.get("password") ?? "") });
   if (error || !data.user) {
     if (error && isNetworkError(error)) return { error: t.network, values };
-    if (error?.code === "email_not_confirmed") return { error: t.emailNotConfirmed, values };
+    if (error?.code === "email_not_confirmed") return { error: t.emailNotConfirmed, values, unconfirmed: email, next };
     return { error: t.wrongCredentials, values };
   }
 
@@ -86,7 +84,8 @@ export async function register(_prev: FormState, form: FormData): Promise<FormSt
   });
 
   if (error) {
-    if (isNetworkError(error)) return { error: t.network, values };
+    const problem = emailSendProblem(error);
+    if (problem) return { error: t[problem], values };
     if (error.code === "user_already_exists" || error.code === "email_exists") return { error: t.emailTaken, values };
     if (error.code === "weak_password") return { error: dict(lang).password.mix, values };
     return { error: error.message, values };
@@ -95,7 +94,26 @@ export async function register(_prev: FormState, form: FormData): Promise<FormSt
   // pengguna dikembalikan tanpa identitas.
   if (data.user && data.user.identities?.length === 0) return { error: t.emailTaken, values };
   if (data.session) redirect(home);
-  return { notice: t.checkEmail };
+  return { notice: t.checkEmail, unconfirmed: email, next: home };
+}
+
+// Kirim ulang email konfirmasi pendaftaran. Hasilnya sama untuk email terdaftar maupun tidak,
+// supaya halaman ini tidak bisa dipakai menebak email siapa saja yang punya akun.
+export async function resendConfirmation(email: string, next: string): Promise<{ ok: boolean; message: string }> {
+  const t = dict(await getLang()).auth;
+  const clean = String(email ?? "").trim().toLowerCase();
+  if (!isSupabaseConfigured) return { ok: false, message: t.notConfigured };
+  if (!z.email().safeParse(clean).success) return { ok: false, message: t.invalidEmail };
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email: clean,
+    options: { emailRedirectTo: `${await appOrigin()}/auth/callback?next=${encodeURIComponent(String(next ?? ""))}` },
+  });
+  const problem = error ? emailSendProblem(error) : null;
+  if (problem) return { ok: false, message: t[problem] };
+  if (error) console.warn(`Kirim ulang konfirmasi gagal: ${error.code ?? error.name} ${error.message}`);
+  return { ok: true, message: t.resent(clean) };
 }
 
 export async function logout() {

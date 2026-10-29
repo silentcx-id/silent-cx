@@ -2,6 +2,7 @@ import type { IconName } from "@/lib/roles";
 
 // Ikon garis sederhana untuk menu; satu gaya untuk seluruh aplikasi.
 const PATHS: Record<IconName, string> = {
+  bell: "M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 21h4",
   home: "M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z",
   box: "M3 7.5 12 3l9 4.5v9L12 21l-9-4.5zM3 7.5l9 4.5 9-4.5M12 12v9",
   wallet: "M3 7h15a3 3 0 0 1 3 3v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 7l12-4v4M16 14h2",

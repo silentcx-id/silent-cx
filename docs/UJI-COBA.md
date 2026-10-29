@@ -443,3 +443,92 @@ Fitur ini diuji otomatis dengan 23 tes database:
 - akses antar-client.
 
 Uji e2e `tests/e2e/fase5-konsultasi.mjs` memakai akun dan jadwal sementara, lalu menghapusnya.
+
+## Putaran 5: Landing page baru
+
+Tidak perlu migrate. Kalau konten pernah diterbitkan dari menu Konten, bagian baru (Testimoni dan Ajakan penutup) otomatis ikut muncul di posisi bawaannya.
+
+1. **Buka landing dalam keadaan belum login.** Warna latar selang-seling hitam dan putih mengikuti urutan bagian yang tampil, mulai dari hero hitam. Kalau admin mengubah urutan atau menyembunyikan bagian, selang-selingnya tetap terjaga. Ajakan penutup yang jatuh di urutan hitam tampil sebagai kotak emas. Urutan bagiannya:
+   - Pita kuning-hitam, lalu header gelap: menu bagian, ID/EN, **Masuk**, **Daftar**.
+   - Hero gelap dengan bidang emas miring dan ilustrasi outlet. **Daftar sebagai pemilik bisnis** membuka halaman daftar, dan **Jadi mystery shopper** membuka daftar shopper.
+   - Bagian terang: Masalah (kartu berikon), Cara kerja, Yang diaudit.
+   - Pita gelap: Mengapa SilentCX.
+   - Contoh laporan: galeri 6 gambar yang bergeser otomatis dan tombol unduh PDF.
+   - Paket: kartu Insight disorot "Paling diminati".
+   - Pita gelap: Testimoni. Tampil 3 kartu di laptop, bergeser otomatis satu per satu.
+   - FAQ, Ajakan jadi shopper, Kontak (hanya tampil kalau kontak di Info situs sudah diisi), Ajakan penutup, dan footer.
+2. **Geser otomatis.**
+   - Galeri dan testimoni bergeser setiap sekitar 5 detik, lalu kembali ke awal.
+   - Geseran berhenti saat kursor ada di atasnya atau saat disentuh di HP.
+   - Tombol ← → dan titik penanda bisa dipakai, dan di HP bisa digeser dengan jari.
+3. **HP.**
+   - Header berisi logo, **Masuk**, **Daftar**, dan tombol menu (☰). Menu berisi tautan bagian dan ID/EN.
+   - Tidak ada geser ke samping.
+4. **Tidak ada lagi tombol Gelap/Terang** di semua halaman. Dashboard selalu gelap, dan ID/EN tetap ada.
+5. **Sudah login.** Membuka `/`, `/login`, `/register`, atau `/become-shopper` langsung diarahkan ke dashboard role masing-masing. Untuk melihat landing, Keluar dulu atau pakai **Simpan & pratinjau** di menu Konten.
+6. **Menu Konten.**
+   - Selama testimoni contoh masih dipakai, muncul peringatan kuning.
+   - Setiap kartu Masalah, Yang diaudit, Mengapa, dan Ajakan shopper punya pilihan **Ikon** dengan contoh tampilannya.
+   - Testimoni punya isian Nama, Jabatan dan nama usaha, serta Kutipan.
+   - Gambar galeri Contoh laporan bisa diganti, ditambah, dihapus, dan diurutkan.
+   - Gambar hero bisa diganti.
+
+7. **Footer.** Di **Konten → Info situs**, isi Kontak (WhatsApp, telepon kantor, email, situs web, alamat kantor) dan Media sosial (Instagram, TikTok, Facebook, LinkedIn, YouTube, X). Media sosial boleh berupa nama akun (@silentcx) atau alamat lengkap https://. Setelah diterbitkan, footer menampilkan kolom **Hubungi kami** (alamat, telepon, WhatsApp, email, situs web) dan ikon media sosial bulat di bawah logo. Isian yang kosong tidak ditampilkan. Isi bawaannya berupa kontak contoh (alamat bertanda "(alamat contoh)", nomor 0800… dan (021) 000 0000 yang tidak bisa dihubungi), dan editor menampilkan peringatan kuning selama kontak contoh masih dipakai.
+
+Gambar bawaan (ilustrasi hero dan 6 halaman contoh laporan) digambar dari kode `scripts/landing-images.mjs` dengan data fiktif PT ABC / Cafe 123, jadi tidak ada masalah hak cipta. Jalankan `node scripts/landing-images.mjs` untuk membuatnya ulang.
+
+Diuji otomatis: 6 tes pembacaan konten lama dan tautan kontak, `tests/e2e/fase0-public.mjs`, dan `tests/e2e/putaran5-landing.mjs` (37 cek, tidak mengubah data).
+
+## Verifikasi email saat daftar
+
+Pengaturan di dashboard Supabase (dilakukan pemilik proyek):
+
+1. Authentication → Sign In / Providers → Email: aktifkan **Confirm email**.
+2. Authentication → URL Configuration: Site URL `http://localhost:3000`, Redirect URLs tambahkan `http://localhost:3000/**`.
+3. Authentication → Emails → Confirm signup: ganti tautan menjadi
+   `<a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email">Konfirmasi email</a>`
+   supaya tautan bisa dibuka di perangkat lain (misalnya daftar di laptop, buka email di HP).
+4. Server email bawaan Supabase hanya mengirim beberapa email per jam dan hanya ke anggota tim proyek. Untuk uji coba pakai email sendiri, misalnya `nama+client1@gmail.com`. Sebelum diluncurkan, pasang SMTP sendiri.
+
+Yang dicoba:
+
+1. Daftar sebagai pemilik bisnis dari tombol Pilih paket. Muncul pesan "Akun dibuat. Buka email Anda…" dan tombol **Kirim ulang email konfirmasi** yang menghitung mundur 60 detik.
+2. Coba masuk sebelum konfirmasi: muncul "Email belum dikonfirmasi" beserta tombol kirim ulang.
+3. Tekan kirim ulang: muncul "Email konfirmasi dikirim ulang ke …", lalu tombol menunggu 60 detik lagi. Kalau terlalu sering, muncul pesan untuk menunggu.
+4. Klik tautan di email (boleh di HP): langsung masuk ke dashboard, atau ke halaman paket yang tadi dipilih.
+5. Klik tautan yang sama sekali lagi: diarahkan ke halaman masuk dengan pesan tautan tidak berlaku.
+
+Tes otomatis: `tests/verifikasi-email.test.ts` (2 tes). Alur lengkapnya perlu email sungguhan, jadi dicoba manual.
+
+## Putaran 6: Lonceng notifikasi & kartu rekening
+
+Perlu `npm run db:migrate` (migration `20261029000012_notification_center.sql`). Sebelum migrate, lonceng tetap tampil, tetapi notifikasi baru belum masuk real time, klik satu notifikasi belum menandainya dibaca, dan pengingat jatuh tempo tagihan belum dibuat.
+
+1. **Lonceng di header (semua role).**
+   - Lonceng ada di kanan atas, sebelum ID/EN. Angka merah menunjukkan jumlah yang belum dibaca (di atas 99 tampil "99+").
+   - Klik lonceng: panel berisi 10 notifikasi terbaru. Yang belum dibaca bertitik emas.
+   - Klik satu notifikasi: halaman terkait terbuka dan notifikasi itu ditandai dibaca.
+   - **Tandai semua dibaca** mengosongkan angka merah.
+   - **Lihat semua notifikasi →** membuka halaman Notifikasi (`/app/notifications`, `/shopper/notifications`, `/admin/notifications`).
+   - Panel tertutup dengan Escape atau klik di luar panel. Di HP panel selebar layar, tepat di bawah lonceng.
+   - Beranda client dan shopper tidak lagi menampilkan daftar notifikasi.
+2. **Real time.** Buka dua browser: admin di satu, shopper atau client di yang lain. Saat satu pihak melakukan aksi, notifikasi pihak lain muncul tanpa memuat ulang halaman, disertai toast, dan isi halaman yang sedang dibuka ikut diperbarui. Kalau sambungan sempat putus, isi lonceng diambil ulang saat tab dibuka kembali.
+3. **Notifikasi baru untuk admin.**
+   - Lamaran shopper dikirim.
+   - Client mengunggah bukti bayar.
+   - Shopper mengirim kunjungan, atau mengirim ulang setelah revisi.
+   - Shopper menolak tawaran tugas, atau tawarannya kedaluwarsa.
+   - Client memesan atau memindah jadwal konsultasi. Aksi yang dilakukan admin sendiri tidak memicu notifikasi ke admin.
+4. **Notifikasi baru untuk client.**
+   - Pesanan dikonfirmasi admin dan tagihan siap dibayar.
+   - Pesanan dibatalkan admin, beserta alasannya.
+   - Pembayaran diverifikasi atau ditolak (dengan catatan dan batas bayar baru).
+   - Proyek dimulai (shopper pertama menerima tugas), hanya sekali per proyek.
+   - Tagihan jatuh tempo dalam 24 jam, sekali per tagihan.
+5. **Kartu rekening shopper** (Profil, setelah lamaran disetujui).
+   - Kalau rekening sudah diisi, form tidak tampil. Yang tampil kartu bank dengan nomor disamarkan (•••• 7890) dan nama disamarkan (a.n. Budi S*** W***).
+   - **Tampilkan data rekening saya** membuka nomor dan nama lengkap; **Sembunyikan** menutupnya lagi.
+   - **Ubah rekening** membuka form berisi data lama; **Batal** kembali ke kartu, dan Simpan kembali ke kartu dengan data baru.
+   - Kalau rekening belum diisi, form langsung tampil seperti biasa.
+
+Diuji otomatis: `tests/notifikasi.test.ts` (13 tes), `tests/e2e/putaran6-notifikasi.mjs` (28 cek, tidak mengubah data). Uji real time dan kartu rekening dengan data sungguhan ada di `tests/e2e/fase2-flow.mjs`, yang MENGUBAH data (akun sementara), jadi dijalankan hanya dengan izin.

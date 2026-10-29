@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { ComingSoon, PortalShell } from "@/components/portal-shell";
 import { dict } from "./i18n";
 import { clientState, getClientProjects } from "./orders";
-import { getLang, getTheme } from "./prefs";
+import { getNotificationCenter } from "./notifications";
+import { getLang } from "./prefs";
 import { menuItem, ROLE_HOME, type Role } from "./roles";
 import { requireRole } from "./session";
 
@@ -16,10 +17,13 @@ async function clientEntitlements(clientId: string) {
 // Layout bersama tiap area role: memastikan role, lalu membungkus halaman dengan PortalShell.
 export function areaLayout(role: Role, home: string) {
   return async function AreaLayout({ children }: { children: React.ReactNode }) {
-    const [viewer, lang, theme] = await Promise.all([requireRole(role, home), getLang(), getTheme()]);
-    const entitlements = role === "client" ? await clientEntitlements(viewer.id) : undefined;
+    const [viewer, lang] = await Promise.all([requireRole(role, home), getLang()]);
+    const [entitlements, notifications] = await Promise.all([
+      role === "client" ? clientEntitlements(viewer.id) : undefined,
+      getNotificationCenter(viewer.id),
+    ]);
     return (
-      <PortalShell viewer={viewer} lang={lang} theme={theme} entitlements={entitlements}>
+      <PortalShell viewer={viewer} lang={lang} entitlements={entitlements} notifications={notifications}>
         {children}
       </PortalShell>
     );

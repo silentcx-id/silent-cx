@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Landing } from "@/components/landing";
 import { getCatalog } from "@/lib/catalog";
-import { getLang, getTheme } from "@/lib/prefs";
+import { getLang } from "@/lib/prefs";
+import { ROLE_HOME } from "@/lib/roles";
 import { getViewer } from "@/lib/session";
 import { getPublishedContent } from "@/lib/site";
 import { pick } from "@/lib/site-content";
@@ -13,9 +15,12 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: { absolute: pick(content.site.seoTitle, lang) }, description: pick(content.site.seoDescription, lang) };
 }
 
-// Landing page: isi dari versi terbit di menu Konten, paket langsung dari Katalog.
+// Landing page untuk pengunjung yang belum masuk. Yang sudah masuk langsung ke dashboard role-nya;
+// admin melihat landing lewat Pratinjau di menu Konten.
 export default async function Home() {
-  const [lang, theme, viewer, content] = await Promise.all([getLang(), getTheme(), getViewer(), getPublishedContent()]);
+  const viewer = await getViewer();
+  if (viewer) redirect(ROLE_HOME[viewer.role]);
+  const [lang, content] = await Promise.all([getLang(), getPublishedContent()]);
   const packages = isSupabaseConfigured ? (await getCatalog()).packages.filter((p) => p.active && p.prices.length > 0) : [];
-  return <Landing content={content} packages={packages} lang={lang} theme={theme} viewer={viewer} />;
+  return <Landing content={content} packages={packages} lang={lang} />;
 }

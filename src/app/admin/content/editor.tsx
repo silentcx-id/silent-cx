@@ -4,11 +4,26 @@ import { useEffect, useState } from "react";
 import { discardSiteDraft, prepareSiteImage, publishSite, saveSiteDraft } from "./actions";
 import { StatusText, useAction } from "@/components/use-action";
 import { shrinkImage } from "@/lib/shrink-image";
-import { SECTION_META, type Item, type Section, type SectionKey, type SiteContent, type SiteInfo, type Text } from "@/lib/site-content";
+import { LANDING_ICONS, type LandingIcon } from "@/lib/landing-icons";
+import { SOCIALS } from "@/lib/site-links";
+import { SAMPLE_MARK, SAMPLE_SITE, SECTION_META, type Item, type Section, type SectionKey, type SiteContent, type SiteInfo, type Text } from "@/lib/site-content";
 import { createClient } from "@/lib/supabase/client";
 
 const input = "min-h-10 w-full rounded-lg border border-line bg-raise px-3 py-2 text-sm";
 const blank: Text = { id: "", en: "" };
+const newItem = (): Item => ({ title: blank, body: blank, meta: blank, icon: "", image: "" });
+// Testimoni contoh bawaan masih dipakai kalau ada nama yang bertanda "(contoh)".
+const hasSampleTestimonials = (c: SiteContent) => c.sections.testimonials.items.some((x) => x.title.id.includes(SAMPLE_MARK));
+const SITE_LABEL: Record<keyof typeof SAMPLE_SITE, string> = {
+  whatsapp: "WhatsApp",
+  phone: "telepon",
+  email: "email",
+  website: "situs web",
+  address: "alamat",
+  ...(Object.fromEntries(SOCIALS.map((s) => [s.key, s.label])) as Record<(typeof SOCIALS)[number]["key"], string>),
+};
+// Isian Info situs yang masih sama dengan kontak contoh bawaan.
+const sampleSiteFields = (c: SiteContent) => (Object.keys(SAMPLE_SITE) as (keyof typeof SAMPLE_SITE)[]).filter((k) => c.site[k] === SAMPLE_SITE[k]).map((k) => SITE_LABEL[k]);
 
 // Editor CMS: semua perubahan tersimpan di layar sampai admin menekan Simpan draf, Pratinjau, atau Terbitkan.
 export function ContentEditor({ initial, unpublished, hasPublished }: { initial: SiteContent; unpublished: boolean; hasPublished: boolean }) {
@@ -84,6 +99,19 @@ export function ContentEditor({ initial, unpublished, hasPublished }: { initial:
         </div>
       </section>
 
+      {hasSampleTestimonials(c) && (
+        <p role="note" className="rounded-xl border border-warn/50 bg-warn/10 p-4 text-sm">
+          <strong>Testimoni masih berisi contoh fiktif.</strong> Ganti dengan testimoni asli dari client (dengan izin mereka) sebelum situs dibuka untuk umum,
+          atau sembunyikan bagian Testimoni.
+        </p>
+      )}
+      {sampleSiteFields(c).length > 0 && (
+        <p role="note" className="rounded-xl border border-warn/50 bg-warn/10 p-4 text-sm">
+          <strong>Kontak di footer masih contoh:</strong> {sampleSiteFields(c).join(", ")}. Ganti dengan kontak asli di tab Info situs, atau kosongkan supaya tidak
+          ditampilkan.
+        </p>
+      )}
+
       <nav aria-label="Bagian editor" className="flex gap-1 border-b border-line">
         {(
           [
@@ -157,7 +185,7 @@ function SectionCard({ k, section: s, onChange, onUp, onDown, position }: { k: S
         {meta.lede && <Bilingual label="Pengantar" value={s.lede} onChange={set("lede")} max={600} long />}
         {meta.cta && <Bilingual label={meta.cta} value={s.cta} onChange={set("cta")} max={60} />}
         {meta.cta2 && <Bilingual label={meta.cta2} value={s.cta2} onChange={set("cta2")} max={60} />}
-        {meta.image && <ImageField value={s.image} onChange={(image) => onChange({ ...s, image })} />}
+        {meta.image && <ImageField label="Gambar (opsional)" value={s.image} onChange={(image) => onChange({ ...s, image })} />}
         {meta.items && <ItemsEditor meta={meta.items} items={s.items} onChange={(items) => onChange({ ...s, items })} />}
       </div>
     </details>
@@ -220,20 +248,49 @@ function ItemsEditor({ meta, items, onChange }: { meta: NonNullable<(typeof SECT
                 </button>
               </span>
             </div>
+            {meta.icon && <IconPicker value={x.icon} onChange={(icon) => update(i, { ...x, icon })} />}
+            {meta.image && <ImageField label="Gambar" value={x.image} onChange={(image) => update(i, { ...x, image })} />}
             <Bilingual label={meta.title} value={x.title} onChange={(title) => update(i, { ...x, title })} max={160} required />
+            {meta.meta && <Bilingual label={meta.meta} value={x.meta} onChange={(v) => update(i, { ...x, meta: v })} max={120} />}
             <Bilingual label={meta.body} value={x.body} onChange={(body) => update(i, { ...x, body })} max={800} long />
           </li>
         ))}
       </ol>
-      <button type="button" className="btn btn-sm w-fit" disabled={items.length >= 20} onClick={() => onChange([...items, { title: blank, body: blank }])}>
+      <button type="button" className="btn btn-sm w-fit" disabled={items.length >= 20} onClick={() => onChange([...items, newItem()])}>
         + Tambah {meta.label.toLowerCase()}
       </button>
     </div>
   );
 }
 
+// Ikon kartu dari daftar ikon landing page, dengan contoh tampilannya.
+function IconPicker({ value, onChange }: { value: LandingIcon | ""; onChange: (icon: LandingIcon | "") => void }) {
+  return (
+    <label className="grid gap-1 text-sm font-semibold">
+      Ikon
+      <span className="flex items-center gap-3">
+        <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-lg bg-accent text-accent-ink">
+          {value && (
+            <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d={LANDING_ICONS[value].d} />
+            </svg>
+          )}
+        </span>
+        <select className={`${input} max-w-xs font-normal`} value={value} onChange={(e) => onChange(e.target.value as LandingIcon | "")}>
+          <option value="">Tanpa ikon</option>
+          {(Object.keys(LANDING_ICONS) as LandingIcon[]).map((k) => (
+            <option key={k} value={k}>
+              {LANDING_ICONS[k].label}
+            </option>
+          ))}
+        </select>
+      </span>
+    </label>
+  );
+}
+
 // Unggah gambar ke Storage publik lewat tautan sekali pakai; alamatnya tersimpan di draf.
-function ImageField({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+function ImageField({ label, value, onChange }: { label: string; value: string; onChange: (url: string) => void }) {
   const { status, setStatus } = useAction();
   const [uploading, setUploading] = useState(false);
 
@@ -257,11 +314,11 @@ function ImageField({ value, onChange }: { value: string; onChange: (url: string
 
   return (
     <div className="grid gap-2">
-      <span className="text-sm font-semibold">Gambar (opsional)</span>
+      <span className="text-sm font-semibold">{label}</span>
       {value && (
         <div className="h-40 w-64 overflow-hidden rounded-xl border border-line bg-raise">
-          {/* eslint-disable-next-line @next/next/no-img-element -- gambar dari Supabase Storage milik admin */}
-          <img src={value} alt="Gambar bagian ini" className="size-full object-cover" />
+          {/* eslint-disable-next-line @next/next/no-img-element -- gambar dari Supabase Storage milik admin atau gambar bawaan */}
+          <img src={value} alt="Pratinjau gambar" className="size-full object-contain" />
         </div>
       )}
       <div className="flex flex-wrap items-center gap-2">
@@ -282,24 +339,46 @@ function ImageField({ value, onChange }: { value: string; onChange: (url: string
 }
 
 function SiteForm({ site, onChange }: { site: SiteInfo; onChange: (s: SiteInfo) => void }) {
-  const set = (k: "whatsapp" | "email" | "instagram") => (e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...site, [k]: e.target.value });
+  const set = (k: Exclude<keyof SiteInfo, "seoTitle" | "seoDescription" | "authHeadline">) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    onChange({ ...site, [k]: e.target.value });
   return (
     <section className="card grid gap-5 p-5">
-      <div className="grid gap-4 md:grid-cols-3">
+      <h2 className="text-lg font-extrabold">Kontak</h2>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <label className="grid gap-1 text-sm font-semibold">
           Nomor WhatsApp bisnis
           <input className={input} inputMode="tel" value={site.whatsapp} maxLength={16} placeholder="081234567890" onChange={set("whatsapp")} />
+        </label>
+        <label className="grid gap-1 text-sm font-semibold">
+          Telepon kantor
+          <input className={input} inputMode="tel" value={site.phone} maxLength={20} placeholder="(021) 1234 5678" onChange={set("phone")} />
         </label>
         <label className="grid gap-1 text-sm font-semibold">
           Email bisnis
           <input className={input} type="email" value={site.email} maxLength={120} placeholder="halo@silentcx.id" onChange={set("email")} />
         </label>
         <label className="grid gap-1 text-sm font-semibold">
-          Instagram
-          <input className={input} value={site.instagram} maxLength={120} placeholder="@silentcx.id" onChange={set("instagram")} />
+          Situs web
+          <input className={input} value={site.website} maxLength={200} placeholder="silentcx.id" onChange={set("website")} />
         </label>
       </div>
-      <p className="text-xs text-muted">Kontak yang dikosongkan tidak ditampilkan di landing page.</p>
+      <label className="grid gap-1 text-sm font-semibold">
+        Alamat kantor
+        <textarea className={`${input} min-h-20`} value={site.address} maxLength={300} placeholder="Nama jalan, nomor, kota, kode pos" onChange={set("address")} />
+      </label>
+      <h2 className="text-lg font-extrabold">Media sosial</h2>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {SOCIALS.map((s) => (
+          <label key={s.key} className="grid gap-1 text-sm font-semibold">
+            {s.label}
+            <input className={input} value={site[s.key]} maxLength={200} placeholder={s.placeholder} onChange={set(s.key)} />
+          </label>
+        ))}
+      </div>
+      <p className="text-xs text-muted">
+        Media sosial boleh diisi nama akun (misalnya @silentcx) atau alamat lengkap yang diawali https://. Isian yang dikosongkan tidak ditampilkan di landing page.
+      </p>
+      <h2 className="text-lg font-extrabold">Halaman</h2>
       <Bilingual label="Judul halaman di Google" value={site.seoTitle} onChange={(seoTitle) => onChange({ ...site, seoTitle })} max={70} required />
       <Bilingual label="Deskripsi halaman di Google" value={site.seoDescription} onChange={(seoDescription) => onChange({ ...site, seoDescription })} max={170} long />
       <Bilingual label="Judul di halaman masuk dan daftar" value={site.authHeadline} onChange={(authHeadline) => onChange({ ...site, authHeadline })} max={120} />

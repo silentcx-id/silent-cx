@@ -135,8 +135,19 @@ try {
   await s.page.goto(`${BASE}/shopper`, { waitUntil: "networkidle" });
   const rejectedText = await text(s.page);
   check("pelamar melihat alasan dan tanggal boleh melamar lagi", rejectedText.includes("Uji penolakan otomatis.") && rejectedText.includes("melamar lagi mulai"));
-  check("notifikasi penolakan tampil", rejectedText.includes("Notifikasi") && rejectedText.includes("belum disetujui"));
+  check("beranda tidak lagi berisi daftar notifikasi", !rejectedText.includes("Tandai semua dibaca"));
+  check("lonceng menandai notifikasi baru", await s.page.getByTestId("bell-count").isVisible());
+  await s.page.getByRole("button", { name: /^Notifikasi/ }).click();
+  check("notifikasi penolakan tampil di lonceng", ((await s.page.getByRole("dialog", { name: "Notifikasi" }).textContent()) ?? "").includes("belum disetujui"));
+  await s.page.keyboard.press("Escape");
   await shot(s.page, "rejected");
+
+  // Admin mengosongkan lonceng dulu, supaya notifikasi lamaran ulang terbukti datang real time.
+  await a.page.getByRole("button", { name: /^Notifikasi/ }).click();
+  const clearAll = a.page.getByRole("dialog", { name: "Notifikasi" }).getByRole("button", { name: "Tandai semua dibaca" });
+  if (await clearAll.count()) await clearAll.click();
+  await a.page.getByTestId("bell-count").waitFor({ state: "detached", timeout: 30000 });
+  await a.page.keyboard.press("Escape");
 
   // 4. Majukan 30 hari, lalu melamar ulang dengan isian yang tersalin.
   await admin.from("shopper_applications").update({ decided_at: new Date(Date.now() - 31 * 86400000).toISOString() }).eq("shopper_id", shopperId);
@@ -147,6 +158,11 @@ try {
   await answerQuiz(s.page, RIGHT);
   await s.page.getByText(/Keputusan tim SilentCX akan muncul/).first().waitFor({ timeout: 30000 });
   check("lamaran ulang terkirim", true);
+  // Halaman admin yang sedang terbuka menerima notifikasi tanpa dimuat ulang.
+  await a.page.getByTestId("bell-count").waitFor({ timeout: 30000 });
+  await a.page.getByRole("button", { name: /^Notifikasi/ }).click();
+  check("admin menerima notifikasi lamaran secara real time", ((await a.page.getByRole("dialog", { name: "Notifikasi" }).textContent()) ?? "").includes("Lamaran shopper baru dari Uji Fase Dua"));
+  await a.page.keyboard.press("Escape");
 
   // 5. Admin menyetujui.
   await a.page.goto(`${BASE}/admin/accounts?tab=pending`, { waitUntil: "networkidle" });
@@ -158,11 +174,15 @@ try {
 
   await s.page.goto(`${BASE}/shopper`, { waitUntil: "networkidle" });
   const activeText = await text(s.page);
-  check("shopper aktif dengan notifikasi disetujui", activeText.includes("Akun Anda aktif") && activeText.includes("Lamaran Anda disetujui"));
-  check("beranda meminta rekening", activeText.includes("Isi rekening"));
-  await s.page.getByRole("button", { name: "Tandai sudah dibaca" }).click();
-  await s.page.getByRole("button", { name: "Tandai sudah dibaca" }).waitFor({ state: "detached", timeout: 30000 });
-  check("notifikasi ditandai dibaca", true);
+  check("beranda meminta rekening", activeText.includes("Akun Anda aktif") && activeText.includes("Isi rekening"));
+  await s.page.getByRole("button", { name: /^Notifikasi/ }).click();
+  const panel = s.page.getByRole("dialog", { name: "Notifikasi" });
+  check("notifikasi disetujui ada di lonceng", ((await panel.textContent()) ?? "").includes("Lamaran Anda disetujui"));
+  await panel.getByRole("button", { name: "Tandai semua dibaca" }).click();
+  await s.page.getByTestId("bell-count").waitFor({ state: "detached", timeout: 30000 });
+  await panel.getByRole("link", { name: /Lihat semua notifikasi/ }).click();
+  await s.page.waitForURL("**/shopper/notifications");
+  check("halaman semua notifikasi berisi riwayat, sudah dibaca", (await text(s.page)).includes("belum disetujui") && !(await text(s.page)).includes("Tandai semua dibaca"));
   await s.page.goto(`${BASE}/shopper/assignments`, { waitUntil: "networkidle" });
   check("menu Tugas terbuka setelah disetujui", !(await text(s.page)).includes("terbuka setelah lamaran disetujui"));
 
@@ -173,7 +193,15 @@ try {
   await s.page.fill("#holder", "Uji Fase Dua");
   await s.page.getByRole("button", { name: "Simpan rekening" }).click();
   await s.page.getByText("Rekening tersimpan.").first().waitFor({ timeout: 30000 });
-  check("rekening tersimpan", true);
+  const card = s.page.getByTestId("bank-card");
+  await card.waitFor({ timeout: 30000 });
+  check("rekening tersimpan, form diganti kartu yang disamarkan", (await card.textContent()).includes("•••• 7890") && (await card.textContent()).includes("a.n. Uji F*** D***") && (await s.page.locator("#number").count()) === 0);
+  await s.page.getByRole("button", { name: "Tampilkan data rekening saya" }).click();
+  check("tombol tampilkan membuka nomor dan nama lengkap", (await card.textContent()).includes("1234567890") && (await card.textContent()).includes("Uji Fase Dua"));
+  await s.page.getByRole("button", { name: "Ubah rekening" }).click();
+  check("ubah rekening membuka form berisi data lama", (await s.page.inputValue("#number")) === "1234567890");
+  await s.page.getByRole("button", { name: "Batal" }).click();
+  check("batal kembali ke kartu yang disamarkan", (await card.textContent()).includes("•••• 7890"));
   await shot(s.page, "profile-active");
 
   // 7. Pool shopper per kota.

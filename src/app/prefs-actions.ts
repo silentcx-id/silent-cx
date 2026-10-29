@@ -19,9 +19,3 @@ export async function setLanguage(lang: string) {
   }
   revalidatePath("/", "layout");
 }
-
-export async function setTheme(theme: string) {
-  if (theme !== "dark" && theme !== "light") return;
-  (await cookies()).set("theme", theme, { path: "/", maxAge: YEAR, sameSite: "lax" });
-  revalidatePath("/", "layout");
-}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
-import { login, register, type FormState } from "@/app/(auth)/actions";
+import { useActionState, useEffect, useState, useTransition } from "react";
+import { login, register, resendConfirmation, type FormState } from "@/app/(auth)/actions";
 import { toast } from "./toaster";
 import { dict, type Lang } from "@/lib/i18n";
 
@@ -28,12 +28,49 @@ function Alert({ state }: { state: FormState }) {
   return null;
 }
 
+// Supabase membatasi kirim ulang sekitar sekali per menit untuk tiap email.
+const RESEND_WAIT = 60;
+
+// Tombol kirim ulang email konfirmasi, dengan hitung mundur supaya tidak terkena batas kirim.
+function ResendConfirmation({ lang, email, next, wait = 0 }: { lang: Lang; email: string; next?: string; wait?: number }) {
+  const t = dict(lang).auth;
+  const [left, setLeft] = useState(wait);
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [pending, start] = useTransition();
+  useEffect(() => {
+    if (left <= 0) return;
+    const id = setTimeout(() => setLeft((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [left]);
+  const send = () =>
+    start(async () => {
+      const r = await resendConfirmation(email, next ?? "").catch(() => ({ ok: false, message: t.network }));
+      setResult(r);
+      toast(r.ok ? "ok" : "error", r.message);
+      setLeft(RESEND_WAIT);
+    });
+  return (
+    <div className="grid gap-2 rounded-lg border border-line bg-raise px-3 py-3 text-sm">
+      <span className="text-muted">{t.notReceived}</span>
+      <button type="button" className="btn btn-sm justify-self-start" disabled={pending || left > 0} onClick={send}>
+        {pending ? t.resending : left > 0 ? t.resendIn(left) : t.resend}
+      </button>
+      {result && (
+        <p role="status" className={result.ok ? "text-good" : "text-bad"}>
+          {result.message}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function LoginForm({ lang, next, initialError }: { lang: Lang; next?: string; initialError?: string }) {
   const t = dict(lang);
   const [state, action, pending] = useActionState(login, { error: initialError });
   return (
     <form action={action} className="grid gap-4" noValidate>
       <Alert state={state} />
+      {state.unconfirmed && <ResendConfirmation key={state.unconfirmed} lang={lang} email={state.unconfirmed} next={state.next} />}
       <input type="hidden" name="next" value={next ?? ""} />
       <div className="field">
         <label htmlFor="email">{t.common.email}</label>
@@ -53,7 +90,14 @@ export function LoginForm({ lang, next, initialError }: { lang: Lang; next?: str
 export function RegisterForm({ lang, kind, next }: { lang: Lang; kind: "client" | "shopper"; next?: string }) {
   const t = dict(lang);
   const [state, action, pending] = useActionState(register, {});
-  if (state.notice) return <Alert state={state} />;
+  if (state.notice) {
+    return (
+      <div className="grid gap-4">
+        <Alert state={state} />
+        {state.unconfirmed && <ResendConfirmation lang={lang} email={state.unconfirmed} next={state.next} wait={RESEND_WAIT} />}
+      </div>
+    );
+  }
   return (
     <form action={action} className="grid gap-4" noValidate>
       <Alert state={state} />

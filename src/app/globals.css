@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* SilentCX: warna diambil dari logo resmi (logo/): hitam #06080C dan emas #E5A93C.
-   Emas untuk aksi utama dan milestone aktif. Mode gelap bawaan; mode terang = latar krem, tinta hitam.
+   Emas untuk aksi utama dan milestone aktif. Dashboard selalu gelap; [data-theme="light"] dipakai bagian terang landing page.
    Merah, oranye, hijau hanya untuk arti status. */
 :root,
 [data-theme="dark"] {
@@ -198,4 +198,12 @@ h3 {
   .toast {
     animation: rise 0.2s ease both;
   }
+}
+
+/* Deretan geser (galeri dan testimoni) tanpa scrollbar; tetap bisa digeser dengan jari, trackpad, atau tombol. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
