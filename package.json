@@ -17,7 +17,8 @@
     "admin:buat:prod": "node --env-file=.env.prod scripts/admin-create.mjs",
     "env:cek": "node --env-file-if-exists=.env.local scripts/check-env.mjs",
     "env:cek:prod": "node --env-file-if-exists=.env.prod scripts/check-env.mjs",
-    "contoh:laporan": "esbuild scripts/sample-report.mts --bundle --platform=node --format=esm --packages=external --jsx=automatic --log-level=warning --outfile=e2e-output/.sample-report.mjs && node e2e-output/.sample-report.mjs"
+    "contoh:laporan": "esbuild scripts/sample-report.mts --bundle --platform=node --format=esm --packages=external --jsx=automatic --log-level=warning --outfile=e2e-output/.sample-report.mjs && node e2e-output/.sample-report.mjs",
+    "contoh:laporan:shot": "esbuild scripts/sample-report-shot.mts --bundle --platform=node --format=esm --packages=external --jsx=automatic --log-level=warning --outfile=e2e-output/.sample-report-shot.mjs && node e2e-output/.sample-report-shot.mjs"
   },
   "dependencies": {
     "@fontsource/bricolage-grotesque": "5.3.0",

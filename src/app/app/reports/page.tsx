@@ -29,9 +29,14 @@ export default async function ReportsPage() {
       {rows.length === 0 ? (
         <section className="card grid gap-4 p-6">
           <p className="text-muted">{t.empty}</p>
-          <a href="/app/reports/contoh/pdf" target="_blank" rel="noreferrer" className="btn w-fit">
-            {t.sample} ↗
-          </a>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold">{t.sample}:</span>
+            {(["essential", "insight", "performance"] as const).map((k) => (
+              <a key={k} href={`/app/reports/contoh/pdf?paket=${k}`} target="_blank" rel="noreferrer" className="btn btn-sm">
+                {k[0].toUpperCase() + k.slice(1)} ↗
+              </a>
+            ))}
+          </div>
         </section>
       ) : (
         <ul className="grid gap-3 md:grid-cols-2">

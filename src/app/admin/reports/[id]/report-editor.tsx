@@ -16,6 +16,8 @@ export function ReportEditor({
   photos,
   evidence,
   detailed,
+  summaryLabel,
+  suggestion,
   blockers,
   isNew,
 }: {
@@ -25,6 +27,8 @@ export function ReportEditor({
   photos: { id: string; url: string; caption: string }[];
   evidence: boolean;
   detailed: boolean;
+  summaryLabel: string;
+  suggestion: { summary: string; findings: ReportFinding[] };
   blockers: string[];
   isNew: boolean;
 }) {
@@ -46,9 +50,32 @@ export function ReportEditor({
       {isNew && <p className="rounded-xl border border-accent bg-accent/10 p-4 text-sm">Draf awal disusun otomatis dari skor. Periksa, lengkapi, lalu simpan.</p>}
 
       <section className="card grid gap-2 p-5">
-        <label htmlFor="summary" className="text-lg font-extrabold">
-          {detailed ? "Ringkasan manajemen" : "Ringkasan"}
-        </label>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <label htmlFor="summary" className="text-lg font-extrabold">
+            {summaryLabel}
+          </label>
+          <span className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => (!d.summary.trim() || confirm("Ganti ringkasan dengan draf otomatis dari angka terbaru?")) && setD({ ...d, summary: suggestion.summary })}
+            >
+              Susun ulang ringkasan otomatis
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm"
+              disabled={d.findings.length >= 20}
+              onClick={() => {
+                const have = new Set(d.findings.map((x) => x.title));
+                setD({ ...d, findings: [...d.findings, ...suggestion.findings.filter((x) => !have.has(x.title))].slice(0, 20) });
+              }}
+            >
+              Tambah temuan otomatis
+            </button>
+          </span>
+        </div>
+        <p className="text-xs text-muted">Draf otomatis memakai angka terbaru: skor, kepatuhan SOP, customer journey, gap, dan red flag sesuai paket. Periksa dan sesuaikan sebelum terbit.</p>
         <textarea id="summary" className={input} rows={5} maxLength={4000} value={d.summary} onChange={(e) => setD({ ...d, summary: e.target.value })} />
       </section>
 

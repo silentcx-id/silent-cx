@@ -41,6 +41,8 @@ export type Addon = {
   promo_pct: number | null;
   promo_starts_at: string | null;
   promo_ends_at: string | null;
+  // Hanya dipesan dari halaman laporan setelah terbit (Audit ulang).
+  after_report: boolean;
 };
 
 export type City = { id: string; name: string; active: boolean };

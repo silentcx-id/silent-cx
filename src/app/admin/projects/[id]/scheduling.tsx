@@ -43,7 +43,7 @@ export type AdminTask = {
   candidates: Candidate[];
 };
 
-export type OutletTasks = { id: string; position: number; name: string; city: string; address: string; maps_url: string; is_competitor: boolean; tasks: AdminTask[] };
+export type OutletTasks = { id: string; position: number; name: string; city: string; address: string; maps_url: string; is_competitor: boolean; extra_visits?: number; tasks: AdminTask[] };
 
 type Defaults = { fee: number; reimburse: number; hours: number; today: string; inAWeek: string };
 

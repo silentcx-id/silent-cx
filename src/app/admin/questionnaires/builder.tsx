@@ -4,22 +4,28 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   addQuestion,
+  addReferenceStages,
   addSection,
+  addStage,
   createQuestionnaire,
   deleteQuestion,
   deleteQuestionnaire,
   deleteSection,
+  deleteStage,
   duplicateQuestionnaire,
   move,
+  moveStage,
   saveFieldSettings,
   saveQuestion,
   saveQuestionnaire,
   saveSection,
+  saveStage,
 } from "./actions";
 import { StatusText, useAction } from "@/components/use-action";
 import { QUESTION_KINDS, type QuestionKind } from "@/lib/field";
 import { rupiah } from "@/lib/format";
 import type { BusinessType } from "@/lib/catalog-types";
+import { journeyReference, type JourneyStage } from "@/lib/journey";
 
 const input = "min-h-10 w-full rounded-lg border border-line bg-raise px-3 py-2 text-sm";
 const label = "grid gap-1 text-sm font-semibold";
@@ -164,8 +170,14 @@ export function QuestionnaireHeader({ questionnaire, usedBy, types }: { question
   );
 }
 
-type Question = { id: string; prompt: string; help: string; kind: string; photo_required: boolean };
-type Section = { id: string; title: string; weight: number; questions: Question[] };
+type Question = { id: string; prompt: string; help: string; kind: string; photo_required: boolean; is_sop: boolean; red_flag: boolean; journey_stage_id: string | null };
+type Section = { id: string; title: string; weight: number; target: number; questions: Question[] };
+type QuestionDraft = Omit<Question, "id">;
+
+const emptyQuestion: QuestionDraft = { prompt: "", help: "", kind: "yes_no", photo_required: false, is_sop: false, red_flag: false, journey_stage_id: null };
+const sameQuestion = (a: QuestionDraft, b: QuestionDraft) =>
+  a.prompt === b.prompt && a.help === b.help && a.kind === b.kind && a.photo_required === b.photo_required && a.is_sop === b.is_sop && a.red_flag === b.red_flag && a.journey_stage_id === b.journey_stage_id;
+const toPayload = (q: QuestionDraft) => ({ ...q, journey_stage_id: q.journey_stage_id ?? "" });
 
 function MoveButtons({ kind, id, first, last }: { kind: "section" | "question"; id: string; first: boolean; last: boolean }) {
   const { pending, act } = useAction();
@@ -181,7 +193,8 @@ function MoveButtons({ kind, id, first, last }: { kind: "section" | "question"; 
   );
 }
 
-function QuestionFields({ id, value, onChange }: { id: string; value: Omit<Question, "id">; onChange: (v: Omit<Question, "id">) => void }) {
+function QuestionFields({ id, value, onChange, stages }: { id: string; value: QuestionDraft; onChange: (v: QuestionDraft) => void; stages: JourneyStage[] }) {
+  const setKind = (kind: QuestionKind) => onChange({ ...value, kind, is_sop: value.is_sop && kind === "yes_no", red_flag: value.red_flag && kind !== "text" });
   return (
     <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_200px]">
       <label className="grid gap-1 text-xs font-semibold text-muted" htmlFor={`${id}-prompt`}>
@@ -191,7 +204,7 @@ function QuestionFields({ id, value, onChange }: { id: string; value: Omit<Quest
       <div className="grid content-start gap-2">
         <label className="grid gap-1 text-xs font-semibold text-muted" htmlFor={`${id}-kind`}>
           Jenis jawaban
-          <select id={`${id}-kind`} className={`${input} text-fg`} value={value.kind} onChange={(e) => onChange({ ...value, kind: e.target.value as QuestionKind })}>
+          <select id={`${id}-kind`} className={`${input} text-fg`} value={value.kind} onChange={(e) => setKind(e.target.value as QuestionKind)}>
             {QUESTION_KINDS.map((k) => (
               <option key={k.value} value={k.value}>
                 {k.label}
@@ -203,7 +216,44 @@ function QuestionFields({ id, value, onChange }: { id: string; value: Omit<Quest
           <input type="checkbox" className="size-4 accent-[var(--accent)]" checked={value.photo_required} onChange={(e) => onChange({ ...value, photo_required: e.target.checked })} />
           Wajib foto
         </label>
+        <label className={`flex items-center gap-2 text-sm ${value.kind === "yes_no" ? "" : "text-muted"}`}>
+          <input
+            type="checkbox"
+            className="size-4 accent-[var(--accent)]"
+            disabled={value.kind !== "yes_no"}
+            checked={value.is_sop}
+            onChange={(e) => onChange({ ...value, is_sop: e.target.checked })}
+          />
+          SOP {value.kind !== "yes_no" && <small>(hanya Ya / Tidak)</small>}
+        </label>
+        <label className={`flex items-center gap-2 text-sm ${value.kind === "text" ? "text-muted" : ""}`}>
+          <input
+            type="checkbox"
+            className="size-4 accent-[var(--accent)]"
+            disabled={value.kind === "text"}
+            checked={value.red_flag}
+            onChange={(e) => onChange({ ...value, red_flag: e.target.checked })}
+          />
+          Red flag
+        </label>
       </div>
+      <label className="grid gap-1 text-xs font-semibold text-muted sm:col-span-2" htmlFor={`${id}-stage`}>
+        Tahap customer journey
+        <select
+          id={`${id}-stage`}
+          className={`${input} text-fg`}
+          disabled={value.kind === "text"}
+          value={value.journey_stage_id ?? ""}
+          onChange={(e) => onChange({ ...value, journey_stage_id: e.target.value || null })}
+        >
+          <option value="">{value.kind === "text" ? "Isian teks tidak masuk tahap" : "Tanpa tahap"}</option>
+          {stages.map((st) => (
+            <option key={st.id} value={st.id}>
+              {st.position}. {st.title}
+            </option>
+          ))}
+        </select>
+      </label>
       <label className="grid gap-1 text-xs font-semibold text-muted sm:col-span-2" htmlFor={`${id}-help`}>
         Petunjuk untuk shopper (opsional)
         <input id={`${id}-help`} className={`${input} text-fg`} maxLength={500} value={value.help} onChange={(e) => onChange({ ...value, help: e.target.value })} />
@@ -212,14 +262,20 @@ function QuestionFields({ id, value, onChange }: { id: string; value: Omit<Quest
   );
 }
 
-function QuestionRow({ q, n, first, last }: { q: Question; n: number; first: boolean; last: boolean }) {
+function QuestionRow({ q, n, first, last, stages }: { q: Question; n: number; first: boolean; last: boolean; stages: JourneyStage[] }) {
   const { pending, status, act } = useAction();
-  const [v, setV] = useState({ prompt: q.prompt, help: q.help, kind: q.kind, photo_required: q.photo_required });
-  const dirty = v.prompt !== q.prompt || v.help !== q.help || v.kind !== q.kind || v.photo_required !== q.photo_required;
+  const saved: QuestionDraft = { prompt: q.prompt, help: q.help, kind: q.kind, photo_required: q.photo_required, is_sop: q.is_sop, red_flag: q.red_flag, journey_stage_id: q.journey_stage_id };
+  const [v, setV] = useState<QuestionDraft>(saved);
+  const dirty = !sameQuestion(v, saved);
   return (
     <li className="grid gap-2 rounded-xl border border-line p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="font-mono text-xs text-muted">P{n}</span>
+        <span className="flex flex-wrap items-center gap-1">
+          <span className="font-mono text-xs text-muted">P{n}</span>
+          {q.is_sop && <span className="chip border-accent text-mark">SOP</span>}
+          {q.red_flag && <span className="chip border-bad/50 text-bad">Red flag</span>}
+          {q.journey_stage_id && <span className="chip">{stages.find((st) => st.id === q.journey_stage_id)?.title ?? "Tahap jenis usaha lain"}</span>}
+        </span>
         <span className="flex flex-wrap gap-1">
           <MoveButtons kind="question" id={q.id} first={first} last={last} />
           <button type="button" className="btn btn-sm" disabled={pending} onClick={() => confirm("Hapus pertanyaan ini?") && act(() => deleteQuestion({ id: q.id }))}>
@@ -227,11 +283,11 @@ function QuestionRow({ q, n, first, last }: { q: Question; n: number; first: boo
           </button>
         </span>
       </div>
-      <QuestionFields id={q.id} value={v} onChange={setV} />
+      <QuestionFields id={q.id} value={v} onChange={setV} stages={stages} />
       {(dirty || status) && (
         <div className="flex flex-wrap items-center gap-3">
           {dirty && (
-            <button type="button" className="btn btn-sm btn-primary" disabled={pending} onClick={() => act(() => saveQuestion({ id: q.id, ...v }), "Tersimpan.")}>
+            <button type="button" className="btn btn-sm btn-primary" disabled={pending} onClick={() => act(() => saveQuestion({ id: q.id, ...toPayload(v) }), "Tersimpan.")}>
               Simpan pertanyaan
             </button>
           )}
@@ -242,15 +298,16 @@ function QuestionRow({ q, n, first, last }: { q: Question; n: number; first: boo
   );
 }
 
-export function SectionCard({ section, first, last }: { section: Section; first: boolean; last: boolean }) {
+export function SectionCard({ section, first, last, stages }: { section: Section; first: boolean; last: boolean; stages: JourneyStage[] }) {
   const { pending, status, act } = useAction();
   const [title, setTitle] = useState(section.title);
   const [weight, setWeight] = useState(String(section.weight));
-  const [draft, setDraft] = useState<Omit<Question, "id"> | null>(null);
-  const dirty = title !== section.title || weight !== String(section.weight);
+  const [target, setTarget] = useState(String(section.target));
+  const [draft, setDraft] = useState<QuestionDraft | null>(null);
+  const dirty = title !== section.title || weight !== String(section.weight) || target !== String(section.target);
   return (
     <article className="card grid gap-4 p-5">
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_120px_auto] sm:items-end">
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_100px_100px_auto] sm:items-end">
         <label className={label} htmlFor={`s-${section.id}`}>
           Bagian
           <input id={`s-${section.id}`} className={`${input} font-bold`} value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -258,6 +315,10 @@ export function SectionCard({ section, first, last }: { section: Section; first:
         <label className={label} htmlFor={`w-${section.id}`}>
           Bobot
           <input id={`w-${section.id}`} className={input} inputMode="numeric" value={weight} onChange={(e) => setWeight(e.target.value)} />
+        </label>
+        <label className={label} htmlFor={`t-${section.id}`}>
+          Target skor
+          <input id={`t-${section.id}`} className={input} inputMode="numeric" value={target} onChange={(e) => setTarget(e.target.value)} />
         </label>
         <span className="flex flex-wrap gap-1">
           <MoveButtons kind="section" id={section.id} first={first} last={last} />
@@ -274,7 +335,7 @@ export function SectionCard({ section, first, last }: { section: Section; first:
       {(dirty || status) && (
         <div className="flex flex-wrap items-center gap-3">
           {dirty && (
-            <button type="button" className="btn btn-sm btn-primary" disabled={pending} onClick={() => act(() => saveSection({ id: section.id, title, weight }), "Tersimpan.")}>
+            <button type="button" className="btn btn-sm btn-primary" disabled={pending} onClick={() => act(() => saveSection({ id: section.id, title, weight, target }), "Tersimpan.")}>
               Simpan bagian
             </button>
           )}
@@ -282,11 +343,13 @@ export function SectionCard({ section, first, last }: { section: Section; first:
         </div>
       )}
       <p className="text-xs text-muted">
-        {section.weight === 0 ? "Bobot 0: bagian ini tidak dinilai." : `Bobot dibagi rata ke ${section.questions.filter((q) => q.kind !== "text").length} pertanyaan yang dinilai.`}
+        {section.weight === 0
+          ? "Bobot 0: bagian ini tidak dinilai."
+          : `Bobot dibagi rata ke ${section.questions.filter((q) => q.kind !== "text").length} pertanyaan yang dinilai. Target ${section.target} dipakai di analisis gap laporan.`}
       </p>
       <ol className="grid gap-2">
         {section.questions.map((q, i) => (
-          <QuestionRow key={q.id} q={q} n={i + 1} first={i === 0} last={i === section.questions.length - 1} />
+          <QuestionRow key={q.id} q={q} n={i + 1} first={i === 0} last={i === section.questions.length - 1} stages={stages} />
         ))}
       </ol>
       {draft ? (
@@ -294,10 +357,10 @@ export function SectionCard({ section, first, last }: { section: Section; first:
           className="grid gap-2 rounded-xl border border-dashed border-accent p-3"
           onSubmit={(e) => {
             e.preventDefault();
-            act(() => addQuestion({ sectionId: section.id, ...draft }), undefined, () => setDraft(null));
+            act(() => addQuestion({ sectionId: section.id, ...toPayload(draft) }), undefined, () => setDraft(null));
           }}
         >
-          <QuestionFields id={`new-${section.id}`} value={draft} onChange={setDraft} />
+          <QuestionFields id={`new-${section.id}`} value={draft} onChange={setDraft} stages={stages} />
           <div className="flex gap-2">
             <button className="btn btn-sm btn-primary" disabled={pending}>
               Tambah
@@ -308,7 +371,7 @@ export function SectionCard({ section, first, last }: { section: Section; first:
           </div>
         </form>
       ) : (
-        <button type="button" className="btn btn-sm w-fit" onClick={() => setDraft({ prompt: "", help: "", kind: "yes_no", photo_required: false })}>
+        <button type="button" className="btn btn-sm w-fit" onClick={() => setDraft(emptyQuestion)}>
           + Pertanyaan
         </button>
       )}
@@ -343,5 +406,115 @@ export function AddSectionForm({ questionnaireId, remaining }: { questionnaireId
         <StatusText status={status} />
       </div>
     </form>
+  );
+}
+
+function StageRow({ stage, first, last }: { stage: JourneyStage; first: boolean; last: boolean }) {
+  const { pending, status, act } = useAction();
+  const [title, setTitle] = useState(stage.title);
+  const [hint, setHint] = useState(stage.hint);
+  const dirty = title !== stage.title || hint !== stage.hint;
+  return (
+    <li className="grid gap-2 rounded-xl border border-line p-3 sm:grid-cols-[32px_minmax(0,1fr)_minmax(0,2fr)_auto] sm:items-center">
+      <span className="font-display text-lg font-extrabold text-mark">{stage.position}</span>
+      <input aria-label="Nama tahap" className={`${input} font-semibold`} maxLength={80} value={title} onChange={(e) => setTitle(e.target.value)} />
+      <input aria-label="Yang diamati di tahap ini" className={input} maxLength={300} value={hint} onChange={(e) => setHint(e.target.value)} placeholder="Yang diamati di tahap ini" />
+      <span className="flex flex-wrap gap-1">
+        {dirty && (
+          <button type="button" className="btn btn-sm btn-primary" disabled={pending} onClick={() => act(() => saveStage({ id: stage.id, title, hint }), "Tersimpan.")}>
+            Simpan
+          </button>
+        )}
+        <button type="button" className="btn btn-sm" aria-label="Naikkan tahap" disabled={pending || first} onClick={() => act(() => moveStage({ id: stage.id, dir: "up" }))}>
+          ↑
+        </button>
+        <button type="button" className="btn btn-sm" aria-label="Turunkan tahap" disabled={pending || last} onClick={() => act(() => moveStage({ id: stage.id, dir: "down" }))}>
+          ↓
+        </button>
+        <button
+          type="button"
+          className="btn btn-sm"
+          disabled={pending}
+          onClick={() => confirm(`Hapus tahap "${stage.title}"? Pertanyaan yang memakainya menjadi tanpa tahap.`) && act(() => deleteStage({ id: stage.id }))}
+        >
+          Hapus
+        </button>
+      </span>
+      {status && (
+        <span className="sm:col-span-4">
+          <StatusText status={status} />
+        </span>
+      )}
+    </li>
+  );
+}
+
+// Tahap customer journey untuk jenis usaha kuesioner ini, dengan catatan referensi untuk admin.
+export function JourneyPanel({ businessType, typeLabel, stages }: { businessType: string; typeLabel: string; stages: JourneyStage[] }) {
+  const { pending, status, act } = useAction();
+  const [title, setTitle] = useState("");
+  const [hint, setHint] = useState("");
+  const ref = journeyReference(businessType);
+  const missing = ref.stages.filter((r) => !stages.some((st) => st.title.trim().toLowerCase() === r.title.toLowerCase())).length;
+  return (
+    <section className="card grid gap-4 p-5" aria-labelledby="journey-title">
+      <div className="grid gap-1">
+        <h2 id="journey-title" className="text-lg font-extrabold">
+          Tahap customer journey · {typeLabel}
+        </h2>
+        <p className="text-sm text-muted">Berlaku untuk semua kuesioner {typeLabel}. Salinan kuesioner di proyek yang sudah berjalan tidak ikut berubah.</p>
+      </div>
+      <details className="rounded-xl border border-accent bg-accent/10 p-4 text-sm">
+        <summary className="cursor-pointer font-semibold">Catatan referensi customer journey {typeLabel}</summary>
+        <div className="mt-3 grid gap-2">
+          <p>{ref.tip}</p>
+          <p className="font-semibold">Contoh alur:</p>
+          <ol className="grid list-decimal gap-1 pl-5">
+            {ref.stages.map((r) => (
+              <li key={r.title}>
+                <span className="font-semibold">{r.title}</span> <span className="text-muted">· {r.hint}</span>
+              </li>
+            ))}
+          </ol>
+          {missing > 0 && (
+            <button type="button" className="btn btn-sm w-fit" disabled={pending} onClick={() => act(() => addReferenceStages({ businessType }), "Tahap contoh ditambahkan.")}>
+              Tambahkan {missing} tahap contoh yang belum ada
+            </button>
+          )}
+        </div>
+      </details>
+      {stages.length === 0 ? (
+        <p className="text-sm text-muted">Belum ada tahap. Tambahkan dari catatan referensi atau isi sendiri di bawah.</p>
+      ) : (
+        <ol className="grid gap-2">
+          {stages.map((st, i) => (
+            <StageRow key={st.id} stage={st} first={i === 0} last={i === stages.length - 1} />
+          ))}
+        </ol>
+      )}
+      <form
+        className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] sm:items-end"
+        onSubmit={(e) => {
+          e.preventDefault();
+          act(() => addStage({ businessType, title, hint }), "Tahap ditambahkan.", () => {
+            setTitle("");
+            setHint("");
+          });
+        }}
+      >
+        <label className={label} htmlFor="new-stage">
+          Tahap baru
+          <input id="new-stage" className={input} maxLength={80} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Contoh: Pengambilan pesanan" required />
+        </label>
+        <label className={label} htmlFor="new-stage-hint">
+          Yang diamati
+          <input id="new-stage-hint" className={input} maxLength={300} value={hint} onChange={(e) => setHint(e.target.value)} />
+        </label>
+        <button className="btn btn-primary" disabled={pending}>
+          Tambah tahap
+        </button>
+      </form>
+      <StatusText status={status} />
+    </section>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Stepper } from "@/components/stepper";
+import { dayLabel } from "@/lib/field";
 import { dict } from "@/lib/i18n";
 import { getClientProjects } from "@/lib/orders";
 import { getLang } from "@/lib/prefs";
@@ -22,7 +23,20 @@ type Row = {
   awaiting_qc: number;
   approved: number;
   is_competitor: boolean;
+  extra_visits: number;
+  // Perkiraan laporan: biasa 5 hari kerja, express 2 hari kerja setelah kunjungan terakhir lolos QC.
+  report_eta: { express: boolean; days: number; all_done: boolean; due: string | null } | null;
+  // Audit ulang: tanggal paling cepat kunjungan (30 hari setelah laporan sebelumnya terbit).
+  earliest_visit: string | null;
 };
+
+function etaText(r: Row, status: string) {
+  const eta = r.report_eta;
+  if (!eta || status === "completed") return null;
+  const kind = eta.express ? "Laporan express" : "Laporan";
+  if (eta.due) return `${kind}: perkiraan terbit ${dayLabel(eta.due)}`;
+  return `${kind} terbit sekitar ${eta.days} hari kerja setelah kunjungan terakhir lolos QC`;
+}
 
 // Tahap proyek dari 0 (Pesanan) sampai 6 (Laporan); 7 berarti laporan sudah terbit.
 // Proyek yang tampil di sini sudah lunas, jadi Pesanan dan Pembayaran selalu selesai.
@@ -66,6 +80,10 @@ export default async function AuditsPage() {
                 <div className="grid gap-1">
                   <h2 className="eyebrow font-mono">{code}</h2>
                   <p className="text-lg font-extrabold">{t.stepNow[step]}</p>
+                  {etaText(outlets[0], status) && <p className="text-sm text-muted">{etaText(outlets[0], status)}</p>}
+                  {outlets[0].earliest_visit && status !== "completed" && (
+                    <p className="text-sm text-muted">Audit ulang: kunjungan paling cepat {dayLabel(outlets[0].earliest_visit)}, 30 hari setelah laporan sebelumnya terbit.</p>
+                  )}
                 </div>
                 {step === 2 && (
                   <Link href="/app/outlets" className="btn btn-primary">
@@ -101,6 +119,7 @@ export default async function AuditsPage() {
                       </span>
                       <span className="flex gap-1">
                         {r.is_competitor && <span className="chip border-accent text-mark">{t.competitor}</span>}
+                        {r.extra_visits > 0 && <span className="chip">+{r.extra_visits} kunjungan tambahan</span>}
                         <span className="chip">{r.city}</span>
                       </span>
                     </div>

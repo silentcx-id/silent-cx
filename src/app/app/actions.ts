@@ -155,3 +155,45 @@ export async function saveCompetitors(raw: unknown) {
     PATHS,
   );
 }
+
+// Pembagian kunjungan tambahan ke outlet; jumlah dan outlet yang sudah dijadwalkan dijaga database.
+export async function saveExtraVisits(raw: unknown) {
+  await requireRole("client", "/app/outlets");
+  return run(
+    z.object({ projectId: z.uuid(), items: z.array(z.object({ outlet_id: z.uuid(), extra: z.number().int().min(0).max(20) })).max(100) }),
+    raw,
+    async ({ projectId, items }) => {
+      const supabase = await createClient();
+      check(await supabase.rpc("client_save_extra_visits", { p_project: projectId, p_items: items }));
+    },
+    PATHS,
+  );
+}
+
+// Brief kuesioner khusus.
+export async function saveBrief(raw: unknown) {
+  await requireRole("client", "/app/outlets");
+  return run(
+    z.object({ projectId: z.uuid(), brief: z.string().trim().max(2000, "Maksimal 2000 karakter.") }),
+    raw,
+    async ({ projectId, brief }) => {
+      const supabase = await createClient();
+      check(await supabase.rpc("client_save_brief", { p_project: projectId, p_brief: brief }));
+    },
+    PATHS,
+  );
+}
+
+// Audit ulang dipesan dari halaman laporan setelah laporan terbit; pesanan baru menunggu tinjauan atau pembayaran.
+export async function orderReaudit(raw: unknown) {
+  await requireRole("client", "/app/reports");
+  return run(
+    z.object({ projectId: z.uuid() }),
+    raw,
+    async ({ projectId }) => {
+      const supabase = await createClient();
+      return checkData<string>(await supabase.rpc("client_order_reaudit", { p_parent: projectId }));
+    },
+    PATHS,
+  );
+}

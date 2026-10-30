@@ -43,7 +43,18 @@ export type Invoice = {
   payment_proofs: PaymentProof[];
 };
 
-export type ProjectOutlet = { id: string; position: number; city: string; name: string; address: string; maps_url: string; notes: string; is_competitor: boolean; paired_outlet_id: string | null };
+export type ProjectOutlet = {
+  id: string;
+  position: number;
+  city: string;
+  name: string;
+  address: string;
+  maps_url: string;
+  notes: string;
+  is_competitor: boolean;
+  paired_outlet_id: string | null;
+  extra_visits: number;
+};
 
 export type Project = {
   id: string;
@@ -57,6 +68,8 @@ export type Project = {
   review_reasons: ("quote" | "city" | "addon")[];
   status_note: string | null;
   objectives: string;
+  custom_brief: string;
+  parent_project_id: string | null;
   details_completed_at: string | null;
   activated_at: string | null;
   created_at: string;

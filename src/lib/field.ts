@@ -9,8 +9,9 @@ export const QUESTION_KINDS = [
 export type QuestionKind = (typeof QUESTION_KINDS)[number]["value"];
 export const QUESTION_KIND_VALUES = QUESTION_KINDS.map((k) => k.value) as [QuestionKind, ...QuestionKind[]];
 
-export type SnapshotQuestion = { id: string; prompt: string; help: string; kind: QuestionKind; photo_required: boolean };
-export type SnapshotSection = { id: string; title: string; weight: number; questions: SnapshotQuestion[] };
+// sop, red_flag, stage, dan target ada sejak Putaran 9; salinan lama tidak memilikinya.
+export type SnapshotQuestion = { id: string; prompt: string; help: string; kind: QuestionKind; photo_required: boolean; sop?: boolean; red_flag?: boolean; stage?: string | null; stage_pos?: number | null };
+export type SnapshotSection = { id: string; title: string; weight: number; target?: number; questions: SnapshotQuestion[] };
 export type QuestionnaireSnapshot = { id?: string; name?: string; photo_limit: number; sections: SnapshotSection[] };
 
 // { "<id pertanyaan>": { value, na, note } }

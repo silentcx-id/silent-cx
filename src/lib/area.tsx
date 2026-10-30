@@ -33,6 +33,32 @@ export function areaLayout(role: Role, home: string) {
   };
 }
 
+// Halaman client yang terkunci fitur paket: kembalikan tampilan "fitur terkunci", atau null kalau terbuka.
+export async function clientFeatureGate(slug: string) {
+  const item = menuItem("client", slug);
+  if (!item) notFound();
+  const viewer = await requireRole("client", `${ROLE_HOME.client}/${slug}`);
+  const lang = await getLang();
+  const locked = item.entitlement && !(await clientEntitlements(viewer.id)).includes(item.entitlement);
+  if (!locked) return { viewer, lang, title: item.label[lang], locked: null };
+  const t = dict(lang).orders;
+  return {
+    viewer,
+    lang,
+    title: item.label[lang],
+    locked: (
+      <section className="card grid gap-3 p-6">
+        <h1 className="text-2xl font-extrabold">{item.label[lang]}</h1>
+        <p className="font-semibold">{t.lockedFeatureTitle}</p>
+        <p className="text-muted">{t.lockedFeatureBody}</p>
+        <Link href="/app/paket" className="btn btn-primary w-fit">
+          {dict(lang).client.choosePackage} →
+        </Link>
+      </section>
+    ),
+  };
+}
+
 // Halaman menu yang belum dibangun: tampil sebagai "Segera hadir"; slug di luar menu → 404.
 // Setiap halaman memeriksa role sendiri, karena layout tidak dirender ulang saat berpindah halaman.
 export async function comingSoonPage(role: Role, slug: string) {

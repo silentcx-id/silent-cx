@@ -599,3 +599,92 @@ Perubahan database ada di migration yang sama dengan Putaran 7 (`20261030000013_
 10. **Keamanan.** Situs tidak bisa ditampilkan di dalam iframe situs lain, dan header keamanan dasar terpasang di semua halaman.
 
 Diuji otomatis: `tests/putaran8.test.ts` (12 tes) dan `tests/e2e/putaran8-siap-deploy.mjs` (28 cek, tidak mengubah data).
+
+## Putaran 9: Semua fitur daftar harga masuk laporan
+
+Jalankan dulu `npm run db:migrate` untuk migration `20261030000014_report_features.sql` (staging, lalu produksi dengan `npm run db:migrate:prod`).
+
+### A. Kuesioner (admin)
+
+1. Buka **Kuesioner**, lalu template **Kafe & restoran — dasar**.
+   - Template ini sudah ditandai: 5 pertanyaan SOP, 3 red flag, dan 16 pertanyaan masuk tahap customer journey F&B.
+   - Kotak **Ringkasan isi laporan** menampilkan jumlah SOP, red flag, tahap yang dipakai, dan pertanyaan yang dinilai tanpa tahap. Dua baris di bawahnya memberi tahu apakah kuesioner siap untuk paket Insight dan Performance.
+2. **Tahap customer journey.**
+   - Panel ini berlaku untuk semua kuesioner dengan jenis usaha yang sama.
+   - Buka **Catatan referensi customer journey**: ada tips dan contoh alur untuk jenis usaha itu, serta tombol untuk menambahkan tahap contoh yang belum ada.
+   - Ubah nama tahap, geser urutan dengan ↑ ↓, tambah, atau hapus tahap.
+   - Kedelapan jenis usaha bawaan dan "Lainnya" sudah punya contoh alur.
+3. **Bagian.** Ada isian **Target skor** (bawaan 85), yang dipakai di analisis gap laporan.
+4. **Pertanyaan.** Ada centang **SOP**, centang **Red flag**, dan pilihan **Tahap customer journey**.
+   - SOP hanya bisa untuk Ya / Tidak. Kalau jenis jawaban diganti ke skala, centang SOP otomatis lepas.
+   - Red flag tidak bisa untuk isian teks.
+   - Label SOP, Red flag, dan nama tahap tampil di atas setiap pertanyaan.
+5. **Syarat paket.** Saat menetapkan kuesioner ke proyek:
+   - Insight dan Performance menolak kuesioner tanpa pertanyaan SOP dan tanpa pertanyaan di minimal 2 tahap journey.
+   - Performance juga menolak kuesioner tanpa red flag.
+   - Essential menerima kuesioner apa pun yang sudah siap.
+   - Syarat yang sama dicek lagi sebelum laporan terbit.
+
+### B. Laporan (admin dan client)
+
+1. **Insight** menambahkan tiga bagian:
+   - **Kepatuhan SOP**: persentase patuh dan daftar SOP yang dilanggar.
+   - **Customer journey**: skor per tahap sesuai urutan, beserta titik terlemah.
+   - **Analisis gap**: target, aktual, dan selisih per area, diurutkan dari gap terbesar.
+   - Garis tipis di batang skor area menandai target.
+2. **Performance** menambahkan:
+   - **Ringkasan eksekutif** (menggantikan label Ringkasan manajemen).
+   - **Peringkat outlet** berupa peta warna, dengan kolom SOP dan jumlah red flag.
+   - **Pola antar outlet**: SOP yang dilanggar di lebih dari satu outlet, dan area yang di bawah target di banyak outlet.
+   - Daftar **Red flag**. Red flag tidak memotong skor.
+   - **Rekomendasi untuk manajemen**.
+3. **Editor laporan admin.** Draf otomatis kini memuat kepatuhan SOP, tahap journey terlemah, gap terbesar, SOP yang dilanggar di banyak outlet, dan red flag.
+   - Tombol **Susun ulang ringkasan otomatis** mengisi ulang ringkasan dari angka terbaru.
+   - Tombol **Tambah temuan otomatis** menambahkan temuan dari red flag, SOP yang dilanggar, dan area di bawah 70.
+4. **PDF** memuat bagian yang sama dengan tampilan web.
+5. **Contoh laporan.** Tersedia untuk ketiga paket:
+   - `/contoh-laporan?paket=essential`
+   - `/contoh-laporan?paket=insight`
+   - `/contoh-laporan?paket=performance` (bawaan)
+
+   Halaman **Laporan** client yang belum punya laporan menampilkan tiga tombol contoh.
+6. Laporan yang terbit sebelum Putaran 9 tetap tampil seperti dulu, tanpa bagian baru.
+
+### C. Dashboard client
+
+1. **Benchmark outlet** (Performance): peta skor outlet × area dari laporan terbaru, outlet tertinggi dan terendah, dan pola antar outlet. Sebelum laporan terbit, halaman ini menampilkan keadaan kosong dengan tautan ke Audit berjalan.
+2. **Benchmark kompetitor** (add-on): skor Anda dibanding setiap kompetitor, per area, dari laporan terbaru.
+3. Keduanya tidak lagi menampilkan "Segera hadir". Tanpa paket atau add-on yang sesuai, halaman menampilkan fitur terkunci.
+
+### D. Add-on
+
+1. **Kunjungan tambahan.**
+   - Saat checkout, client hanya memilih jumlahnya.
+   - Setelah pembayaran diverifikasi, di **Outlet & data** muncul kotak **Bagikan N kunjungan tambahan**, dengan tombol − dan + per outlet.
+   - Isi dan simpan nama outlet dulu; selama nama belum ada, pembagian tidak bisa dilakukan.
+   - Data belum bisa ditandai lengkap sebelum semua kunjungan tambahan dibagikan.
+   - Outlet yang sudah dijadwalkan admin terkunci.
+   - Audit berjalan, penjadwalan admin, dan syarat laporan terbit memakai jumlah kunjungan per outlet hasil pembagian.
+2. **Laporan express.**
+   - Laporan biasa terbit 5 hari kerja setelah kunjungan terakhir lolos QC; express 2 hari kerja. Sabtu dan Minggu tidak dihitung.
+   - Client melihat perkiraan tanggal terbit di **Audit berjalan**.
+   - Daftar **Laporan** admin menampilkan label **Express**, tenggat, dan sisa hari. Tenggat yang lewat berwarna merah, dan yang paling mendesak tampil paling atas.
+3. **Audit ulang.**
+   - Tidak lagi ada di checkout paket.
+   - Setelah laporan terbit, di bawah laporan client muncul kotak **Audit ulang** dengan harga per outlet × jumlah outlet.
+   - Pesanan menyalin outlet, tujuan audit, dan kuesioner proyek sebelumnya, dengan 1 kunjungan per outlet. Pesanan ini tidak termasuk konsultasi gratis, kompetitor, maupun express.
+   - Karena add-on ini diset "perlu persetujuan", pesanan masuk **Tinjau pesanan** admin dulu.
+   - Kunjungan paling cepat 30 hari setelah laporan sebelumnya terbit. Admin melihat tanggal itu di Penjadwalan, dan database menolak jendela kunjungan yang lebih awal.
+   - Laporan audit ulang memuat bagian **Perbandingan dengan audit sebelumnya**.
+4. **Kuesioner khusus.**
+   - Di **Outlet & data** ada kotak **Kebutuhan kuesioner khusus**, minimal 20 karakter, yang wajib diisi sebelum data ditandai lengkap.
+   - Admin melihat brief itu di Penjadwalan proyek.
+   - Laporannya mencantumkan bahwa kuesioner disusun khusus.
+
+### E. Teks paket
+
+Fitur paket Performance: "Review manajemen" dihapus karena review dilakukan di sesi konsultasi, dan "Analisis tren antar outlet" diganti "Pola antar outlet".
+
+Setiap teks fitur paket bawaan dipetakan di `src/lib/report/coverage.ts`. Tes memastikan setiap fitur bagian laporan benar-benar muncul di contoh laporan paketnya. Kalau admin menambah teks fitur baru di Katalog, tambahkan juga ke file itu.
+
+Diuji otomatis: `tests/putaran9.test.ts` (23 tes) dan `tests/e2e/putaran9-laporan.mjs`. E2e ini tidak mengubah data dan butuh migration Putaran 9 sudah dijalankan.

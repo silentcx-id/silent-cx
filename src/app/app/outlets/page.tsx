@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BriefForm, ExtraVisitsForm } from "./addon-forms";
 import { CompetitorForm } from "./competitor-form";
 import { DetailsForm } from "./details-form";
 import { getBusinessTypes } from "@/lib/catalog";
@@ -18,7 +19,17 @@ export default async function OutletsPage() {
   const t = dict(lang).orders;
   const { live, open } = clientState(await getClientProjects(viewer.id));
   const supabase = await createClient();
-  const [{ data: company }, types, cities] = await Promise.all([supabase.from("companies").select("*").eq("client_id", viewer.id).maybeSingle(), getBusinessTypes(), getActiveCities()]);
+  const [{ data: company }, types, cities, { data: progress }] = await Promise.all([
+    supabase.from("companies").select("*").eq("client_id", viewer.id).maybeSingle(),
+    getBusinessTypes(),
+    getActiveCities(),
+    supabase.rpc("client_audit_progress"),
+  ]);
+  // Outlet yang sudah punya kunjungan terjadwal atau selesai tidak bisa diubah pembagian kunjungan tambahannya.
+  const busy = new Set(
+    ((progress ?? []) as { outlet_id: string; scheduled: number; awaiting_qc: number; approved: number }[]).filter((r) => r.scheduled + r.awaiting_qc + r.approved > 0).map((r) => r.outlet_id),
+  );
+  const extraAllowance = (live?.addons_snapshot ?? []).filter((a) => a.item_key === "additional_visit").reduce((n, a) => n + a.quantity, 0);
   // Jumlah kompetitor dari add-on benchmark kompetitor yang dibeli.
   const allowance = (live?.addons_snapshot ?? []).filter((a) => a.item_key === "competitor_benchmark").reduce((n, a) => n + a.quantity, 0);
 
@@ -46,6 +57,17 @@ export default async function OutletsPage() {
               lang={lang}
             />
           )}
+          {extraAllowance > 0 && (
+            <ExtraVisitsForm
+              projectId={live.id}
+              allowance={extraAllowance}
+              baseVisits={live.package_snapshot.visits ?? 1}
+              outlets={live.project_outlets
+                .filter((o) => !o.is_competitor)
+                .map((o) => ({ id: o.id, position: o.position, name: o.name, city: o.city, extra_visits: o.extra_visits ?? 0, locked: busy.has(o.id) }))}
+            />
+          )}
+          {live.entitlements.includes("custom_scope") && <BriefForm projectId={live.id} initial={live.custom_brief ?? ""} locked={Boolean(live.details_completed_at)} />}
           <DetailsForm
             projectId={live.id}
             lang={lang}

@@ -6,7 +6,7 @@ import { OutletSchedule, QuestionnairePicker, type AdminTask, type Candidate, ty
 import { InvoiceView } from "@/components/invoice-view";
 import { pickTab, Tabs } from "@/components/tabs";
 import { businessTypeLabel, getBusinessTypes } from "@/lib/catalog";
-import { wibDate } from "@/lib/field";
+import { dayLabel, wibDate } from "@/lib/field";
 import { dateTime, rupiah } from "@/lib/format";
 import { dict } from "@/lib/i18n";
 import { getProject, type Invoice, type PaymentProof, type Project } from "@/lib/orders";
@@ -68,6 +68,7 @@ async function Scheduling({ project }: { project: Project }) {
   const current = assigned ? { id: assigned.questionnaire_id as string | null, name: (assigned.snapshot as { name?: string }).name ?? "Kuesioner", assigned_at: assigned.assigned_at as string } : null;
   const canCreate = Boolean(assigned) && Boolean(project.details_completed_at);
   const visitsPlanned = project.package_snapshot.visits ?? 1;
+  const { data: earliest } = await supabase.rpc("reaudit_earliest_visit", { p_project: project.id });
 
   return (
     <section className="grid gap-4">
@@ -75,9 +76,19 @@ async function Scheduling({ project }: { project: Project }) {
       {!project.details_completed_at && (
         <p className="rounded-xl border border-warn/50 bg-warn/10 p-4 text-sm">Client belum menandai data outlet lengkap. Tugas bisa dibuat setelah itu.</p>
       )}
+      {earliest && (
+        <p className="rounded-xl border border-accent bg-accent/10 p-4 text-sm">
+          Audit ulang: jendela kunjungan paling cepat mulai <strong>{dayLabel(earliest)}</strong> (30 hari setelah laporan sebelumnya terbit).
+        </p>
+      )}
+      {project.entitlements.includes("custom_scope") && (
+        <p className="rounded-xl border border-line p-4 text-sm">
+          <strong>Brief kuesioner khusus:</strong> {project.custom_brief || "Belum diisi client."}
+        </p>
+      )}
       <QuestionnairePicker projectId={project.id} current={current} options={options} locked={locked} />
       {outlets.map((o) => (
-        <OutletSchedule key={o.id} outlet={o} defaults={defaults} canCreate={canCreate} visitsPlanned={o.is_competitor ? 1 : visitsPlanned} />
+        <OutletSchedule key={o.id} outlet={o} defaults={defaults} canCreate={canCreate} visitsPlanned={o.is_competitor ? 1 : visitsPlanned + (o.extra_visits ?? 0)} />
       ))}
     </section>
   );
@@ -111,6 +122,11 @@ export default async function ProjectDetail({ params, searchParams }: PageProps<
   const open = ["awaiting_review", "awaiting_payment", "verifying"].includes(project.status);
   const needsReview = project.status === "awaiting_review" && Boolean(invoice);
   const outside = project.project_outlets.filter((o) => !served.has(o.city.trim().toLowerCase())).length;
+  const extraTotal = project.addons_snapshot.filter((a) => a.item_key === "additional_visit").reduce((n, a) => n + a.quantity, 0);
+  const extraShared = project.project_outlets.reduce((n, o) => n + (o.extra_visits ?? 0), 0);
+  const parentCode = project.parent_project_id
+    ? ((await supabase.from("projects").select("code").eq("id", project.parent_project_id).maybeSingle()).data?.code as string | undefined)
+    : undefined;
   // Proyek aktif tanpa bukti bayar yang menunggu langsung dibuka di tab jadwal, karena itu pekerjaan utamanya.
   const tab = pickTab(query.tab, TABS, project.status === "active" && !pendingProof ? "jadwal" : "ringkasan");
   const proofs = project.invoices.flatMap((i) => i.payment_proofs.map((p) => ({ ...p, invoiceCode: i.code })));
@@ -164,7 +180,12 @@ export default async function ProjectDetail({ params, searchParams }: PageProps<
               <h2 className="text-xl font-extrabold">Pesanan</h2>
               <dl className="grid gap-4 text-sm sm:grid-cols-2">
                 <Fact label="Paket" value={project.package_snapshot.name} />
-                <Fact label="Kunjungan per outlet" value={String(project.package_snapshot.visits ?? 1)} />
+                <Fact
+                  label="Kunjungan per outlet"
+                  value={`${project.package_snapshot.visits ?? 1}${extraTotal ? ` · +${extraTotal} kunjungan tambahan (${extraShared}/${extraTotal} dibagikan client)` : ""}`}
+                />
+                {project.parent_project_id && <Fact label="Audit ulang dari" value={parentCode ?? "Proyek sebelumnya"} />}
+                {project.entitlements.includes("priority") && <Fact label="Laporan" value="Express: 2 hari kerja setelah kunjungan terakhir lolos QC" />}
                 <Fact label="Outlet" value={`${project.outlet_count} outlet${outside ? ` · ${outside} di luar kota dilayani` : ""}`} />
                 <Fact label="Data outlet" value={project.details_completed_at ? `Lengkap sejak ${dateTime(project.details_completed_at, "id")}` : "Belum ditandai lengkap"} />
                 <Fact label="Total pesanan" value={invoice ? rupiah(invoice.total) : "—"} />
@@ -243,6 +264,7 @@ export default async function ProjectDetail({ params, searchParams }: PageProps<
                   </span>
                   <span className="chip">{o.city}</span>
                   {o.is_competitor && <span className="chip border-accent text-mark">Kompetitor</span>}
+                  {(o.extra_visits ?? 0) > 0 && <span className="chip">+{o.extra_visits} kunjungan tambahan</span>}
                   {!served.has(o.city.trim().toLowerCase()) && <span className="chip border-warn/50 text-warn">Di luar kota dilayani</span>}
                 </span>
                 {o.address && <span className="text-muted">{o.address}</span>}

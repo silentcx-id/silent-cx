@@ -1,6 +1,19 @@
 import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { C, LOGO } from "./pdf-base";
-import { fmtScore, PRIORITY_LABEL, reportFeatures, scoreBand, SEVERITY_LABEL, type ReportData, type ReportFinding, type ReportScore } from "./types";
+import {
+  fmtDiff,
+  fmtScore,
+  gapRows,
+  outletPatterns,
+  PRIORITY_LABEL,
+  reportFeatures,
+  scoreBand,
+  SEVERITY_LABEL,
+  summaryTitle,
+  type ReportData,
+  type ReportFinding,
+  type ReportScore,
+} from "./types";
 
 // Laporan audit dalam PDF A4: latar putih supaya hemat tinta, aksen emas-hitam SilentCX.
 
@@ -82,13 +95,31 @@ function FindingCard({ x, detailed }: { x: ReportFinding; detailed: boolean }) {
   );
 }
 
+// Baris tabel sederhana: kolom pertama lebar tetap, sisanya rata kanan.
+function Row({ cells, head = false, first = 150 }: { cells: { text: string; color?: string; bold?: boolean }[]; head?: boolean; first?: number }) {
+  return (
+    <View style={s.row} wrap={false}>
+      {cells.map((c, i) => (
+        <Text key={i} style={[head ? s.th : s.td, i === 0 ? { width: first } : s.cell, { color: c.color ?? (head ? C.muted : C.text), fontWeight: c.bold ? 600 : 400 }]}>
+          {c.text}
+        </Text>
+      ))}
+    </View>
+  );
+}
+
 export function ReportDocument({ data, draft = false }: { data: ReportData; draft?: boolean }) {
   const f = reportFeatures(data.entitlements);
   const ranked = [...data.outlets].sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
   const multi = f.multiOutlet && data.outlets.length > 1;
   const showPhotos = f.evidence && data.photos.length > 0;
   const showCompetitors = f.competitor && data.competitors.length > 0;
-  let n = 5;
+  const gaps = gapRows(data.sections);
+  const patterns = outletPatterns(data);
+  const sop = data.sop;
+  const violated = sop?.items.filter((i) => i.no > 0) ?? [];
+  const prev = data.previous;
+  let n = 0;
   const next = () => String(++n).padStart(2, "0");
 
   return (
@@ -137,17 +168,109 @@ export function ReportDocument({ data, draft = false }: { data: ReportData; draf
       <Page size="A4" style={s.page}>
         <View style={s.tape} fixed />
 
-        <Section n="01" title={f.detailed ? "Ringkasan manajemen" : "Ringkasan"}>
+        <Section n={next()} title={summaryTitle(data.entitlements)}>
           <Text>{data.summary}</Text>
+          {f.sop && sop && sop.score !== null && <Text style={[s.muted, { marginTop: 6 }]}>Kepatuhan SOP keseluruhan: {fmtScore(sop.score)}%</Text>}
         </Section>
 
-        <Section n="02" title="Skor per area penilaian" items={data.sections} render={(row) => <ScoreBar key={row.title} row={row} />} />
+        {prev && (
+          <Section n={next()} title="Perbandingan dengan audit sebelumnya">
+            <Text style={[s.muted, { marginBottom: 6 }]}>
+              Audit sebelumnya {prev.code}
+              {prev.publishedAt ? ` · terbit ${prev.publishedAt}` : ""}
+            </Text>
+            <Row head cells={[{ text: "Area" }, { text: "Sebelumnya" }, { text: "Sekarang" }, { text: "Perubahan" }]} first={200} />
+            {[
+              { title: "Skor keseluruhan", before: prev.score, now: data.score },
+              ...(f.sop ? [{ title: "Kepatuhan SOP (%)", before: prev.sop, now: sop?.score ?? null }] : []),
+              ...data.sections.map((x) => ({ title: x.title, before: prev.sections.find((y) => y.title === x.title)?.score ?? null, now: x.score })),
+            ].map((r) => {
+              const diff = r.before !== null && r.now !== null ? r.now - r.before : null;
+              return (
+                <Row
+                  key={r.title}
+                  first={200}
+                  cells={[
+                    { text: r.title },
+                    { text: fmtScore(r.before), color: C.muted },
+                    { text: fmtScore(r.now), bold: true },
+                    { text: diff === null ? "—" : fmtDiff(diff), color: diff === null ? C.muted : diff >= 0 ? C.good : C.bad },
+                  ]}
+                />
+              );
+            })}
+          </Section>
+        )}
 
-        <Section n="03" title={multi ? "Peringkat outlet" : "Skor outlet"}>
+        <Section n={next()} title="Skor per area penilaian" items={data.sections} render={(row) => <ScoreBar key={row.title} row={row} />} />
+
+        {f.sop && (
+          <Section n={next()} title="Kepatuhan SOP">
+            {!sop || sop.yes + sop.no === 0 ? (
+              <Text style={s.muted}>Belum ada pemeriksaan SOP di kunjungan yang lolos QC.</Text>
+            ) : (
+              <>
+                <View style={[s.row, { alignItems: "center", marginBottom: 8 }]}>
+                  <Bar value={sop.score} />
+                  <Text style={{ width: 70, textAlign: "right", fontFamily: "Bricolage", fontWeight: 800, fontSize: 16, color: tone(sop.score) }}>{fmtScore(sop.score)}%</Text>
+                </View>
+                <Text style={[s.muted, { marginBottom: 6 }]}>
+                  {sop.yes} patuh · {sop.no} tidak patuh dari {sop.yes + sop.no} pemeriksaan
+                </Text>
+                {violated.length === 0 ? (
+                  <Text style={{ color: C.good }}>Semua SOP yang diperiksa dipatuhi.</Text>
+                ) : (
+                  violated.map((i) => (
+                    <View key={i.prompt} style={[s.card, { marginBottom: 6, padding: 10 }]} wrap={false}>
+                      <View style={[s.row, { justifyContent: "space-between", gap: 8 }]}>
+                        <Text style={{ fontWeight: 600, flexShrink: 1 }}>{i.prompt}</Text>
+                        <Text style={{ color: C.bad, fontSize: 8 }}>
+                          {i.no} dari {i.yes + i.no} tidak patuh
+                        </Text>
+                      </View>
+                      <Text style={[s.muted, { fontSize: 8, marginTop: 2 }]}>
+                        {i.section}
+                        {multi && i.outlets.length ? ` · ${i.outlets.join(", ")}` : ""}
+                      </Text>
+                    </View>
+                  ))
+                )}
+              </>
+            )}
+          </Section>
+        )}
+
+        {f.sop && (
+          <Section n={next()} title="Customer journey">
+            {data.journey.length === 0 ? (
+              <Text style={s.muted}>Belum ada data per tahap customer journey.</Text>
+            ) : (
+              data.journey.map((j, i) => <ScoreBar key={j.title} row={{ title: `${i + 1}. ${j.title}`, score: j.score }} />)
+            )}
+          </Section>
+        )}
+
+        {f.sop && gaps.length > 0 && (
+          <Section n={next()} title="Analisis gap">
+            <Row head cells={[{ text: "Area" }, { text: "Target" }, { text: "Aktual" }, { text: "Gap" }]} first={200} />
+            {gaps.map((g) => (
+              <Row
+                key={g.title}
+                first={200}
+                cells={[{ text: g.title }, { text: String(g.target), color: C.muted }, { text: fmtScore(g.score), bold: true, color: tone(g.score) }, { text: fmtDiff(g.gap), color: g.gap >= 0 ? C.good : C.bad }]}
+              />
+            ))}
+            <Text style={[s.muted, { fontSize: 8, marginTop: 6 }]}>Diurutkan dari gap terbesar. Gap = skor aktual dikurangi target area.</Text>
+          </Section>
+        )}
+
+        <Section n={next()} title={multi ? "Peringkat outlet" : "Skor outlet"}>
           <View style={s.row}>
             <Text style={[s.th, { width: 24 }]}>#</Text>
             <Text style={[s.th, { flexGrow: 1 }]}>Outlet</Text>
-            <Text style={[s.th, { width: 70 }]}>Kunjungan</Text>
+            <Text style={[s.th, { width: 60 }]}>Kunjungan</Text>
+            {f.benchmarking && <Text style={[s.th, { width: 50, textAlign: "right" }]}>SOP</Text>}
+            {f.benchmarking && <Text style={[s.th, { width: 50, textAlign: "right" }]}>Red flag</Text>}
             <Text style={[s.th, { width: 50, textAlign: "right" }]}>Skor</Text>
           </View>
           {ranked.map((o, i) => (
@@ -156,7 +279,9 @@ export function ReportDocument({ data, draft = false }: { data: ReportData; draf
               <Text style={[s.td, { flexGrow: 1 }]}>
                 {o.name} <Text style={s.muted}>· {o.city}</Text>
               </Text>
-              <Text style={[s.td, { width: 70 }]}>{o.visits}</Text>
+              <Text style={[s.td, { width: 60 }]}>{o.visits}</Text>
+              {f.benchmarking && <Text style={[s.td, { width: 50, textAlign: "right" }]}>{o.sop === null || o.sop === undefined ? "—" : `${fmtScore(o.sop)}%`}</Text>}
+              {f.benchmarking && <Text style={[s.td, { width: 50, textAlign: "right", color: o.redFlags ? C.bad : C.muted }]}>{o.redFlags ?? 0}</Text>}
               <Text style={[s.td, { width: 50, textAlign: "right", fontWeight: 600, color: tone(o.score) }]}>{fmtScore(o.score)}</Text>
             </View>
           ))}
@@ -189,11 +314,53 @@ export function ReportDocument({ data, draft = false }: { data: ReportData; draf
           </View>
         )}
 
-        <Section n="04" title="Temuan utama" items={data.findings} render={(x, i) => <FindingCard key={i} x={x} detailed={f.detailed} />} />
+        {f.benchmarking && multi && (patterns.areas.length > 0 || patterns.sharedSop.length > 0) && (
+          <Section n={next()} title="Pola antar outlet">
+            {patterns.sharedSop.map((i) => (
+              <View key={i.prompt} style={[s.card, { marginBottom: 6, padding: 10, borderColor: C.bad }]} wrap={false}>
+                <Text style={{ fontWeight: 600 }}>
+                  SOP dilanggar di {i.outlets.length} outlet: {i.prompt}
+                </Text>
+                <Text style={[s.muted, { fontSize: 8 }]}>{i.outlets.join(", ")}. Kemungkinan masalah sistem atau pelatihan, bukan satu cabang saja.</Text>
+              </View>
+            ))}
+            {patterns.areas.map((a) => (
+              <View key={a.title} style={{ marginBottom: 6 }} wrap={false}>
+                <Text style={{ fontWeight: 600 }}>
+                  {a.title} <Text style={{ color: a.below ? C.warn : C.good, fontWeight: 400 }}>· {a.below === 0 ? "semua outlet mencapai target" : `${a.below} dari ${a.total} outlet di bawah target`}</Text>
+                </Text>
+                <Text style={s.muted}>
+                  Terendah {a.low.name} ({fmtScore(a.low.score)}), tertinggi {a.high.name} ({fmtScore(a.high.score)}), selisih {fmtScore(a.spread)} poin.
+                </Text>
+              </View>
+            ))}
+          </Section>
+        )}
+
+        {f.benchmarking && (
+          <Section n={next()} title="Red flag">
+            {data.redFlags.length === 0 ? (
+              <Text style={{ color: C.good }}>Tidak ada red flag di kunjungan yang lolos QC.</Text>
+            ) : (
+              data.redFlags.map((r, i) => (
+                <View key={i} style={[s.card, { marginBottom: 6, padding: 10, borderLeftWidth: 3, borderLeftColor: C.bad }]} wrap={false}>
+                  <Text style={{ fontWeight: 600 }}>{r.prompt}</Text>
+                  <Text style={[s.muted, { fontSize: 8 }]}>
+                    {r.outlet} · {r.section}
+                    {r.count > 1 ? ` · ${r.count} kunjungan` : ""}
+                  </Text>
+                </View>
+              ))
+            )}
+            <Text style={[s.muted, { fontSize: 8, marginTop: 4 }]}>Red flag perlu ditindaklanjuti segera dan tidak mengurangi skor.</Text>
+          </Section>
+        )}
+
+        <Section n={next()} title="Temuan utama" items={data.findings} render={(x, i) => <FindingCard key={i} x={x} detailed={f.detailed} />} />
 
         <Section
-          n="05"
-          title="Rekomendasi"
+          n={next()}
+          title={f.benchmarking ? "Rekomendasi untuk manajemen" : "Rekomendasi"}
           items={data.recommendations}
           render={(r, i) => (
             <View key={i} style={[s.row, { marginBottom: 7, gap: 10 }]} wrap={false}>
@@ -239,7 +406,7 @@ export function ReportDocument({ data, draft = false }: { data: ReportData; draf
                   return (
                     <Text key={c.name} style={[s.td, s.cell]}>
                       {fmtScore(v)}
-                      {diff !== null && <Text style={{ color: diff >= 0 ? C.good : C.bad, fontSize: 8 }}> {diff >= 0 ? `+${fmtScore(diff)}` : `−${fmtScore(-diff)}`}</Text>}
+                      {diff !== null && <Text style={{ color: diff >= 0 ? C.good : C.bad, fontSize: 8 }}> {fmtDiff(diff)}</Text>}
                     </Text>
                   );
                 })}
@@ -259,6 +426,9 @@ export function ReportDocument({ data, draft = false }: { data: ReportData; draf
             pertanyaannya, skor outlet adalah rata-rata kunjungan yang lolos QC, dan skor keseluruhan adalah rata-rata outlet.
           </Text>
           <Text style={{ marginTop: 6 }}>Kategori skor: 85–100 sangat baik · 70–84 baik · 55–69 perlu perbaikan · di bawah 55 kritis.</Text>
+          {f.sop && <Text style={{ marginTop: 6 }}>Kepatuhan SOP = pemeriksaan yang patuh dibagi seluruh pemeriksaan SOP. Customer journey = rata-rata indikator di setiap tahap.</Text>}
+          {f.benchmarking && <Text style={{ marginTop: 6 }}>Red flag = pertanyaan bertanda red flag yang dijawab Tidak atau bernilai 1–2 pada skala 1–5.</Text>}
+          {f.customScope && <Text style={{ marginTop: 6 }}>Kuesioner audit ini disusun khusus sesuai kebutuhan {data.company}.</Text>}
         </Section>
         {/* Teks kaki di setiap halaman isi. Nomor halaman (render) tidak tercetak di react-pdf 4.9 untuk dokumen ini, jadi teks statis saja. */}
         <Text style={s.footer} fixed>
