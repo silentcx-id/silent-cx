@@ -430,7 +430,11 @@ export function ReportView({ data }: { data: ReportData }) {
                       {r.outlet} · {r.section}
                     </span>
                   </span>
-                  {r.count > 1 && <span className="chip border-bad/50 text-bad">{r.count} kunjungan</span>}
+                  {/* Prompt red flag ditulis sebagai standar, jadi diberi label supaya tidak terbaca sebagai hal yang sudah baik. */}
+                  <span className="flex flex-wrap gap-1.5">
+                    <span className="chip border-bad/50 text-bad">Tidak terpenuhi</span>
+                    {r.count > 1 && <span className="chip border-bad/50 text-bad">{r.count} kunjungan</span>}
+                  </span>
                 </li>
               ))}
             </ul>

@@ -208,10 +208,10 @@ describe("membeli sesi tambahan", () => {
   it("membuat tagihan dan menambah jatah setelah pembayaran diverifikasi", async () => {
     const invoice = (await t.as<{ id: string }>(other, "select public.client_buy_consultation($1, 2) as id", [essential])).rows[0].id;
     const inv = await one<{ total: number; kind: string; status: string }>("select total, kind, status from public.invoices where id = $1", [invoice]);
-    expect(inv).toEqual({ total: 998000, kind: "consultation", status: "unpaid" });
+    expect(inv).toEqual({ total: 798000, kind: "consultation", status: "unpaid" });
     expect(await fails(t.as(other, "select public.client_buy_consultation($1, 1)", [essential]))).toMatch(/belum selesai/);
 
-    await t.as(other, "select public.submit_payment_proof($1, 'transfer', $2, 998000, 'Client lain')", [invoice, `${other}/${invoice}/bukti.jpg`]);
+    await t.as(other, "select public.submit_payment_proof($1, 'transfer', $2, 798000, 'Client lain')", [invoice, `${other}/${invoice}/bukti.jpg`]);
     expect((await one<{ status: string }>("select status from public.projects where id = $1", [essential])).status).toBe("completed");
     await t.as(admin, "select public.admin_verify_payment($1, true, null)", [invoice]);
     const rows = await mine(other, essential);

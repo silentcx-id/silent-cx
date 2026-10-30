@@ -194,8 +194,8 @@ export function Landing({ content, packages, lang, banner }: Props) {
                     </span>
                   </div>
                   <ul className="grid gap-2 text-sm">
-                    {pkg.features.slice(0, 8).map((f) => (
-                      <li key={f} className="flex gap-2">
+                    {pkg.features.map((f, i) => (
+                      <li key={i} className="flex gap-2">
                         <span aria-hidden="true" className="font-bold text-mark">
                           ✓
                         </span>

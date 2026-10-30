@@ -65,12 +65,12 @@ describe("katalog", () => {
   it("hanya admin yang bisa mengubah harga", async () => {
     await t.as(client, "update public.package_prices set price = 1 where outlets = 1");
     const res = await t.db.query<{ price: number }>("select price from public.package_prices pp join public.packages p on p.id = pp.package_id where p.key = 'essential'");
-    expect(res.rows[0].price).toBe(1249000);
+    expect(res.rows[0].price).toBe(1099000);
     await expect(t.as(null, "update public.packages set name = 'x'")).rejects.toThrow(/permission denied/);
     await t.as(admin, "update public.package_prices pp set price = 1299000 from public.packages p where p.id = pp.package_id and p.key = 'essential'");
     const after = await t.db.query<{ price: number }>("select price from public.package_prices pp join public.packages p on p.id = pp.package_id where p.key = 'essential'");
     expect(after.rows[0].price).toBe(1299000);
-    await t.db.query("update public.package_prices pp set price = 1249000 from public.packages p where p.id = pp.package_id and p.key = 'essential'");
+    await t.db.query("update public.package_prices pp set price = 1099000 from public.packages p where p.id = pp.package_id and p.key = 'essential'");
   });
 
   it("pengaturan pembayaran dibaca pengguna login, bukan pengunjung", async () => {
@@ -85,21 +85,21 @@ describe("katalog", () => {
 describe("perhitungan harga", () => {
   it("paket Insight 1 outlet di kota yang dilayani", async () => {
     const q = await quote("insight", ["Jakarta"]);
-    expect(q.total).toBe(1749000);
+    expect(q.total).toBe(1399000);
     expect(q.review_reasons).toEqual([]);
     expect(q.entitlements).toContain("sop");
   });
 
   it("Performance mengikuti harga per jumlah outlet", async () => {
-    expect((await quote("performance", ["Jakarta", "Jakarta", "Bandung"])).total).toBe(3749000);
-    expect((await quote("performance", ["Jakarta", "Jakarta", "Bandung", "Jakarta"])).total).toBe(4599000);
+    expect((await quote("performance", ["Jakarta", "Jakarta", "Bandung"])).total).toBe(3999000);
+    expect((await quote("performance", ["Jakarta", "Jakarta", "Bandung", "Jakarta"])).total).toBe(4999000);
     await expect(quote("performance", ["Jakarta", "Jakarta"])).rejects.toThrow(/tidak tersedia untuk 2 outlet/);
   });
 
   it("outlet tambahan menambah jumlah outlet dan harga", async () => {
     const q = await quote("essential", ["Jakarta", "bandung", "Jakarta"], [{ key: "additional_outlet", qty: 2 }]);
     expect(q.outlet_count).toBe(3);
-    expect(q.total).toBe(1249000 + 2 * 1099000);
+    expect(q.total).toBe(1099000 + 2 * 999000);
     expect(q.review_reasons).toEqual([]);
   });
 
@@ -117,7 +117,7 @@ describe("perhitungan harga", () => {
 
   it("add-on tanpa harga pasti ditandai perlu konfirmasi dan tidak masuk total", async () => {
     const q = await quote("insight", ["Jakarta"], [{ key: "custom_questionnaire", qty: 1 }]);
-    expect(q.total).toBe(1749000);
+    expect(q.total).toBe(1399000);
     expect(q.review_reasons).toEqual(["quote"]);
     expect(q.lines.find((l) => l.item_key === "custom_questionnaire")?.amount).toBeNull();
   });
@@ -144,10 +144,10 @@ describe("perhitungan harga", () => {
   it("promo yang sedang berlaku memotong harga, yang belum mulai tidak", async () => {
     await t.db.query("update public.packages set promo_pct = 20, promo_starts_at = now() - interval '1 day', promo_ends_at = now() + interval '1 day' where key = 'insight'");
     const q = await quote("insight", ["Jakarta"]);
-    expect(q.total).toBe(1399200);
-    expect(q.lines[0]).toMatchObject({ unit_price: 1399200, list_price: 1749000 });
+    expect(q.total).toBe(1119200);
+    expect(q.lines[0]).toMatchObject({ unit_price: 1119200, list_price: 1399000 });
     await t.db.query("update public.packages set promo_starts_at = now() + interval '1 day', promo_ends_at = now() + interval '2 days' where key = 'insight'");
-    expect((await quote("insight", ["Jakarta"])).total).toBe(1749000);
+    expect((await quote("insight", ["Jakarta"])).total).toBe(1399000);
     await t.db.query("update public.packages set promo_pct = null, promo_starts_at = null, promo_ends_at = null where key = 'insight'");
   });
 
@@ -163,7 +163,7 @@ describe("pesanan dan pembayaran", () => {
     expect(p).toMatchObject({ status: "awaiting_payment", outlet_count: 1 });
     expect(p.code).toMatch(/^PRJ-\d{4}$/);
     const inv = await invoiceOf(id);
-    expect(inv).toMatchObject({ status: "unpaid", total: 1749000 + 599000, client_id: client });
+    expect(inv).toMatchObject({ status: "unpaid", total: 1399000 + 399000, client_id: client });
     expect(inv.code).toMatch(/^INV-\d{4}$/);
     const hours = (new Date(inv.due_at!).getTime() - Date.now()) / 3_600_000;
     expect(hours).toBeGreaterThan(47.9);
@@ -271,7 +271,7 @@ describe("pesanan yang perlu review admin", () => {
     const review = (prices: object) => t.as(admin, "select public.admin_review_order($1, true, 'Harga kuesioner disesuaikan', $2::jsonb)", [id, JSON.stringify(prices)]);
     await expect(review({})).rejects.toThrow(/Harga untuk Kuesioner khusus wajib diisi/);
     await review({ [line.id]: 800000 });
-    expect(await invoiceOf(id)).toMatchObject({ status: "unpaid", total: 1749000 + 800000 });
+    expect(await invoiceOf(id)).toMatchObject({ status: "unpaid", total: 1399000 + 800000 });
     expect((await invoiceOf(id)).due_at).not.toBeNull();
     expect((await projectOf(id)).status).toBe("awaiting_payment");
     await closeOpenOrders(other);

@@ -288,8 +288,7 @@ export function ReportDocument({ data, draft = false }: { data: ReportData; draf
         </Section>
 
         {multi && (
-          <View style={s.section} wrap={false}>
-            <Text style={[s.muted, { marginBottom: 6 }]}>Perbandingan antar outlet per area</Text>
+          <Section n={next()} title="Perbandingan outlet per area">
             <View style={s.row}>
               <Text style={[s.th, { width: 150 }]}>Area</Text>
               {ranked.map((o) => (
@@ -311,7 +310,7 @@ export function ReportDocument({ data, draft = false }: { data: ReportData; draf
                 })}
               </View>
             ))}
-          </View>
+          </Section>
         )}
 
         {f.benchmarking && multi && (patterns.areas.length > 0 || patterns.sharedSop.length > 0) && (
@@ -344,7 +343,11 @@ export function ReportDocument({ data, draft = false }: { data: ReportData; draf
             ) : (
               data.redFlags.map((r, i) => (
                 <View key={i} style={[s.card, { marginBottom: 6, padding: 10, borderLeftWidth: 3, borderLeftColor: C.bad }]} wrap={false}>
-                  <Text style={{ fontWeight: 600 }}>{r.prompt}</Text>
+                  {/* Prompt red flag ditulis sebagai standar ("Meja bersih saat Anda duduk."), jadi diberi label supaya tidak terbaca sebagai hal yang sudah baik. */}
+                  <View style={[s.row, { justifyContent: "space-between", gap: 8 }]}>
+                    <Text style={{ fontWeight: 600, flexShrink: 1 }}>{r.prompt}</Text>
+                    <Text style={[s.chip, { color: C.bad, borderWidth: 1, borderColor: C.bad }]}>Tidak terpenuhi</Text>
+                  </View>
                   <Text style={[s.muted, { fontSize: 8 }]}>
                     {r.outlet} · {r.section}
                     {r.count > 1 ? ` · ${r.count} kunjungan` : ""}
@@ -352,7 +355,7 @@ export function ReportDocument({ data, draft = false }: { data: ReportData; draf
                 </View>
               ))
             )}
-            <Text style={[s.muted, { fontSize: 8, marginTop: 4 }]}>Red flag perlu ditindaklanjuti segera dan tidak mengurangi skor.</Text>
+            <Text style={[s.muted, { fontSize: 8, marginTop: 4 }]}>Standar di atas tidak terpenuhi saat kunjungan. Red flag perlu ditindaklanjuti segera dan tidak mengurangi skor.</Text>
           </Section>
         )}
 
@@ -419,17 +422,22 @@ export function ReportDocument({ data, draft = false }: { data: ReportData; draf
           </Section>
         )}
 
-        <Section n="Metodologi" title="Cara membaca laporan ini">
-          <Text>
+        {/* Metodologi boleh menyambung ke halaman berikutnya: hanya judul dan paragraf pertama yang dijaga tetap bersama,
+            supaya bagian ini tidak pindah utuh dan menyisakan halaman hampir kosong. */}
+        <View style={[s.section, { fontSize: 9, lineHeight: 1.4 }]}>
+          <View wrap={false}>
+            <Heading n="Metodologi" title="Cara membaca laporan ini" />
+            <Text>
             Setiap kunjungan dilakukan mystery shopper terlatih tanpa diketahui staf outlet, lalu diperiksa tim SilentCX (quality control) sebelum masuk laporan.
             Jawaban Ya bernilai 1, Tidak bernilai 0, dan skala 1–5 dikonversi ke 0–1. Pertanyaan yang tidak teramati tidak dihitung. Skor area adalah rata-rata
             pertanyaannya, skor outlet adalah rata-rata kunjungan yang lolos QC, dan skor keseluruhan adalah rata-rata outlet.
-          </Text>
+            </Text>
+          </View>
           <Text style={{ marginTop: 6 }}>Kategori skor: 85–100 sangat baik · 70–84 baik · 55–69 perlu perbaikan · di bawah 55 kritis.</Text>
           {f.sop && <Text style={{ marginTop: 6 }}>Kepatuhan SOP = pemeriksaan yang patuh dibagi seluruh pemeriksaan SOP. Customer journey = rata-rata indikator di setiap tahap.</Text>}
           {f.benchmarking && <Text style={{ marginTop: 6 }}>Red flag = pertanyaan bertanda red flag yang dijawab Tidak atau bernilai 1–2 pada skala 1–5.</Text>}
           {f.customScope && <Text style={{ marginTop: 6 }}>Kuesioner audit ini disusun khusus sesuai kebutuhan {data.company}.</Text>}
-        </Section>
+        </View>
         {/* Teks kaki di setiap halaman isi. Nomor halaman (render) tidak tercetak di react-pdf 4.9 untuk dokumen ini, jadi teks statis saja. */}
         <Text style={s.footer} fixed>
           SilentCX · {data.code} · Rahasia, untuk penggunaan internal {data.company}
