@@ -48,6 +48,7 @@ describe("kontak dan media sosial di footer", () => {
     expect(socialHref("instagram", "@silentcx.id")).toBe("https://instagram.com/silentcx.id");
     expect(socialHref("tiktok", "silentcx")).toBe("https://www.tiktok.com/@silentcx");
     expect(socialHref("x", "@silentcx")).toBe("https://x.com/silentcx");
+    expect(socialHref("threads", "@silentcx.id")).toBe("https://www.threads.com/@silentcx.id");
     expect(socialHref("facebook", "https://facebook.com/silentcx")).toBe("https://facebook.com/silentcx");
     expect(socialHref("youtube", "  ")).toBe("");
     expect(websiteHref("silentcx.id")).toBe("https://silentcx.id");

@@ -35,6 +35,7 @@ export type SiteInfo = {
   facebook: string;
   linkedin: string;
   youtube: string;
+  threads: string;
   x: string;
   seoTitle: Text;
   seoDescription: Text;
@@ -234,6 +235,8 @@ export const DEFAULT_CONTENT: SiteContent = {
   site: {
     // Kontak contoh supaya footer terlihat lengkap; editor memperingatkan admin selama masih dipakai.
     ...SAMPLE_SITE,
+    // Threads belum punya akun contoh: kosong sampai admin mengisinya.
+    threads: "",
     seoTitle: tx("SilentCX · Mystery shopping dan audit pengalaman pelanggan", "SilentCX · Mystery shopping and customer experience audits"),
     seoDescription: tx(
       "Audit pengalaman pelanggan lewat mystery shopping: kunjungan rahasia, bukti foto dan GPS, dan laporan skor CX dengan rekomendasi.",
@@ -334,6 +337,7 @@ export function normalizeContent(raw: unknown): SiteContent {
       facebook: str(s.facebook, d.facebook),
       linkedin: str(s.linkedin, d.linkedin),
       youtube: str(s.youtube, d.youtube),
+      threads: str(s.threads, d.threads),
       x: str(s.x, d.x),
       seoTitle: asText(s.seoTitle, d.seoTitle),
       seoDescription: asText(s.seoDescription, d.seoDescription),

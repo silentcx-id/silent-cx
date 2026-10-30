@@ -688,3 +688,16 @@ Fitur paket Performance: "Review manajemen" dihapus karena review dilakukan di s
 Setiap teks fitur paket bawaan dipetakan di `src/lib/report/coverage.ts`. Tes memastikan setiap fitur bagian laporan benar-benar muncul di contoh laporan paketnya. Kalau admin menambah teks fitur baru di Katalog, tambahkan juga ke file itu.
 
 Diuji otomatis: `tests/putaran9.test.ts` (23 tes) dan `tests/e2e/putaran9-laporan.mjs`. E2e ini tidak mengubah data dan butuh migration Putaran 9 sudah dijalankan.
+
+## Threads di landing dan X, Threads, Facebook di Linktree
+
+Landing page:
+- [ ] Admin → Konten → Info situs: kolom **Threads** muncul di Media sosial. Isi `@akun` atau alamat lengkap, lalu Terbitkan.
+- [ ] Footer landing menampilkan ikon Threads yang membuka `https://www.threads.com/@akun`. Kalau dikosongkan, ikonnya tidak tampil.
+
+Linktree (`silentcx-linktree`, salin `Code.gs`, `Shared.html`, dan `Admin.html` ke Apps Script, lalu deploy versi baru):
+- [ ] Panel admin → Tampilan → Media sosial: pilihan jenis berisi Facebook, Threads, dan X.
+- [ ] Bisa menambah sampai 10 media sosial.
+- [ ] Halaman github.io menampilkan ketiga ikon baru dan membuka alamat yang diisi.
+
+Diuji otomatis: `tests/putaran5.test.ts` (tautan Threads) dan `npm test` di folder linktree (68 cek).

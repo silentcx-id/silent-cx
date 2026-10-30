@@ -69,6 +69,7 @@ const contentSchema = z.object({
     facebook: social("Facebook"),
     linkedin: social("LinkedIn"),
     youtube: social("YouTube"),
+    threads: social("Threads"),
     x: social("X"),
     seoTitle: text(70).refine((t) => t.id.length > 0, "Judul untuk Google wajib diisi."),
     seoDescription: text(170),
