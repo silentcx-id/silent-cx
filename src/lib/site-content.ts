@@ -6,10 +6,11 @@ import { isLandingIcon, type LandingIcon } from "./landing-icons";
 import { DEFAULT_PRIVACY, DEFAULT_TERMS } from "./legal-defaults";
 
 export type Text = { id: string; en: string };
-// meta = keterangan tambahan (jabatan pada testimoni); icon = ikon kartu; image = gambar galeri.
-export type Item = { title: Text; body: Text; meta: Text; icon: LandingIcon | ""; image: string };
+// meta = keterangan tambahan (jabatan pada testimoni); icon = ikon kartu; image = gambar galeri atau logo mitra.
+// hidden = butir disembunyikan dari landing tanpa dihapus.
+export type Item = { title: Text; body: Text; meta: Text; icon: LandingIcon | ""; image: string; hidden: boolean };
 
-export const SECTION_KEYS = ["hero", "problems", "steps", "audited", "why", "sample", "packages", "testimonials", "faq", "shopper", "contact", "cta"] as const;
+export const SECTION_KEYS = ["hero", "problems", "steps", "audited", "features", "industries", "why", "sample", "packages", "testimonials", "partners", "faq", "shopper", "contact", "cta"] as const;
 export type SectionKey = (typeof SECTION_KEYS)[number];
 
 export type Section = {
@@ -61,7 +62,8 @@ export type SectionMeta = {
   cta?: string;
   cta2?: string;
   image?: boolean;
-  items?: { label: string; title: string; body: string; meta?: string; icon?: boolean; image?: boolean };
+  // body kosong = butir tanpa penjelasan; logo = gambar butir disimpan dengan latar transparan.
+  items?: { label: string; title: string; body: string; meta?: string; icon?: boolean; image?: boolean; logo?: boolean };
 };
 
 export const SECTION_META: Record<SectionKey, SectionMeta> = {
@@ -69,6 +71,14 @@ export const SECTION_META: Record<SectionKey, SectionMeta> = {
   problems: { label: "Masalah yang diselesaikan", hint: "Masalah yang dialami pemilik bisnis sebelum memakai SilentCX.", lede: true, items: { label: "Masalah", title: "Masalah", body: "Penjelasan", icon: true } },
   steps: { label: "Cara kerja", hint: "Langkah dari memesan sampai menerima laporan.", lede: true, items: { label: "Langkah", title: "Judul langkah", body: "Penjelasan" } },
   audited: { label: "Apa saja yang diaudit", hint: "Area yang dinilai shopper di setiap kunjungan.", lede: true, items: { label: "Area", title: "Area", body: "Penjelasan", icon: true } },
+  features: { label: "Fitur platform", hint: "Fitur yang didapat client. Kartu yang disembunyikan tidak tampil di landing.", lede: true, items: { label: "Fitur", title: "Nama fitur", body: "Penjelasan", icon: true } },
+  industries: { label: "Bisnis yang kami layani", hint: "Jenis usaha yang bisa diaudit SilentCX.", lede: true, items: { label: "Jenis bisnis", title: "Jenis bisnis", body: "Penjelasan", icon: true } },
+  partners: {
+    label: "Mitra kami",
+    hint: "Logo mitra saja. Nama mitra tidak tampil, hanya dibaca pembaca layar dan Google. Bagian ini tampil setelah ada logo. Pastikan setiap logo sudah diizinkan mitranya.",
+    lede: true,
+    items: { label: "Mitra", title: "Nama mitra", body: "", image: true, logo: true },
+  },
   packages: { label: "Paket dan harga", hint: "Daftar paket dan harganya diambil otomatis dari Katalog. Di sini hanya judul dan pengantarnya.", lede: true },
   why: { label: "Mengapa SilentCX", hint: "Alasan memilih SilentCX. Tampil di pita gelap.", lede: true, items: { label: "Alasan", title: "Alasan", body: "Penjelasan", icon: true } },
   sample: {
@@ -91,11 +101,11 @@ export const SECTION_META: Record<SectionKey, SectionMeta> = {
 };
 
 // Urutan bawaan di halaman.
-export const DEFAULT_ORDER: SectionKey[] = ["hero", "problems", "steps", "audited", "why", "sample", "packages", "testimonials", "faq", "shopper", "contact", "cta"];
+export const DEFAULT_ORDER: SectionKey[] = ["hero", "problems", "steps", "audited", "features", "industries", "why", "sample", "packages", "testimonials", "partners", "faq", "shopper", "contact", "cta"];
 
 const tx = (id: string, en = ""): Text => ({ id, en });
 const blank = tx("");
-const item = (title: Text, body: Text, icon: LandingIcon | "" = "", extra: Partial<Item> = {}): Item => ({ title, body, meta: blank, icon, image: "", ...extra });
+const item = (title: Text, body: Text, icon: LandingIcon | "" = "", extra: Partial<Item> = {}): Item => ({ title, body, meta: blank, icon, image: "", hidden: false, ...extra });
 
 // Testimoni bawaan berisi contoh fiktif yang namanya ditandai ini; editor memperingatkan admin selama masih dipakai.
 export const SAMPLE_MARK = "(contoh)";
@@ -181,6 +191,49 @@ export const DEFAULT_CONTENT: SiteContent = {
         item(tx("Bukti kunjungan", "Visit evidence"), tx("Foto, struk, dan check-in lokasi yang lolos QC.", "Photos, receipts, and location check-ins that passed QC."), "", { image: "/landing/contoh-laporan-5.svg" }),
         item(tx("Rekomendasi prioritas", "Priority recommendations"), tx("Langkah perbaikan: sekarang, segera, dan nanti.", "Next steps: now, soon, and later."), "", { image: "/landing/contoh-laporan-6.svg" }),
       ],
+    }),
+    features: section({
+      title: tx("Fitur yang Anda dapatkan", "What you get"),
+      lede: tx("Semua yang dibutuhkan untuk melihat layanan outlet dari sisi pelanggan, dari kunjungan sampai tindak lanjut.", "Everything you need to see your outlets through your customers' eyes, from the visit to the follow-up."),
+      items: [
+        item(
+          tx("Check-in GPS dan bukti foto", "GPS check-in and photo evidence"),
+          tx("Setiap kunjungan tercatat lokasi GPS, waktu check-in, foto bukti, dan struk pembelian, jadi hasil audit bisa dipertanggungjawabkan.", "Every visit records GPS location, check-in time, photo evidence, and the purchase receipt, so results can be verified."),
+          "pin",
+        ),
+        item(
+          tx("Benchmark outlet", "Outlet benchmark"),
+          tx("Bandingkan skor setiap outlet per area penilaian dan lihat outlet mana yang perlu perhatian lebih dulu (paket Performance).", "Compare every outlet's score by area and see which outlet needs attention first (Performance package)."),
+          "chart",
+        ),
+        item(
+          tx("Konsultasi", "Consultation"),
+          tx("Bahas hasil laporan langsung dengan tim SilentCX: 30 menit di paket Insight, 60 menit di Performance.", "Discuss your report directly with the SilentCX team: 30 minutes with Insight, 60 minutes with Performance."),
+          "users",
+        ),
+        item(
+          tx("Live chat Sisca", "Live chat with Sisca"),
+          tx("Tanya apa saja seputar pesanan, kunjungan, atau laporan langsung dari dashboard, dibalas oleh Sisca.", "Ask anything about your order, visits, or report right from your dashboard, answered by Sisca."),
+          "message",
+        ),
+      ],
+    }),
+    industries: section({
+      title: tx("Bisnis yang kami layani", "Businesses we serve"),
+      lede: tx("Kuesioner audit disesuaikan dengan alur layanan di setiap jenis usaha.", "Audit questionnaires follow the service flow of each type of business."),
+      items: [
+        item(tx("Kafe & restoran", "Cafés & restaurants"), tx("Sapaan, kecepatan saji, ketepatan pesanan, dan kebersihan.", "Greeting, serving speed, order accuracy, and cleanliness."), "cup"),
+        item(tx("Retail", "Retail"), tx("Sapaan, pengetahuan produk, kerapian display, dan proses kasir.", "Greeting, product knowledge, display, and checkout."), "bag"),
+        item(tx("Hotel & hospitality", "Hotels & hospitality"), tx("Check-in, kamar, layanan tamu, dan check-out.", "Check-in, rooms, guest service, and check-out."), "bed"),
+        item(tx("Perbankan & keuangan", "Banking & finance"), tx("Antrean, kejelasan penjelasan produk, dan kepatuhan prosedur.", "Queues, clear product explanations, and procedure compliance."), "bank"),
+        item(tx("Otomotif", "Automotive"), tx("Showroom, test drive, penawaran, dan layanan bengkel.", "Showroom, test drive, offers, and service center."), "car"),
+        item(tx("Kesehatan & klinik", "Health & clinics"), tx("Pendaftaran, waktu tunggu, dan sikap petugas.", "Registration, waiting time, and staff attitude."), "health"),
+        item(tx("Kecantikan & salon", "Beauty & salons"), tx("Konsultasi, kebersihan alat, dan hasil layanan.", "Consultation, tool hygiene, and service results."), "scissors"),
+        item(tx("Telekomunikasi", "Telecommunications"), tx("Penjelasan paket, transparansi biaya, dan penanganan keluhan.", "Plan explanations, cost transparency, and complaint handling."), "signal"),
+      ],
+    }),
+    partners: section({
+      title: tx("Mitra kami", "Our partners"),
     }),
     why: section({
       title: tx("Mengapa SilentCX", "Why SilentCX"),
@@ -306,6 +359,7 @@ export function normalizeContent(raw: unknown): SiteContent {
                 meta: asText(x?.meta, blank),
                 icon: isLandingIcon(x?.icon) ? x.icon : x?.icon === "" ? ("" as const) : (d.items[i]?.icon ?? ""),
                 image: typeof x?.image === "string" ? x.image : "",
+                hidden: x?.hidden === true,
               }))
             : d.items,
         },

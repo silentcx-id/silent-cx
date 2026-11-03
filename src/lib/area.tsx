@@ -2,16 +2,32 @@ import "server-only";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ComingSoon, PortalShell } from "@/components/portal-shell";
+import { chatHoursLabel, normalizeChatSettings } from "./chat";
 import { dict } from "./i18n";
 import { clientState, getClientProjects } from "./orders";
 import { getNotificationCenter } from "./notifications";
 import { getLang } from "./prefs";
 import { menuItem, ROLE_HOME, type Role } from "./roles";
 import { getSessionUser, requireRole } from "./session";
+import { createClient } from "./supabase/server";
 
 // Fitur yang dibuka paket dan add-on dari proyek client yang sudah aktif.
 async function clientEntitlements(clientId: string) {
   return clientState(await getClientProjects(clientId)).entitlements;
+}
+
+// Live chat: admin melihat jumlah percakapan yang belum dibaca di menu; client dan shopper mendapat tombol chat.
+async function chatState(role: Role, userId: string) {
+  const supabase = await createClient();
+  if (role === "admin") {
+    const { count } = await supabase.from("chat_threads").select("id", { count: "exact", head: true }).gt("admin_unread", 0);
+    return { badges: (count ? { chat: count } : {}) as Record<string, number>, chat: undefined };
+  }
+  const [{ data: thread }, { data: settings }] = await Promise.all([
+    supabase.from("chat_threads").select("user_unread").eq("user_id", userId).maybeSingle(),
+    supabase.from("app_settings").select("value").eq("key", "chat").maybeSingle(),
+  ]);
+  return { badges: {} as Record<string, number>, chat: { unread: (thread?.user_unread as number | undefined) ?? 0, hours: chatHoursLabel(normalizeChatSettings(settings?.value)) } };
 }
 
 // Layout bersama tiap area role: memastikan role, lalu membungkus halaman dengan PortalShell.
@@ -19,14 +35,15 @@ export function areaLayout(role: Role, home: string) {
   return async function AreaLayout({ children }: { children: React.ReactNode }) {
     // Profil, lonceng, dan fitur paket diambil bersamaan; kalau role tidak cocok, requireRole mengalihkan halaman.
     const user = await getSessionUser();
-    const [viewer, lang, entitlements, notifications] = await Promise.all([
+    const [viewer, lang, entitlements, notifications, chat] = await Promise.all([
       requireRole(role, home),
       getLang(),
       role === "client" && user ? clientEntitlements(user.id) : undefined,
       user ? getNotificationCenter(user.id) : { items: [], unread: 0 },
+      user ? chatState(role, user.id) : { badges: {} as Record<string, number>, chat: undefined },
     ]);
     return (
-      <PortalShell viewer={viewer} lang={lang} entitlements={entitlements} notifications={notifications}>
+      <PortalShell viewer={viewer} lang={lang} entitlements={entitlements} notifications={notifications} chat={chat.chat} badges={chat.badges}>
         {children}
       </PortalShell>
     );

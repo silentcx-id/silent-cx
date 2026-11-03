@@ -14,7 +14,7 @@ const oldDoc = {
 describe("konten landing page", () => {
   it("bagian baru disisipkan di posisi bawaannya tanpa mengubah urutan yang diatur admin", () => {
     const c = normalizeContent(oldDoc);
-    expect(c.order).toEqual(["hero", "problems", "steps", "audited", "packages", "testimonials", "sample", "why", "faq", "shopper", "contact", "cta"]);
+    expect(c.order).toEqual(["hero", "problems", "steps", "audited", "features", "industries", "packages", "testimonials", "partners", "sample", "why", "faq", "shopper", "contact", "cta"]);
     expect(new Set(c.order).size).toBe(DEFAULT_ORDER.length);
   });
 

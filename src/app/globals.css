@@ -207,3 +207,27 @@ h3 {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Logo mitra di landing: baris bergeser pelan, berhenti saat disorot, diam untuk pengguna yang memilih gerak dikurangi. */
+@keyframes partner-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.partner-track {
+  animation: partner-scroll 40s linear infinite;
+}
+.partner-marquee:hover .partner-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .partner-track {
+    animation: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: auto;
+  }
+  .partner-track > [aria-hidden="true"] {
+    display: none;
+  }
+}

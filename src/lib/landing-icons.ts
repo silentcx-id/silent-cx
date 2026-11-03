@@ -26,6 +26,15 @@ export const LANDING_ICONS = {
   calendar: { label: "Kalender (waktu fleksibel)", d: "M4 5h16v16H4zM4 10h16M9 3v4M15 3v4" },
   lightbulb: { label: "Lampu (rekomendasi)", d: "M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" },
   file: { label: "Dokumen / laporan", d: "M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6" },
+  cup: { label: "Cangkir (kafe, restoran)", d: "M4 8h13v5a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6zM17 10h1.5a2.5 2.5 0 0 1 0 5H17M8 3v2M12 3v2" },
+  bag: { label: "Tas belanja (retail)", d: "M5 8h14l-1 13H6zM9 8V6a3 3 0 0 1 6 0v2" },
+  bed: { label: "Tempat tidur (hotel)", d: "M3 19V6M3 15h18v4M21 15v-3a3 3 0 0 0-3-3h-7v6M7 12.5a1.5 1.5 0 1 0 0-.01" },
+  bank: { label: "Bank", d: "M3 10h18L12 4zM5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 21h18" },
+  car: { label: "Mobil (otomotif)", d: "M5 16h14v-4l-2-5H7l-2 5zM3 12h18M7 16v2M17 16v2M7.5 13.5h.01M16.5 13.5h.01" },
+  health: { label: "Palang (kesehatan)", d: "M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" },
+  scissors: { label: "Gunting (salon, kecantikan)", d: "M6 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.5 7.5 20 19M8.5 16.5 20 5" },
+  signal: { label: "Sinyal (telekomunikasi)", d: "M12 20h.01M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 14 0M2 9.5a15 15 0 0 1 20 0" },
+  grid: { label: "Grid (lainnya)", d: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" },
   star: { label: "Bintang", d: "M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" },
 } as const;
 

@@ -701,3 +701,54 @@ Linktree (`silentcx-linktree`, salin `Code.gs`, `Shared.html`, dan `Admin.html` 
 - [ ] Halaman github.io menampilkan ketiga ikon baru dan membuka alamat yang diisi.
 
 Diuji otomatis: `tests/putaran5.test.ts` (tautan Threads) dan `npm test` di folder linktree (68 cek).
+
+## Putaran 10: promo nominal dan halaman Akun admin
+
+Jalankan dulu migration `20261031000016_promo_amount.sql` lalu `20261031000017_admin_accounts.sql`.
+
+Promo:
+- [ ] Admin → Katalog → satu paket → Promo: pilih **Nominal (Rp)**, isi `300000`, tanggal mulai kemarin dan selesai minggu depan, lalu Simpan. Pratinjau di bawah form menunjukkan harga lama → harga baru.
+- [ ] Landing dan halaman Paket client menampilkan harga asli dicoret, harga promo, label **Hemat Rp300.000**, dan **Promo s.d. …**.
+- [ ] Ganti ke **Persen (%)** isi `20`: labelnya jadi **Hemat 20%**.
+- [ ] Pesan paket itu: invoice memakai harga promo.
+- [ ] Potongan nominal yang sama atau lebih besar dari harga termurah paket ditolak dengan pesan jelas.
+- [ ] Performance: potongan nominal mengurangi harga 3, 4, dan 5 outlet dengan jumlah yang sama.
+- [ ] Promo bisa juga dipasang di add-on (dihitung per unit).
+
+Akun admin:
+- [ ] Tab Shopper, Pemilik bisnis, dan Semua menampilkan 10 akun per halaman dengan tombol Sebelumnya/Berikutnya.
+- [ ] Cari nama, email, nomor HP, atau nama perusahaan.
+- [ ] Filter: status akun (semua tab); kota dan bisnis yang diminati/jenis usaha (Shopper dan Pemilik bisnis); jenis kelamin (Shopper).
+- [ ] Refresh halaman: filter tetap. Tombol Reset mengosongkan filter.
+- [ ] Tombol **Detail** membuka data lengkap: shopper (lamaran, rekening disamarkan, tugas, pembayaran) atau pemilik bisnis (perusahaan, outlet, proyek, tagihan).
+- [ ] Tombol Tangguhkan/Aktifkan kembali ada di daftar dan di halaman detail.
+
+Diuji otomatis: `tests/putaran10.test.ts` (13 tes) dan `tests/e2e/putaran10-akun-promo.mjs` (tidak mengubah data).
+
+## Putaran 11: landing baru, akun, email admin, dan live chat Sisca
+
+Jalankan dulu `npm run db:migrate` (staging) lalu `npm run db:migrate:prod` (produksi). Migration `20261104000018_accounts_submitted_only.sql` dan `20261104000019_live_chat.sql` terpasang, dan bucket `chat-attachments` dibuat otomatis.
+
+Landing (Admin → Konten):
+- [ ] Bagian baru **Fitur platform** (4 kartu), **Bisnis yang kami layani** (8 jenis), dan **Mitra kami** ada di editor dan bisa digeser urutannya.
+- [ ] Setiap kartu dan logo punya tombol **Tampil/Disembunyikan**. Kartu yang disembunyikan tidak tampil di Pratinjau dan landing.
+- [ ] Mitra kami: unggah logo PNG/WEBP (latar transparan tetap transparan) dan isi nama mitra. Bagian ini baru tampil setelah ada minimal satu logo. Lebih dari 6 logo bergeser pelan.
+
+Akun admin:
+- [ ] Tab Lamaran masuk tidak lagi menampilkan "Belum mengirim lamaran".
+- [ ] Tab Mystery shopper dan Semua hanya menampilkan shopper yang pernah mengirim lamaran.
+
+Email admin:
+- [ ] Client mengunggah bukti bayar: setiap admin menerima email "Bukti bayar perlu diverifikasi" dengan tombol ke halaman validasi (dalam 1–2 menit).
+- [ ] Unggah ulang setelah ditolak juga mengirim email.
+
+Live chat Sisca:
+- [ ] Dashboard client dan shopper: tombol **Chat Sisca** di kanan bawah. Panel menampilkan foto Sisca, nama, kepanjangan, dan jam kerja.
+- [ ] Kirim pesan teks (Enter) dan foto. Admin → **Live chat**: percakapan muncul dengan angka belum dibaca, juga di menu samping dan lonceng.
+- [ ] Admin membalas: balasan muncul di panel client tanpa muat ulang, dengan nama Sisca. Di sisi admin tercatat nama admin yang membalas.
+- [ ] Client menutup tab lalu admin membalas: lonceng client bertambah. Kalau 5 menit belum dibuka, client menerima email "Sisca membalas pesan Anda".
+- [ ] Di luar jam kerja (atur di Live chat → Jam kerja dan pesan otomatis): pesan pertama dibalas otomatis satu kali sampai admin membalas.
+- [ ] Tandai selesai: percakapan pindah ke filter Selesai, dan terbuka lagi kalau pengguna menulis.
+- [ ] Di HP, panel chat memenuhi layar dan bisa ditutup.
+
+Diuji otomatis: `tests/putaran11.test.ts` (13 tes) dan `tests/e2e/putaran11-landing-chat.mjs` (tanpa `E2E_TULIS=1` hanya membuka halaman; dengan `E2E_TULIS=1` mengirim satu pesan uji dan satu balasan di staging).

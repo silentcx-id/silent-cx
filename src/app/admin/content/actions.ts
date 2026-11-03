@@ -29,7 +29,7 @@ const social = (name: string) =>
     .max(200)
     .regex(/^(@?[\w.-]{1,60}|https:\/\/\S+)?$/, `${name}: isi nama akun (misalnya @silentcx) atau alamat lengkap yang diawali https://.`);
 const icon = z.union([z.literal(""), z.enum(Object.keys(LANDING_ICONS) as [keyof typeof LANDING_ICONS, ...(keyof typeof LANDING_ICONS)[]])]);
-const item = z.object({ title: text(160), body: text(800), meta: text(120), icon, image }).refine((x) => x.title.id.length > 0, "Setiap butir daftar wajib punya judul (Bahasa Indonesia).");
+const item = z.object({ title: text(160), body: text(800), meta: text(120), icon, image, hidden: z.boolean().default(false) }).refine((x) => x.title.id.length > 0, "Setiap butir daftar wajib punya judul (Bahasa Indonesia).");
 
 const section = z.object({
   visible: z.boolean(),

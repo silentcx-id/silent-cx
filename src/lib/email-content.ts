@@ -1,5 +1,5 @@
 // Isi email untuk notifikasi penting. Teksnya sama dengan notifikasi di lonceng, ditambah tombol ke halaman terkait.
-// Admin tidak menerima email; cukup lonceng di dashboard.
+// Admin hanya menerima email untuk bukti bayar yang perlu diverifikasi; notifikasi admin lain cukup di lonceng.
 import { notificationLink, notificationText, type Notification } from "./notification-text";
 
 export const EMAIL_KINDS: Record<string, string> = {
@@ -15,6 +15,10 @@ export const EMAIL_KINDS: Record<string, string> = {
   "invoice.rejected": "Bukti pembayaran perlu diunggah ulang",
   "invoice.due_soon": "Pengingat: tagihan jatuh tempo",
   "report.published": "Laporan audit Anda sudah terbit",
+  // Live chat: dikirim kalau balasan Sisca belum dibaca 5 menit.
+  "chat.reply": "Sisca membalas pesan Anda",
+  // Admin
+  "admin.payment": "Bukti bayar perlu diverifikasi",
 };
 
 export const isEmailKind = (kind: string) => Object.hasOwn(EMAIL_KINDS, kind);

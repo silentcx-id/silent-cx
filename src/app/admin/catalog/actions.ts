@@ -12,19 +12,26 @@ const PATHS = ["/admin", "/app", "/"];
 const money = z.coerce.number().int("Harga harus bilangan bulat.").min(0, "Harga tidak boleh negatif.").max(1_000_000_000);
 const key = z.string().regex(/^[a-z0-9_]{2,40}$/, "Kode hanya huruf kecil, angka, dan garis bawah (2–40 karakter).");
 
-// Promo: persentase kosong berarti tidak ada promo; kalau diisi, tanggal mulai dan selesai wajib.
+// Promo: persen (1–90) atau potongan nominal Rp per unit. Nilai kosong berarti tidak ada promo; kalau diisi,
+// tanggal mulai dan selesai wajib. Batas potongan nominal terhadap harga dicek di skema paket/add-on.
 const promo = z
-  .object({ promo_pct: z.string(), promo_starts_at: z.string(), promo_ends_at: z.string() })
+  .object({ promo_kind: z.enum(["pct", "amount"]), promo_value: z.string(), promo_starts_at: z.string(), promo_ends_at: z.string() })
   .transform((p, ctx) => {
-    if (!p.promo_pct.trim()) return { promo_pct: null, promo_starts_at: null, promo_ends_at: null };
-    const pct = Number(p.promo_pct);
+    const none = { promo_pct: null, promo_amount: null, promo_starts_at: null, promo_ends_at: null };
+    const raw = p.promo_value.replace(/[.\s]/g, "");
+    if (!raw) return none;
+    const value = Number(raw);
     const starts = fromWibInput(p.promo_starts_at);
     const ends = fromWibInput(p.promo_ends_at);
-    if (!Number.isInteger(pct) || pct < 1 || pct > 90) ctx.addIssue({ code: "custom", message: "Diskon promo 1 sampai 90 persen." });
+    if (p.promo_kind === "pct" && (!Number.isInteger(value) || value < 1 || value > 90)) ctx.addIssue({ code: "custom", message: "Diskon promo 1 sampai 90 persen." });
+    else if (p.promo_kind === "amount" && (!Number.isInteger(value) || value < 1)) ctx.addIssue({ code: "custom", message: "Potongan promo harus bilangan bulat rupiah, minimal Rp1." });
     else if (!starts || !ends) ctx.addIssue({ code: "custom", message: "Isi tanggal mulai dan selesai promo." });
     else if (ends <= starts) ctx.addIssue({ code: "custom", message: "Tanggal selesai promo harus setelah tanggal mulai." });
-    return { promo_pct: pct, promo_starts_at: starts, promo_ends_at: ends };
+    return { ...none, [p.promo_kind === "pct" ? "promo_pct" : "promo_amount"]: value, promo_starts_at: starts, promo_ends_at: ends };
   });
+
+const amountBelow = (price: number, what: string) => (p: { promo: { promo_amount: number | null } }) =>
+  p.promo.promo_amount == null || p.promo.promo_amount < price || { message: `Potongan promo harus lebih kecil dari ${what} (Rp${new Intl.NumberFormat("id-ID").format(price)}).` };
 
 const packageSchema = z.object({
   id: z.uuid(),
@@ -44,6 +51,10 @@ const packageSchema = z.object({
     .min(1, "Paket wajib punya minimal satu harga.")
     .refine((rows) => new Set(rows.map((r) => r.outlets)).size === rows.length, "Jumlah outlet di daftar harga tidak boleh dobel."),
   promo,
+}).superRefine((p, ctx) => {
+  // Potongan nominal mengurangi setiap harga per jumlah outlet dengan jumlah yang sama.
+  const res = amountBelow(Math.min(...p.prices.map((r) => r.price)), "harga termurah paket")(p);
+  if (res !== true) ctx.addIssue({ code: "custom", message: res.message });
 });
 
 export async function savePackage(raw: unknown) {
@@ -92,6 +103,9 @@ const addonSchema = z.object({
   active: z.boolean(),
   sort_order: z.coerce.number().int().min(0).max(999),
   promo,
+}).superRefine((a, ctx) => {
+  const res = amountBelow(a.price, "harga add-on")(a);
+  if (res !== true) ctx.addIssue({ code: "custom", message: res.message });
 });
 
 export async function saveAddon(raw: unknown) {

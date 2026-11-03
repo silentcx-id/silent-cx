@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { AddonForm, BusinessTypeManager, CityManager, NewItemForm, PackageForm, PaymentForm } from "./catalog-forms";
 import { Tabs } from "@/components/tabs";
-import { getBusinessTypes, getCatalog, getPaymentSettings, promoActive } from "@/lib/catalog";
+import { getBusinessTypes, getCatalog, getPaymentSettings, promoActive, promoSaving } from "@/lib/catalog";
 import { rupiah } from "@/lib/format";
 import { requireRole } from "@/lib/session";
 
@@ -48,7 +48,7 @@ export default async function CatalogPage({ searchParams }: PageProps<"/admin/ca
                   <span className="text-sm text-muted tabular-nums">{p.prices.map((r) => `${r.outlets} outlet ${rupiah(r.price)}`).join(" · ")}</span>
                 </span>
                 <span className="flex flex-wrap gap-2">
-                  {promoActive(p) && <span className="chip border-accent text-mark">Promo {p.promo_pct}%</span>}
+                  {promoActive(p) && <span className="chip border-accent text-mark">Promo · {promoSaving(p, "id")}</span>}
                   {p.recommended && <span className="chip">Rekomendasi</span>}
                   <span className={`chip ${p.active ? "text-good" : "text-muted"}`}>{p.active ? "Aktif" : "Nonaktif"}</span>
                 </span>
@@ -77,7 +77,7 @@ export default async function CatalogPage({ searchParams }: PageProps<"/admin/ca
                   </span>
                 </span>
                 <span className="flex flex-wrap gap-2">
-                  {promoActive(a) && <span className="chip border-accent text-mark">Promo {a.promo_pct}%</span>}
+                  {promoActive(a) && <span className="chip border-accent text-mark">Promo · {promoSaving(a, "id")}</span>}
                   <span className={`chip ${a.active ? "text-good" : "text-muted"}`}>{a.active ? "Aktif" : "Nonaktif"}</span>
                 </span>
               </summary>

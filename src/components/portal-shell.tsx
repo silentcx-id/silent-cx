@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { logout } from "@/app/(auth)/actions";
+import { ChatWidget } from "./chat-widget";
 import { Logo } from "./logo";
 import { NotificationBell } from "./notification-bell";
 import { PortalNav } from "./portal-nav";
@@ -16,12 +17,17 @@ export function PortalShell({
   lang,
   entitlements,
   notifications,
+  chat,
+  badges,
   children,
 }: {
   viewer: Viewer;
   lang: Lang;
   entitlements?: string[];
   notifications: NotificationCenter;
+  // Live chat Sisca untuk client dan shopper: jumlah balasan belum dibaca dan jam kerja.
+  chat?: { unread: number; hours: string };
+  badges?: Record<string, number>;
   children: React.ReactNode;
 }) {
   const t = dict(lang);
@@ -36,7 +42,7 @@ export function PortalShell({
             <Logo href={ROLE_HOME[viewer.role]} />
             <span className="chip md:hidden">{t.roles[viewer.role]}</span>
           </div>
-          <PortalNav role={viewer.role} lang={lang} locked={locked} entitlements={entitlements} />
+          <PortalNav role={viewer.role} lang={lang} locked={locked} entitlements={entitlements} badges={badges} />
           <div className="hidden gap-3 border-t border-line pt-4 md:mt-auto md:grid">
             <div className="grid gap-0.5 text-sm">
               <span className="truncate font-semibold">{viewer.fullName}</span>
@@ -57,6 +63,7 @@ export function PortalShell({
           <Suspense>
             <StatusFlash messages={{ password: t.auth.passwordReset }} />
           </Suspense>
+          {chat && viewer.role !== "admin" && <ChatWidget userId={viewer.id} initialUnread={chat.unread} hours={chat.hours} />}
         </div>
       </div>
     </div>

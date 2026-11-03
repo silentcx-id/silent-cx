@@ -48,6 +48,7 @@ export const ROLE_MENU: Record<Role, MenuItem[]> = {
   ],
   admin: [
     { slug: "", label: { id: "Antrian kerja", en: "Work queue" }, icon: "home", phase: 0 },
+    { slug: "chat", label: { id: "Live chat", en: "Live chat" }, icon: "chat", phase: 0 },
     { slug: "accounts", label: { id: "Akun", en: "Accounts" }, icon: "users", phase: 0 },
     { slug: "catalog", label: { id: "Katalog", en: "Catalog" }, icon: "box", phase: 1 },
     { slug: "projects", label: { id: "Proyek & verifikasi", en: "Projects & verification" }, icon: "layers", phase: 1 },

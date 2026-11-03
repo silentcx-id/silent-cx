@@ -29,7 +29,8 @@ describe("isi email notifikasi", () => {
   it("hanya kejadian penting yang dikirim lewat email", () => {
     expect(isEmailKind("task.offered")).toBe(true);
     expect(isEmailKind("invoice.due_soon")).toBe(true);
-    expect(isEmailKind("admin.payment")).toBe(false);
+    expect(isEmailKind("admin.application")).toBe(false);
+    expect(isEmailKind("admin.payment")).toBe(true);
     expect(isEmailKind("consultation.link")).toBe(false);
   });
 });
@@ -57,7 +58,7 @@ describe("kotak keluar email di database", () => {
   it("daftar kejadian email di database sama dengan di aplikasi", async () => {
     const kinds = Object.keys(EMAIL_KINDS);
     for (const k of kinds) expect((await t.db.query<{ ok: boolean }>("select public.is_email_kind($1) as ok", [k])).rows[0].ok, k).toBe(true);
-    for (const k of ["admin.payment", "task.withdrawn", "consultation.link", "payout.need_bank"]) expect((await t.db.query<{ ok: boolean }>("select public.is_email_kind($1) as ok", [k])).rows[0].ok, k).toBe(false);
+    for (const k of ["admin.application", "task.withdrawn", "consultation.link", "payout.need_bank"]) expect((await t.db.query<{ ok: boolean }>("select public.is_email_kind($1) as ok", [k])).rows[0].ok, k).toBe(false);
   });
 
   it("notifikasi penting untuk client masuk antrean email; yang lain tidak", async () => {

@@ -51,6 +51,8 @@ if (!process.exitCode && url && serviceKey) {
     // Foto kunjungan (check-in, struk, bukti): privat, hanya diunggah shopper pemilik tugas lewat tautan sekali pakai.
     { name: "audit-evidence", options: { public: false, fileSizeLimit: "5MB", allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"] } },
     // Bukti transfer payout: privat, diunggah admin; shopper hanya membuka buktinya sendiri lewat tautan sementara.
+    // Foto di live chat Sisca: privat, dibuka lewat tautan sementara oleh pemilik percakapan dan admin.
+    { name: "chat-attachments", options: { public: false, fileSizeLimit: "5MB", allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"] } },
     { name: "payout-proofs", options: { public: false, fileSizeLimit: "5MB", allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "application/pdf"] } },
   ];
   const { data: existing, error } = await admin.storage.listBuckets();

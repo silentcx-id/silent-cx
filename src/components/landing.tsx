@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AutoCarousel } from "./auto-carousel";
 import { Logo } from "./logo";
 import { PrefsSwitch } from "./prefs-switch";
-import { displayPrice, promoActive, type Package } from "@/lib/catalog-types";
+import { displayPrice, promoActive, promoSaving, promoUntil, type Package } from "@/lib/catalog-types";
 import { waLink } from "@/lib/field";
 import { rupiah } from "@/lib/format";
 import { dict, type Lang } from "@/lib/i18n";
@@ -34,8 +34,15 @@ export function Landing({ content, packages, lang, banner }: Props) {
   const website = websiteHref(site.website);
   const socials = SOCIALS.map((s) => ({ ...s, href: socialHref(s.key, site[s.key]) })).filter((s) => s.href);
   const footerContact = Boolean(site.address.trim() || site.phone.trim() || wa || site.email || website);
-  // Bagian yang benar-benar tampil: Kontak butuh info kontak, Paket butuh paket aktif.
-  const shown = visible.filter((k) => (k !== "contact" || hasContact) && (k !== "packages" || packages.length > 0));
+  // Butir yang disembunyikan admin tidak ikut tampil; logo mitra tanpa gambar dilewati.
+  const sections = Object.fromEntries(
+    Object.entries(content.sections).map(([k, s]) => [k, { ...s, items: s.items.filter((x) => !x.hidden && (k !== "partners" || x.image)) }]),
+  ) as Record<SectionKey, Section>;
+  // Bagian yang benar-benar tampil: Kontak butuh info kontak, Paket butuh paket aktif, bagian kartu baru butuh minimal satu kartu.
+  const needsItems: SectionKey[] = ["features", "industries", "partners"];
+  const shown = visible.filter(
+    (k) => (k !== "contact" || hasContact) && (k !== "packages" || packages.length > 0) && (!needsItems.includes(k) || sections[k].items.length > 0),
+  );
   const nav = NAV.filter((k) => shown.includes(k));
   // Warna latar selang-seling hitam dan putih mengikuti urutan bagian yang tampil, mulai dari hero hitam.
   const isDark = (k: SectionKey) => shown.indexOf(k) % 2 === 0;
@@ -117,6 +124,59 @@ export function Landing({ content, packages, lang, banner }: Props) {
         </ul>
       </>
     ),
+    features: (s) => (
+      <>
+        {head(s, "features", true)}
+        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+          {s.items.map((x, i) => (
+            <li key={i} className={`card grid content-start gap-3 p-6 ${shadow}`}>
+              <IconTile icon={x.icon} />
+              <h3 className="text-lg font-extrabold">{p(x.title)}</h3>
+              <p className="text-muted">{p(x.body)}</p>
+            </li>
+          ))}
+        </ul>
+      </>
+    ),
+    industries: (s) => (
+      <>
+        {head(s, "industries", true)}
+        <ul className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 lg:grid-cols-4">
+          {s.items.map((x, i) => (
+            <li key={i} className="grid content-start gap-3 rounded-2xl border border-line bg-surface p-5">
+              <IconTile icon={x.icon} outline small />
+              <span className="font-extrabold">{p(x.title)}</span>
+              {p(x.body) && <span className="text-sm text-muted">{p(x.body)}</span>}
+            </li>
+          ))}
+        </ul>
+      </>
+    ),
+    partners: (s) => {
+      // Lebih dari 6 logo: satu baris yang bergeser pelan (berhenti saat disorot atau kalau pengguna memilih gerak dikurangi).
+      const moving = s.items.length > 6;
+      const logo = (x: (typeof s.items)[number], i: number, copy = false) => (
+        <li key={`${copy ? "c" : ""}${i}`} className="flex h-16 w-40 shrink-0 items-center justify-center px-4" aria-hidden={copy || undefined}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- logo unggahan admin di Supabase Storage */}
+          <img src={x.image} alt={copy ? "" : p(x.title)} loading="lazy" className="max-h-12 max-w-full object-contain opacity-70 grayscale transition hover:opacity-100 hover:grayscale-0" />
+        </li>
+      );
+      return (
+        <>
+          {head(s, "partners", true)}
+          {moving ? (
+            <div className="partner-marquee overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
+              <ul className="partner-track flex w-max">
+                {s.items.map((x, i) => logo(x, i))}
+                {s.items.map((x, i) => logo(x, i, true))}
+              </ul>
+            </div>
+          ) : (
+            <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-6">{s.items.map((x, i) => logo(x, i))}</ul>
+          )}
+        </>
+      );
+    },
     why: (s) => (
       <div className="grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-start">
         {head(s, "why")}
@@ -186,8 +246,13 @@ export function Landing({ content, packages, lang, banner }: Props) {
                     {promoActive(pkg) && <s className="text-sm text-muted tabular-nums">{rupiah(from.price)}</s>}
                     <span className="font-display text-4xl font-extrabold tabular-nums">
                       {rupiah(displayPrice(from.price, pkg))}
-                      {promoActive(pkg) && <span className="ml-2 align-middle text-sm text-mark">−{pkg.promo_pct}%</span>}
                     </span>
+                    {promoActive(pkg) && (
+                      <span className="mt-1 grid justify-items-center gap-1">
+                        <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-bold text-accent-ink">{promoSaving(pkg, lang)}</span>
+                        <span className="text-xs text-muted">{promoUntil(pkg, lang)}</span>
+                      </span>
+                    )}
                     <span className="text-center text-xs text-muted">
                       {pkg.prices.length > 1 ? `${t.orders.from} ` : ""}
                       {t.orders.perOutlets(from.outlets)} · {t.orders.totalNote}
@@ -382,7 +447,7 @@ export function Landing({ content, packages, lang, banner }: Props) {
               className={`relative scroll-mt-16 overflow-hidden text-fg ${dark ? "bg-bg" : "bg-surface"}`}
             >
               {k === "hero" && <HeroBackdrop />}
-              <div className={`relative mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 ${k === "hero" ? "py-12 md:py-16" : "py-16 md:py-24"}`}>{render[k](content.sections[k])}</div>
+              <div className={`relative mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 ${k === "hero" ? "py-12 md:py-16" : "py-16 md:py-24"}`}>{render[k](sections[k])}</div>
             </section>
           );
         })}

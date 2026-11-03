@@ -26,7 +26,7 @@ import { createClient } from "@/lib/supabase/client";
 
 const input = "min-h-10 w-full rounded-lg border border-line bg-raise px-3 py-2 text-sm";
 const blank: Text = { id: "", en: "" };
-const newItem = (): Item => ({ title: blank, body: blank, meta: blank, icon: "", image: "" });
+const newItem = (): Item => ({ title: blank, body: blank, meta: blank, icon: "", image: "", hidden: false });
 // Testimoni contoh bawaan masih dipakai kalau ada nama yang bertanda "(contoh)".
 const hasSampleTestimonials = (c: SiteContent) => c.sections.testimonials.items.some((x) => x.title.id.includes(SAMPLE_MARK));
 const SITE_LABEL: Record<keyof typeof SAMPLE_SITE, string> = {
@@ -257,12 +257,20 @@ function ItemsEditor({ meta, items, onChange }: { meta: NonNullable<(typeof SECT
       <span className="text-sm font-semibold">Daftar {meta.label.toLowerCase()}</span>
       <ol className="grid gap-3">
         {items.map((x, i) => (
-          <li key={i} className="grid gap-3 rounded-xl border border-dashed border-line p-3">
+          <li key={i} className={`grid gap-3 rounded-xl border border-dashed border-line p-3 ${x.hidden ? "opacity-70" : ""}`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-sm font-semibold">
                 {meta.label} {i + 1}
               </span>
-              <span className="flex gap-2">
+              <span className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={`btn btn-sm ${x.hidden ? "border-warn/60 text-warn" : ""}`}
+                  aria-pressed={!x.hidden}
+                  onClick={() => update(i, { ...x, hidden: !x.hidden })}
+                >
+                  {x.hidden ? "Disembunyikan" : "Tampil"}
+                </button>
                 <button type="button" className="btn btn-sm" aria-label="Naikkan" disabled={i === 0} onClick={() => move(i, -1)}>
                   ↑
                 </button>
@@ -275,10 +283,10 @@ function ItemsEditor({ meta, items, onChange }: { meta: NonNullable<(typeof SECT
               </span>
             </div>
             {meta.icon && <IconPicker value={x.icon} onChange={(icon) => update(i, { ...x, icon })} />}
-            {meta.image && <ImageField label="Gambar" value={x.image} onChange={(image) => update(i, { ...x, image })} />}
+            {meta.image && <ImageField label={meta.logo ? "Logo" : "Gambar"} value={x.image} keepAlpha={meta.logo} onChange={(image) => update(i, { ...x, image })} />}
             <Bilingual label={meta.title} value={x.title} onChange={(title) => update(i, { ...x, title })} max={160} required />
             {meta.meta && <Bilingual label={meta.meta} value={x.meta} onChange={(v) => update(i, { ...x, meta: v })} max={120} />}
-            <Bilingual label={meta.body} value={x.body} onChange={(body) => update(i, { ...x, body })} max={800} long />
+            {meta.body && <Bilingual label={meta.body} value={x.body} onChange={(body) => update(i, { ...x, body })} max={800} long />}
           </li>
         ))}
       </ol>
@@ -316,7 +324,8 @@ function IconPicker({ value, onChange }: { value: LandingIcon | ""; onChange: (i
 }
 
 // Unggah gambar ke Storage publik lewat tautan sekali pakai; alamatnya tersimpan di draf.
-function ImageField({ label, value, onChange }: { label: string; value: string; onChange: (url: string) => void }) {
+// keepAlpha: logo disimpan WEBP supaya latar transparan tidak berubah putih.
+function ImageField({ label, value, onChange, keepAlpha = false }: { label: string; value: string; onChange: (url: string) => void; keepAlpha?: boolean }) {
   const { status, setStatus } = useAction();
   const [uploading, setUploading] = useState(false);
 
@@ -324,7 +333,7 @@ function ImageField({ label, value, onChange }: { label: string; value: string; 
     setStatus(null);
     setUploading(true);
     try {
-      const shrunk = await shrinkImage(file);
+      const shrunk = await shrinkImage(file, 1600, keepAlpha);
       const prep = await prepareSiteImage({ type: shrunk.type, size: shrunk.size });
       if (!prep.ok || !prep.data) throw new Error(prep.ok ? "Gagal menyiapkan unggahan." : prep.error);
       const { error } = await createClient().storage.from("site-assets").uploadToSignedUrl(prep.data.path, prep.data.token, shrunk, { contentType: shrunk.type });

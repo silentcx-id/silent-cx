@@ -52,7 +52,8 @@ export function NotificationBell({ userId, lang, initial, allHref }: { userId: s
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` }, (payload) => {
           const n = payload.new as Notification;
           setCenter((c) => (c.items.some((x) => x.id === n.id) ? c : { items: [n, ...c.items].slice(0, LIMIT), unread: c.unread + 1 }));
-          toast("ok", notificationText(n, lang));
+          // Balasan live chat sudah terlihat di panel chat dan angka di tombol chat, jadi tanpa pop-up.
+          if (n.kind !== "chat.reply") toast("ok", notificationText(n, lang));
           // Halaman yang sedang dibuka ikut diperbarui (misalnya antrian kerja admin).
           router.refresh();
         })

@@ -9,7 +9,20 @@ import { ROLE_HOME, ROLE_MENU, type Role } from "@/lib/roles";
 
 // Menu samping (desktop). Di HP menu dilipat di balik tombol yang menampilkan halaman aktif, supaya semua menu
 // terlihat sekali buka tanpa perlu digeser. Menu yang terkunci (shopper belum disetujui, fitur di luar paket) diberi tanda ⌀.
-export function PortalNav({ role, lang, locked, entitlements = [] }: { role: Role; lang: Lang; locked: boolean; entitlements?: string[] }) {
+// badges: angka kecil di menu (misalnya percakapan live chat yang belum dibaca admin).
+export function PortalNav({
+  role,
+  lang,
+  locked,
+  entitlements = [],
+  badges = {},
+}: {
+  role: Role;
+  lang: Lang;
+  locked: boolean;
+  entitlements?: string[];
+  badges?: Record<string, number>;
+}) {
   const pathname = usePathname();
   const t = dict(lang).common;
   const home = ROLE_HOME[role];
@@ -60,6 +73,10 @@ export function PortalNav({ role, lang, locked, entitlements = [] }: { role: Rol
                 {blocked ? (
                   <span aria-hidden="true" className={active ? "" : "text-muted"}>
                     ⌀
+                  </span>
+                ) : badges[item.slug] ? (
+                  <span className="rounded-full bg-bad px-1.5 text-[11px] font-semibold tabular-nums text-white" aria-label={`${badges[item.slug]} belum dibaca`}>
+                    {badges[item.slug]}
                   </span>
                 ) : null}
               </Link>

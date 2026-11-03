@@ -48,6 +48,8 @@ export async function POST(request: NextRequest) {
     .from("notifications")
     .select("id, kind, detail, read_at, created_at, user_id, email_status, email_attempts, profiles(email, full_name, status)")
     .or(`email_status.eq.pending,and(email_status.eq.sending,email_at.lt.${stale})`)
+    // Email balasan chat ditunda 5 menit (dibatalkan kalau sudah dibaca).
+    .or(`email_not_before.is.null,email_not_before.lte.${new Date().toISOString()}`)
     .order("id")
     .limit(BATCH);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -14,7 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Konsultasi" };
 
-type Addon = { price: number; max_qty: number; promo_pct: number | null; promo_starts_at: string | null; promo_ends_at: string | null };
+type Addon = { price: number; max_qty: number; promo_pct: number | null; promo_amount: number | null; promo_starts_at: string | null; promo_ends_at: string | null };
 
 export default async function ConsultationPage({ searchParams }: PageProps<"/app/consultation">) {
   const [viewer, lang, params] = await Promise.all([requireRole("client", "/app/consultation"), getLang(), searchParams]);
@@ -23,7 +23,7 @@ export default async function ConsultationPage({ searchParams }: PageProps<"/app
   const [items, projects, addonRes] = await Promise.all([
     getClientConsultations(viewer.id),
     getClientProjects(viewer.id),
-    supabase.from("addons").select("price, max_qty, promo_pct, promo_starts_at, promo_ends_at").eq("key", "additional_consultation").eq("active", true).maybeSingle(),
+    supabase.from("addons").select("price, max_qty, promo_pct, promo_amount, promo_starts_at, promo_ends_at").eq("key", "additional_consultation").eq("active", true).maybeSingle(),
   ]);
   const addon = addonRes.data as Addon | null;
   const now = requestTime();

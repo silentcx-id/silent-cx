@@ -5,7 +5,7 @@ import { useMemo, useState, useTransition } from "react";
 import { createOrder } from "../actions";
 import { CityPicker } from "@/components/city-picker";
 import { toast } from "@/components/toaster";
-import { displayPrice, promoActive, type Addon, type City, type Package } from "@/lib/catalog-types";
+import { displayPrice, promoActive, promoSaving, promoUntil, type Addon, type City, type Package } from "@/lib/catalog-types";
 import { rupiah } from "@/lib/format";
 import { dict, type Lang } from "@/lib/i18n";
 
@@ -93,8 +93,12 @@ export function Checkout({ packages, addons, cities, initialKey, lang }: { packa
                       {promoActive(p) && <s className="text-sm text-muted tabular-nums">{rupiah(from.price)}</s>}
                       <span className="font-display text-2xl font-extrabold tabular-nums">
                         {rupiah(displayPrice(from.price, p))}
-                        {promoActive(p) && <span className="ml-2 align-middle text-xs font-semibold text-mark">−{p.promo_pct}%</span>}
                       </span>
+                      {promoActive(p) && (
+                        <span className="text-xs">
+                          <span className="font-semibold text-mark">{promoSaving(p, lang)}</span> <span className="text-muted">· {promoUntil(p, lang)}</span>
+                        </span>
+                      )}
                       <span className="text-xs text-muted">
                         {p.prices.length > 1 ? `${t.from} ` : ""}
                         {t.perOutlets(from.outlets)}
@@ -158,6 +162,11 @@ export function Checkout({ packages, addons, cities, initialKey, lang }: { packa
                           <>
                             {promoActive(a) && <s className="mr-2 text-muted">{rupiah(a.price)}</s>}
                             {rupiah(displayPrice(a.price, a))} {a.unit}
+                            {promoActive(a) && (
+                              <span className="block text-xs">
+                                <span className="font-semibold text-mark">{promoSaving(a, lang)}</span> <span className="text-muted">· {promoUntil(a, lang)}</span>
+                              </span>
+                            )}
                           </>
                         )}
                       </span>

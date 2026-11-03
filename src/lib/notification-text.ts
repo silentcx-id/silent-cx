@@ -24,6 +24,9 @@ export type Notification = {
     invoice?: string;
     name?: string;
     resubmitted?: boolean;
+    thread?: string;
+    preview?: string;
+    home?: string;
   };
   read_at: string | null;
   created_at: string;
@@ -100,6 +103,10 @@ export function notificationText(n: Notification, lang: Lang): string {
       return t.adminConsultationBooked(name, code, when(d.starts_at));
     case "admin.consultation_rescheduled":
       return t.adminConsultationRescheduled(name, code, when(d.starts_at));
+    case "admin.chat":
+      return t.adminChat(name, d.preview ?? "");
+    case "chat.reply":
+      return t.chatReply(d.preview ?? "");
     default:
       return n.kind;
   }
@@ -121,6 +128,9 @@ export function notificationLink(n: Notification, lang: Lang): { href: string; l
   if (n.kind === "admin.payment" && d.project) return { href: `/admin/projects/${d.project}`, label: t.openPayment };
   if (n.kind === "admin.visit_submitted" && d.task) return { href: `/admin/qc/${d.task}`, label: t.openQc };
   if ((n.kind === "admin.offer_declined" || n.kind === "admin.offer_expired") && d.project) return { href: `/admin/projects/${d.project}`, label: t.openProject };
+  // ?chat=1 membuka panel live chat di dashboard pengguna.
+  if (n.kind === "chat.reply") return { href: `${d.home === "/shopper" ? "/shopper" : "/app"}?chat=1`, label: t.openChat };
+  if (n.kind === "admin.chat" && d.thread) return { href: `/admin/chat?t=${d.thread}`, label: t.replyChat };
   if (n.kind.startsWith("admin.consultation_") && d.consultation) return { href: `/admin/consultations/${d.consultation}`, label: t.openConsultation };
   return null;
 }

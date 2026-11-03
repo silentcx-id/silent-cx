@@ -10,22 +10,46 @@ import { createClient } from "@/lib/supabase/client";
 const input = "min-h-10 w-full rounded-lg border border-line bg-raise px-3 py-2 text-sm";
 const label = "grid gap-1 text-sm font-semibold";
 
-type PromoItem = { promo_pct: number | null; promo_starts_at: string | null; promo_ends_at: string | null };
+type PromoItem = { promo_pct: number | null; promo_amount: number | null; promo_starts_at: string | null; promo_ends_at: string | null };
 
 function usePromo(item: PromoItem) {
-  const [pct, setPct] = useState(item.promo_pct?.toString() ?? "");
+  const [kind, setKind] = useState<"pct" | "amount">(item.promo_amount ? "amount" : "pct");
+  const [amount, setAmount] = useState((item.promo_pct ?? item.promo_amount)?.toString() ?? "");
   const [starts, setStarts] = useState(toWibInput(item.promo_starts_at));
   const [ends, setEnds] = useState(toWibInput(item.promo_ends_at));
-  return { value: { promo_pct: pct, promo_starts_at: starts, promo_ends_at: ends }, pct, setPct, starts, setStarts, ends, setEnds };
+  return { value: { promo_kind: kind, promo_value: amount, promo_starts_at: starts, promo_ends_at: ends }, kind, setKind, amount, setAmount, starts, setStarts, ends, setEnds };
 }
 
-function PromoFields({ id, promo }: { id: string; promo: ReturnType<typeof usePromo> }) {
+// Pratinjau harga setelah promo untuk harga yang diberikan, sama dengan tampilan di website.
+function promoPreview(promo: ReturnType<typeof usePromo>, price: number) {
+  const v = Number(promo.amount.replace(/[.\s]/g, ""));
+  if (!promo.amount.trim() || !Number.isFinite(v) || v <= 0) return "";
+  const after = promo.kind === "pct" ? Math.round((price * (100 - v)) / 100) : price - v;
+  return after > 0 ? `${rupiah(price)} → ${rupiah(after)} (Hemat ${promo.kind === "pct" ? `${v}%` : rupiah(v)})` : "";
+}
+
+function PromoFields({ id, promo, price }: { id: string; promo: ReturnType<typeof usePromo>; price?: number }) {
+  const preview = price ? promoPreview(promo, price) : "";
   return (
-    <fieldset className="grid gap-3 rounded-xl border border-dashed border-line p-3 sm:grid-cols-3">
+    <fieldset className="grid gap-3 rounded-xl border border-dashed border-line p-3 sm:grid-cols-4">
       <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-muted">Promo (opsional, waktu WIB)</legend>
+      <label className={label} htmlFor={`${id}-kind`}>
+        Jenis potongan
+        <select id={`${id}-kind`} className={input} value={promo.kind} onChange={(e) => promo.setKind(e.target.value as "pct" | "amount")}>
+          <option value="pct">Persen (%)</option>
+          <option value="amount">Nominal (Rp)</option>
+        </select>
+      </label>
       <label className={label} htmlFor={`${id}-pct`}>
-        Diskon %
-        <input id={`${id}-pct`} className={input} inputMode="numeric" placeholder="kosong = tanpa promo" value={promo.pct} onChange={(e) => promo.setPct(e.target.value)} />
+        {promo.kind === "pct" ? "Diskon %" : "Potongan Rp"}
+        <input
+          id={`${id}-pct`}
+          className={input}
+          inputMode="numeric"
+          placeholder={promo.kind === "pct" ? "kosong = tanpa promo" : "contoh 300000"}
+          value={promo.amount}
+          onChange={(e) => promo.setAmount(e.target.value)}
+        />
       </label>
       <label className={label} htmlFor={`${id}-start`}>
         Mulai
@@ -35,6 +59,10 @@ function PromoFields({ id, promo }: { id: string; promo: ReturnType<typeof usePr
         Selesai
         <input id={`${id}-end`} type="datetime-local" className={input} value={promo.ends} onChange={(e) => promo.setEnds(e.target.value)} />
       </label>
+      <p className="text-xs text-muted sm:col-span-4">
+        {preview ? `Pratinjau: ${preview}. ` : ""}
+        Website menampilkan harga asli dicoret, label Hemat, dan tanggal akhir promo. Potongan nominal mengurangi setiap harga dengan jumlah yang sama.
+      </p>
     </fieldset>
   );
 }
@@ -154,7 +182,7 @@ export function PackageForm({ pkg }: { pkg: Package }) {
         </button>
       </fieldset>
 
-      <PromoFields id={`pkg-${pkg.id}`} promo={promo} />
+      <PromoFields id={`pkg-${pkg.id}`} promo={promo} price={Math.min(...prices.map((p) => Number(p.price) || 0))} />
 
       <div className="flex flex-wrap items-center gap-4">
         <Toggle id={`active-${pkg.id}`} checked={f.active} onChange={(v) => setF({ ...f, active: v })}>
@@ -251,7 +279,7 @@ export function AddonForm({ addon, packageKeys }: { addon: Addon; packageKeys: {
         </div>
       </fieldset>
 
-      <PromoFields id={`addon-${addon.id}`} promo={promo} />
+      <PromoFields id={`addon-${addon.id}`} promo={promo} price={f.pricing === "fixed" ? Number(f.price) || 0 : undefined} />
 
       <div className="flex flex-wrap items-center gap-4">
         <Toggle id={`a-active-${addon.id}`} checked={f.active} onChange={(v) => setF({ ...f, active: v })}>
