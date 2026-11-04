@@ -2,6 +2,8 @@ import type { Lang } from "./i18n";
 
 export function rupiah(value: number | null | undefined): string {
   if (value == null) return "—";
+  // Potongan (baris promo di invoice) ditulis -Rp1.000.000 (tanda minus biasa supaya aman di font PDF).
+  if (value < 0) return `-Rp${new Intl.NumberFormat("id-ID").format(-value)}`;
   return `Rp${new Intl.NumberFormat("id-ID").format(value)}`;
 }
 

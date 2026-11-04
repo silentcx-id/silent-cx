@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Landing } from "@/components/landing";
-import { getCatalog } from "@/lib/catalog";
+import { getCatalog, withAddonPromo } from "@/lib/catalog";
 import { getLang } from "@/lib/prefs";
 import { ROLE_HOME } from "@/lib/roles";
 import { getViewer } from "@/lib/session";
@@ -21,6 +21,8 @@ export default async function Home() {
   const viewer = await getViewer();
   if (viewer) redirect(ROLE_HOME[viewer.role]);
   const [lang, content] = await Promise.all([getLang(), getPublishedContent()]);
-  const packages = isSupabaseConfigured ? (await getCatalog()).packages.filter((p) => p.active && p.prices.length > 0) : [];
-  return <Landing content={content} packages={packages} lang={lang} />;
+  const catalog = isSupabaseConfigured ? await getCatalog() : null;
+  const packages = catalog ? catalog.packages.filter((p) => p.active && p.prices.length > 0) : [];
+  const addons = catalog ? withAddonPromo(catalog.addons.filter((a) => a.active), catalog.addonPromo) : [];
+  return <Landing content={content} packages={packages} addons={addons} lang={lang} />;
 }

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { AddonForm, BusinessTypeManager, CityManager, NewItemForm, PackageForm, PaymentForm } from "./catalog-forms";
+import { AddonForm, AddonPromoForm, BusinessTypeManager, CityManager, NewItemForm, PackageForm, PaymentForm } from "./catalog-forms";
 import { Tabs } from "@/components/tabs";
-import { getBusinessTypes, getCatalog, getPaymentSettings, promoActive, promoSaving } from "@/lib/catalog";
-import { rupiah } from "@/lib/format";
+import { getBusinessTypes, getCatalog, getPaymentSettings, promoActive, promoSaving, promoUntil } from "@/lib/catalog";
+import { dateTime, rupiah } from "@/lib/format";
 import { requireRole } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Katalog" };
@@ -19,7 +19,16 @@ type Tab = (typeof TABS)[number]["id"];
 export default async function CatalogPage({ searchParams }: PageProps<"/admin/catalog">) {
   const [, params] = await Promise.all([requireRole("admin", "/admin/catalog"), searchParams]);
   const tab: Tab = TABS.some((t) => t.id === params.tab) ? (params.tab as Tab) : "paket";
-  const [{ packages, addons, cities }, payment, types] = await Promise.all([getCatalog(), getPaymentSettings(), getBusinessTypes()]);
+  const [{ packages, addons, cities, addonPromo }, payment, types] = await Promise.all([getCatalog(), getPaymentSettings(), getBusinessTypes()]);
+  // Promo global add-on yang berlaku atau dijadwalkan mengunci promo per add-on.
+  const now = new Date();
+  const globalSet = Boolean(addonPromo && (addonPromo.promo_pct || addonPromo.promo_amount) && addonPromo.promo_ends_at && new Date(addonPromo.promo_ends_at) > now);
+  const globalOn = Boolean(addonPromo && promoActive(addonPromo, now));
+  const globalLock = globalSet
+    ? globalOn
+      ? `Promo semua add-on sedang berlaku s.d. ${dateTime(addonPromo!.promo_ends_at, "id")}. Promo per add-on bisa dipasang setelah promo itu selesai, atau hentikan dulu promo semua add-on.`
+      : `Promo semua add-on dijadwalkan ${dateTime(addonPromo!.promo_starts_at, "id")} s.d. ${dateTime(addonPromo!.promo_ends_at, "id")}. Promo per add-on bisa dipasang setelah promo itu selesai, atau hentikan dulu promo semua add-on.`
+    : undefined;
   const paymentReady = Boolean((payment.bank_name && payment.account_number) || payment.qris_url);
 
   return (
@@ -67,6 +76,22 @@ export default async function CatalogPage({ searchParams }: PageProps<"/admin/ca
 
       {tab === "addon" && (
         <div className="grid gap-4">
+          <section className="card grid gap-4 p-5" aria-labelledby="promo-addon-title">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="grid gap-0.5">
+                <h2 id="promo-addon-title" className="font-extrabold">
+                  Promo semua add-on
+                </h2>
+                <p className="text-sm text-muted">Atur sekali, berlaku untuk semua add-on aktif berharga pasti.</p>
+              </div>
+              {globalSet && addonPromo && (
+                <span className="chip border-accent text-mark">
+                  {globalOn ? `Berlaku · ${promoSaving(addonPromo, "id")} · ${promoUntil(addonPromo, "id")}` : `Dijadwalkan · ${promoSaving(addonPromo, "id")} · mulai ${dateTime(addonPromo.promo_starts_at, "id")}`}
+                </span>
+              )}
+            </div>
+            <AddonPromoForm promo={addonPromo} addons={addons} />
+          </section>
           {addons.map((a) => (
             <details key={a.id} className="card p-5">
               <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3">
@@ -77,12 +102,16 @@ export default async function CatalogPage({ searchParams }: PageProps<"/admin/ca
                   </span>
                 </span>
                 <span className="flex flex-wrap gap-2">
-                  {promoActive(a) && <span className="chip border-accent text-mark">Promo · {promoSaving(a, "id")}</span>}
+                  {promoActive(a) ? (
+                    <span className="chip border-accent text-mark">Promo · {promoSaving(a, "id")}</span>
+                  ) : (
+                    globalOn && a.pricing === "fixed" && addonPromo && <span className="chip border-accent text-mark">Promo semua add-on · {promoSaving(addonPromo, "id")}</span>
+                  )}
                   <span className={`chip ${a.active ? "text-good" : "text-muted"}`}>{a.active ? "Aktif" : "Nonaktif"}</span>
                 </span>
               </summary>
               <div className="mt-5 border-t border-line pt-5">
-                <AddonForm addon={a} packageKeys={packages.map((p) => ({ key: p.key, name: p.name }))} />
+                <AddonForm addon={a} packageKeys={packages.map((p) => ({ key: p.key, name: p.name }))} globalLock={globalLock} />
               </div>
             </details>
           ))}

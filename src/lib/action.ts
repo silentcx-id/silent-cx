@@ -31,7 +31,7 @@ export function friendlyError(error: unknown): string {
   const message = error instanceof Error ? error.message : typeof error === "object" && error && "message" in error ? String(error.message) : String(error);
   if (/fetch failed|network|ECONN|timeout/i.test(message)) return "Tidak bisa terhubung ke server. Periksa koneksi lalu coba lagi.";
   if (/duplicate key/i.test(message)) return "Data yang sama sudah ada.";
-  if (/violates check constraint .*promo/i.test(message)) return "Promo wajib punya persentase, tanggal mulai, dan tanggal selesai yang benar.";
+  if (/violates check constraint .*promo/i.test(message)) return "Promo wajib punya satu jenis potongan, tanggal mulai, dan tanggal selesai yang benar.";
   if (/violates check constraint|invalid input/i.test(message)) return "Ada isian yang tidak valid. Periksa kembali.";
   if (/row-level security|permission denied/i.test(message)) return "Anda tidak punya akses untuk aksi ini.";
   return message;

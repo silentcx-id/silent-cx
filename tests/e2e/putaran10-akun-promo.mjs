@@ -53,7 +53,8 @@ try {
     const s = await loginAs(browser, "admin@silentcx.demo");
     await s.page.goto(`${BASE}/admin/catalog`, { waitUntil: "networkidle" });
     const kind = s.page.getByLabel("Jenis potongan").first();
-    check("katalog: form promo punya pilihan Persen atau Nominal", (await kind.count()) === 1 && (await kind.locator("option").allTextContents()).join("|") === "Persen (%)|Nominal (Rp)");
+    const opts = await kind.locator("option").allTextContents();
+    check("katalog: form promo punya pilihan Tanpa promo, Persen, atau Nominal", (await kind.count()) === 1 && ["Tanpa promo", "Persen (%)", "Nominal (Rp)"].every((o) => opts.includes(o)));
 
     await s.page.goto(`${BASE}/admin/accounts?tab=shopper`, { waitUntil: "networkidle" });
     for (const label of ["Cari", "Status akun", "Jangkauan kota", "Bisnis yang diminati", "Jenis kelamin"]) check(`akun shopper: filter ${label}`, (await s.page.getByLabel(label, { exact: true }).count()) === 1);

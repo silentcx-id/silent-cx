@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ReauditCard } from "./reaudit";
 import { ReportView } from "@/components/report-view";
 import { getCatalog } from "@/lib/catalog";
-import { displayPrice } from "@/lib/catalog-types";
+import { displayPrice, withAddonPromo } from "@/lib/catalog-types";
 import { dayLabel } from "@/lib/field";
 import { dict } from "@/lib/i18n";
 import { getClientProjects, OPEN_STATUSES } from "@/lib/orders";
@@ -18,12 +18,12 @@ export default async function ReportPage({ params }: PageProps<"/app/reports/[id
   const { id } = await params;
   const [viewer, lang] = await Promise.all([requireRole("client", `/app/reports/${id}`), getLang()]);
   const t = dict(lang).reports;
-  const [report, projects, { addons }] = await Promise.all([loadClientReport(id), getClientProjects(viewer.id), getCatalog()]);
+  const [report, projects, { addons, addonPromo }] = await Promise.all([loadClientReport(id), getClientProjects(viewer.id), getCatalog()]);
   if (!report) notFound();
 
   // Audit ulang: hanya setelah laporan terbit, untuk paket yang boleh memakainya.
   const project = projects.find((p) => p.id === id);
-  const reaudit = addons.find((a) => a.key === "re_audit" && a.active);
+  const reaudit = withAddonPromo(addons, addonPromo).find((a) => a.key === "re_audit" && a.active);
   const allowed =
     project &&
     reaudit &&

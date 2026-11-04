@@ -8,7 +8,8 @@ export type InvoiceStatus = "draft" | "unpaid" | "verifying" | "paid" | "expired
 export type InvoiceLine = {
   id: string;
   position: number;
-  kind: "package" | "addon";
+  // promo = baris potongan (jumlah negatif), misalnya gratis 1 outlet.
+  kind: "package" | "addon" | "promo";
   item_key: string;
   label: string;
   quantity: number;

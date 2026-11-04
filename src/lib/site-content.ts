@@ -10,7 +10,7 @@ export type Text = { id: string; en: string };
 // hidden = butir disembunyikan dari landing tanpa dihapus.
 export type Item = { title: Text; body: Text; meta: Text; icon: LandingIcon | ""; image: string; hidden: boolean };
 
-export const SECTION_KEYS = ["hero", "problems", "steps", "audited", "features", "industries", "why", "sample", "packages", "testimonials", "partners", "faq", "shopper", "contact", "cta"] as const;
+export const SECTION_KEYS = ["hero", "problems", "steps", "audited", "features", "industries", "why", "sample", "packages", "addons", "testimonials", "partners", "faq", "shopper", "contact", "cta"] as const;
 export type SectionKey = (typeof SECTION_KEYS)[number];
 
 export type Section = {
@@ -80,6 +80,7 @@ export const SECTION_META: Record<SectionKey, SectionMeta> = {
     items: { label: "Mitra", title: "Nama mitra", body: "", image: true, logo: true },
   },
   packages: { label: "Paket dan harga", hint: "Daftar paket dan harganya diambil otomatis dari Katalog. Di sini hanya judul dan pengantarnya.", lede: true },
+  addons: { label: "Add-on", hint: "Add-on aktif diambil otomatis dari Katalog, lengkap dengan harga dan promonya. Di sini hanya judul dan pengantarnya. Bagian ini tampil kalau ada add-on aktif.", lede: true },
   why: { label: "Mengapa SilentCX", hint: "Alasan memilih SilentCX. Tampil di pita gelap.", lede: true, items: { label: "Alasan", title: "Alasan", body: "Penjelasan", icon: true } },
   sample: {
     label: "Contoh laporan",
@@ -101,7 +102,7 @@ export const SECTION_META: Record<SectionKey, SectionMeta> = {
 };
 
 // Urutan bawaan di halaman.
-export const DEFAULT_ORDER: SectionKey[] = ["hero", "problems", "steps", "audited", "features", "industries", "why", "sample", "packages", "testimonials", "partners", "faq", "shopper", "contact", "cta"];
+export const DEFAULT_ORDER: SectionKey[] = ["hero", "problems", "steps", "audited", "features", "industries", "why", "sample", "packages", "addons", "testimonials", "partners", "faq", "shopper", "contact", "cta"];
 
 const tx = (id: string, en = ""): Text => ({ id, en });
 const blank = tx("");
@@ -178,6 +179,10 @@ export const DEFAULT_CONTENT: SiteContent = {
     packages: section({
       title: tx("Paket audit", "Audit packages"),
       lede: tx("Harga sudah termasuk PPN. Pilih paket, lalu tentukan jumlah outlet dan add-on di langkah berikutnya.", "Prices include VAT. Choose a package, then set outlets and add-ons in the next step."),
+    }),
+    addons: section({
+      title: tx("Add-on", "Add-ons"),
+      lede: tx("Tambahkan sesuai kebutuhan audit Anda. Dipilih saat memesan paket.", "Add what your audit needs. Choose them when you order a package."),
     }),
     sample: section({
       title: tx("Lihat contoh laporannya", "See a sample report"),

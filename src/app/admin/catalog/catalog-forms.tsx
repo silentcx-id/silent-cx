@@ -1,67 +1,123 @@
 "use client";
 
 import { useState } from "react";
-import { addBusinessType, addCity, createAddon, createPackage, deleteCity, prepareQrisUpload, saveAddon, savePackage, saveBusinessType, savePaymentSettings, setCityActive } from "./actions";
+import { addBusinessType, addCity, createAddon, createPackage, deleteCity, prepareQrisUpload, saveAddon, saveAddonPromo, savePackage, saveBusinessType, savePaymentSettings, setCityActive } from "./actions";
 import { StatusText, useAction } from "@/components/use-action";
-import type { Addon, BusinessType, City, Package, PaymentSettings } from "@/lib/catalog-types";
+import type { Addon, AddonPromo, BusinessType, City, Package, PaymentSettings } from "@/lib/catalog-types";
 import { rupiah, toWibInput } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 
 const input = "min-h-10 w-full rounded-lg border border-line bg-raise px-3 py-2 text-sm";
 const label = "grid gap-1 text-sm font-semibold";
 
-type PromoItem = { promo_pct: number | null; promo_amount: number | null; promo_starts_at: string | null; promo_ends_at: string | null };
+type PromoKind = "none" | "pct" | "amount" | "free_outlet";
+type PromoItem = { promo_pct: number | null; promo_amount: number | null; promo_free_outlet?: boolean; promo_starts_at: string | null; promo_ends_at: string | null };
 
 function usePromo(item: PromoItem) {
-  const [kind, setKind] = useState<"pct" | "amount">(item.promo_amount ? "amount" : "pct");
+  const [kind, setKind] = useState<PromoKind>(item.promo_free_outlet ? "free_outlet" : item.promo_amount ? "amount" : item.promo_pct ? "pct" : "none");
   const [amount, setAmount] = useState((item.promo_pct ?? item.promo_amount)?.toString() ?? "");
   const [starts, setStarts] = useState(toWibInput(item.promo_starts_at));
   const [ends, setEnds] = useState(toWibInput(item.promo_ends_at));
   return { value: { promo_kind: kind, promo_value: amount, promo_starts_at: starts, promo_ends_at: ends }, kind, setKind, amount, setAmount, starts, setStarts, ends, setEnds };
 }
 
-// Pratinjau harga setelah promo untuk harga yang diberikan, sama dengan tampilan di website.
-function promoPreview(promo: ReturnType<typeof usePromo>, price: number) {
+type PreviewRow = { label: string; price: number };
+type Tier = { outlets: number; price: number };
+
+// Pratinjau harga setelah promo untuk setiap baris harga, sama dengan perhitungan di website dan quote_order.
+// Gratis 1 outlet: N outlet dibayar seharga N−1 outlet; pilihan terkecil tanpa potongan.
+function promoPreview(promo: ReturnType<typeof usePromo>, rows: PreviewRow[], tiers: Tier[] = []) {
+  if (promo.kind === "none") return [];
+  if (promo.kind === "free_outlet") {
+    return tiers.map((t) => {
+      const less = tiers.find((x) => x.outlets === t.outlets - 1);
+      return { label: `${t.outlets} outlet`, before: t.price, after: less ? less.price : t.price, note: less ? "Gratis 1 outlet" : "tanpa potongan" };
+    });
+  }
   const v = Number(promo.amount.replace(/[.\s]/g, ""));
-  if (!promo.amount.trim() || !Number.isFinite(v) || v <= 0) return "";
-  const after = promo.kind === "pct" ? Math.round((price * (100 - v)) / 100) : price - v;
-  return after > 0 ? `${rupiah(price)} → ${rupiah(after)} (Hemat ${promo.kind === "pct" ? `${v}%` : rupiah(v)})` : "";
+  if (!promo.amount.trim() || !Number.isFinite(v) || v <= 0) return [];
+  return rows.map((r) => {
+    const after = promo.kind === "pct" ? Math.round((r.price * (100 - v)) / 100) : r.price - v;
+    return { label: r.label, before: r.price, after, note: after <= 0 ? "potongan melebihi harga" : `Hemat ${promo.kind === "pct" ? `${v}%` : rupiah(v)}` };
+  });
 }
 
-function PromoFields({ id, promo, price }: { id: string; promo: ReturnType<typeof usePromo>; price?: number }) {
-  const preview = price ? promoPreview(promo, price) : "";
+function PromoFields({
+  id,
+  promo,
+  rows,
+  tiers,
+  locked,
+}: {
+  id: string;
+  promo: ReturnType<typeof usePromo>;
+  // Harga yang dipratinjau (paket: per jumlah outlet; add-on: harganya; promo global: semua add-on aktif).
+  rows: PreviewRow[];
+  // Daftar harga per jumlah outlet; kalau lebih dari satu, pilihan Gratis 1 outlet muncul.
+  tiers?: Tier[];
+  // Alasan promo tidak bisa diisi (promo global add-on sedang berlaku atau dijadwalkan).
+  locked?: string;
+}) {
+  const preview = promoPreview(promo, rows, tiers);
+  const canFree = (tiers?.length ?? 0) > 1;
+  const valued = promo.kind === "pct" || promo.kind === "amount";
   return (
-    <fieldset className="grid gap-3 rounded-xl border border-dashed border-line p-3 sm:grid-cols-4">
+    <fieldset disabled={Boolean(locked)} className="grid gap-3 rounded-xl border border-dashed border-line p-3 sm:grid-cols-4">
       <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-muted">Promo (opsional, waktu WIB)</legend>
+      {locked && <p className="rounded-lg border border-warn/50 bg-warn/10 p-3 text-sm sm:col-span-4">{locked}</p>}
       <label className={label} htmlFor={`${id}-kind`}>
         Jenis potongan
-        <select id={`${id}-kind`} className={input} value={promo.kind} onChange={(e) => promo.setKind(e.target.value as "pct" | "amount")}>
+        <select id={`${id}-kind`} className={input} value={promo.kind} onChange={(e) => promo.setKind(e.target.value as PromoKind)}>
+          <option value="none">Tanpa promo</option>
           <option value="pct">Persen (%)</option>
           <option value="amount">Nominal (Rp)</option>
+          {(canFree || promo.kind === "free_outlet") && <option value="free_outlet">Gratis 1 outlet</option>}
         </select>
       </label>
-      <label className={label} htmlFor={`${id}-pct`}>
-        {promo.kind === "pct" ? "Diskon %" : "Potongan Rp"}
-        <input
-          id={`${id}-pct`}
-          className={input}
-          inputMode="numeric"
-          placeholder={promo.kind === "pct" ? "kosong = tanpa promo" : "contoh 300000"}
-          value={promo.amount}
-          onChange={(e) => promo.setAmount(e.target.value)}
-        />
-      </label>
-      <label className={label} htmlFor={`${id}-start`}>
-        Mulai
-        <input id={`${id}-start`} type="datetime-local" className={input} value={promo.starts} onChange={(e) => promo.setStarts(e.target.value)} />
-      </label>
-      <label className={label} htmlFor={`${id}-end`}>
-        Selesai
-        <input id={`${id}-end`} type="datetime-local" className={input} value={promo.ends} onChange={(e) => promo.setEnds(e.target.value)} />
-      </label>
+      {valued && (
+        <label className={label} htmlFor={`${id}-pct`}>
+          {promo.kind === "pct" ? "Diskon %" : "Potongan Rp"}
+          <input
+            id={`${id}-pct`}
+            className={input}
+            inputMode="numeric"
+            placeholder={promo.kind === "pct" ? "contoh 10" : "contoh 300000"}
+            value={promo.amount}
+            onChange={(e) => promo.setAmount(e.target.value)}
+          />
+        </label>
+      )}
+      {promo.kind !== "none" && (
+        <>
+          <label className={label} htmlFor={`${id}-start`}>
+            Mulai
+            <input id={`${id}-start`} type="datetime-local" className={input} value={promo.starts} onChange={(e) => promo.setStarts(e.target.value)} />
+          </label>
+          <label className={label} htmlFor={`${id}-end`}>
+            Selesai
+            <input id={`${id}-end`} type="datetime-local" className={input} value={promo.ends} onChange={(e) => promo.setEnds(e.target.value)} />
+          </label>
+        </>
+      )}
+      {preview.length > 0 && (
+        <div className="grid gap-1 sm:col-span-4">
+          <span className="text-xs font-semibold text-muted">Pratinjau</span>
+          <ul className="grid gap-1 text-sm tabular-nums" aria-label="Pratinjau harga promo">
+            {preview.map((p) => (
+              <li key={p.label} className="flex flex-wrap items-baseline gap-x-2">
+                <span className="min-w-28 text-muted">{p.label}</span>
+                {p.after !== p.before && p.after > 0 && <s className="text-xs text-muted">{rupiah(p.before)}</s>}
+                <span className="font-semibold">{rupiah(Math.max(p.after, 0))}</span>
+                <span className={`text-xs ${p.after <= 0 ? "text-bad" : p.after !== p.before ? "text-mark" : "text-muted"}`}>{p.note}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <p className="text-xs text-muted sm:col-span-4">
-        {preview ? `Pratinjau: ${preview}. ` : ""}
-        Website menampilkan harga asli dicoret, label Hemat, dan tanggal akhir promo. Potongan nominal mengurangi setiap harga dengan jumlah yang sama.
+        {promo.kind === "free_outlet"
+          ? "Client yang memilih 4 outlet membayar harga 3 outlet, dan seterusnya. Potongannya tampil sebagai baris tersendiri di invoice."
+          : "Website menampilkan harga asli dicoret, label Hemat, dan tanggal akhir promo. Pilih Tanpa promo untuk menghentikan promo."}
       </p>
     </fieldset>
   );
@@ -182,7 +238,15 @@ export function PackageForm({ pkg }: { pkg: Package }) {
         </button>
       </fieldset>
 
-      <PromoFields id={`pkg-${pkg.id}`} promo={promo} price={Math.min(...prices.map((p) => Number(p.price) || 0))} />
+      <PromoFields
+        id={`pkg-${pkg.id}`}
+        promo={promo}
+        rows={prices.filter((p) => Number(p.price) > 0).map((p) => ({ label: `${p.outlets} outlet`, price: Number(p.price) }))}
+        tiers={prices
+          .filter((p) => Number(p.outlets) > 0 && Number(p.price) > 0)
+          .map((p) => ({ outlets: Number(p.outlets), price: Number(p.price) }))
+          .sort((x, y) => x.outlets - y.outlets)}
+      />
 
       <div className="flex flex-wrap items-center gap-4">
         <Toggle id={`active-${pkg.id}`} checked={f.active} onChange={(v) => setF({ ...f, active: v })}>
@@ -207,7 +271,7 @@ export function PackageForm({ pkg }: { pkg: Package }) {
   );
 }
 
-export function AddonForm({ addon, packageKeys }: { addon: Addon; packageKeys: { key: string; name: string }[] }) {
+export function AddonForm({ addon, packageKeys, globalLock }: { addon: Addon; packageKeys: { key: string; name: string }[]; globalLock?: string }) {
   const { pending, status, act } = useAction();
   const [f, setF] = useState({
     name: addon.name,
@@ -279,7 +343,7 @@ export function AddonForm({ addon, packageKeys }: { addon: Addon; packageKeys: {
         </div>
       </fieldset>
 
-      <PromoFields id={`addon-${addon.id}`} promo={promo} price={f.pricing === "fixed" ? Number(f.price) || 0 : undefined} />
+      <PromoFields id={`addon-${addon.id}`} promo={promo} rows={f.pricing === "fixed" && Number(f.price) > 0 ? [{ label: f.name || "Harga", price: Number(f.price) }] : []} locked={globalLock} />
 
       <div className="flex flex-wrap items-center gap-4">
         <Toggle id={`a-active-${addon.id}`} checked={f.active} onChange={(v) => setF({ ...f, active: v })}>
@@ -303,6 +367,39 @@ export function AddonForm({ addon, packageKeys }: { addon: Addon; packageKeys: {
         </button>
         <StatusText status={status} />
       </div>
+    </form>
+  );
+}
+
+// Promo global untuk semua add-on aktif berharga pasti. Database menolak kalau masih ada promo per add-on yang
+// berlaku atau dijadwalkan di periode yang sama, atau potongan nominal tidak di bawah harga add-on termurah;
+// pesannya menyebut nama add-on dan tetap tampil di bawah tombol.
+export function AddonPromoForm({ promo: current, addons }: { promo: AddonPromo | null; addons: Addon[] }) {
+  const { pending, status, act } = useAction();
+  const promo = usePromo(current ?? { promo_pct: null, promo_amount: null, promo_starts_at: null, promo_ends_at: null });
+  const eligible = addons.filter((a) => a.active && a.pricing === "fixed");
+  return (
+    <form
+      className="grid gap-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        act(() => saveAddonPromo(promo.value), promo.kind === "none" ? "Promo semua add-on dihentikan." : "Promo semua add-on disimpan.");
+      }}
+    >
+      <PromoFields id="addon-global" promo={promo} rows={eligible.map((a) => ({ label: a.name, price: a.price }))} />
+      <p className="text-xs text-muted">
+        Berlaku untuk add-on aktif berharga pasti. Add-on berharga dikonfirmasi admin tidak ikut. Selama promo ini berlaku atau dijadwalkan, promo per add-on tidak bisa dipasang.
+      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <button className="btn btn-primary" disabled={pending}>
+          {pending ? "Menyimpan…" : "Simpan promo semua add-on"}
+        </button>
+      </div>
+      {status?.tone === "error" && (
+        <p role="alert" className="rounded-lg border border-bad/40 bg-bad/10 p-3 text-sm">
+          {status.text}
+        </p>
+      )}
     </form>
   );
 }

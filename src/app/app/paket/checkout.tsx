@@ -5,7 +5,7 @@ import { useMemo, useState, useTransition } from "react";
 import { createOrder } from "../actions";
 import { CityPicker } from "@/components/city-picker";
 import { toast } from "@/components/toaster";
-import { displayPrice, promoActive, promoSaving, promoUntil, type Addon, type City, type Package } from "@/lib/catalog-types";
+import { displayPrice, freeOutletSaving, promoActive, promoSaving, promoUntil, type Addon, type City, type Package } from "@/lib/catalog-types";
 import { rupiah } from "@/lib/format";
 import { dict, type Lang } from "@/lib/i18n";
 
@@ -33,8 +33,12 @@ export function Checkout({ packages, addons, cities, initialKey, lang }: { packa
   const unserved = cityList.some((c) => c.trim().length >= 2 && !served.has(c.trim().toLowerCase()));
 
   const basePrice = pkg.prices.find((p) => p.outlets === tier)?.price ?? 0;
+  // Gratis 1 outlet: potongan tampil sebagai baris sendiri, sama dengan invoice.
+  const free = freeOutletSaving(pkg, tier);
+  const nextFree = free === 0 && pkg.prices.some((p) => p.outlets === tier + 1) ? freeOutletSaving(pkg, tier + 1) : 0;
   const lines = [
     { label: `${pkg.name} (${tier} outlet)`, amount: displayPrice(basePrice, pkg), list: basePrice, quote: false },
+    ...(free > 0 ? [{ label: t.freeOutletLine, amount: -free, list: -free, quote: false }] : []),
     ...selected.map((a) => ({
       label: chosen[a.key] > 1 ? `${a.name} × ${chosen[a.key]}` : a.name,
       amount: a.pricing === "quote" ? null : displayPrice(a.price, a) * chosen[a.key],
@@ -90,13 +94,14 @@ export function Checkout({ packages, addons, cities, initialKey, lang }: { packa
                   <span className="text-sm text-muted">{p.tagline}</span>
                   {from && (
                     <span className="grid">
-                      {promoActive(p) && <s className="text-sm text-muted tabular-nums">{rupiah(from.price)}</s>}
+                      {displayPrice(from.price, p) !== from.price && <s className="text-sm text-muted tabular-nums">{rupiah(from.price)}</s>}
                       <span className="font-display text-2xl font-extrabold tabular-nums">
                         {rupiah(displayPrice(from.price, p))}
                       </span>
                       {promoActive(p) && (
                         <span className="text-xs">
                           <span className="font-semibold text-mark">{promoSaving(p, lang)}</span> <span className="text-muted">· {promoUntil(p, lang)}</span>
+                          {p.promo_free_outlet && <span className="block text-muted">{t.freeOutletHint(from.outlets)}</span>}
                         </span>
                       )}
                       <span className="text-xs text-muted">
@@ -128,12 +133,24 @@ export function Checkout({ packages, addons, cities, initialKey, lang }: { packa
           <section className="grid gap-2">
             <h2 className="font-extrabold">{t.outletCount}</h2>
             <div className="flex flex-wrap gap-2">
-              {pkg.prices.map((p) => (
-                <button key={p.outlets} type="button" aria-pressed={tier === p.outlets} onClick={() => setTier(p.outlets)} className={`btn btn-sm ${tier === p.outlets ? "btn-primary" : ""}`}>
-                  {p.outlets} outlet · {rupiah(displayPrice(p.price, pkg))}
-                </button>
-              ))}
+              {pkg.prices.map((p) => {
+                const saving = freeOutletSaving(pkg, p.outlets);
+                const price = displayPrice(p.price, pkg) - saving;
+                return (
+                  <button key={p.outlets} type="button" aria-pressed={tier === p.outlets} onClick={() => setTier(p.outlets)} className={`btn btn-sm ${tier === p.outlets ? "btn-primary" : ""}`}>
+                    {p.outlets} outlet · {saving > 0 && <s className="opacity-70">{rupiah(p.price)}</s>} {rupiah(price)}
+                  </button>
+                );
+              })}
             </div>
+            {nextFree > 0 && (
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-accent/60 bg-accent/10 p-3 text-sm">
+                <span className="min-w-0 flex-1">{t.freeOutletNudgeHint(tier + 1, rupiah(basePrice))}</span>
+                <button type="button" className="btn btn-sm btn-primary" onClick={() => setTier(tier + 1)}>
+                  {t.freeOutletNudge}
+                </button>
+              </div>
+            )}
           </section>
         )}
 
@@ -160,7 +177,7 @@ export function Checkout({ packages, addons, cities, initialKey, lang }: { packa
                           a.price ? t.addonQuoteFrom(rupiah(a.price)) : t.addonQuote
                         ) : (
                           <>
-                            {promoActive(a) && <s className="mr-2 text-muted">{rupiah(a.price)}</s>}
+                            {displayPrice(a.price, a) !== a.price && <s className="mr-2 text-muted">{rupiah(a.price)}</s>}
                             {rupiah(displayPrice(a.price, a))} {a.unit}
                             {promoActive(a) && (
                               <span className="block text-xs">

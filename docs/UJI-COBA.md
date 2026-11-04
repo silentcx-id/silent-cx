@@ -752,3 +752,34 @@ Live chat Sisca:
 - [ ] Di HP, panel chat memenuhi layar dan bisa ditutup.
 
 Diuji otomatis: `tests/putaran11.test.ts` (13 tes) dan `tests/e2e/putaran11-landing-chat.mjs` (tanpa `E2E_TULIS=1` hanya membuka halaman; dengan `E2E_TULIS=1` mengirim satu pesan uji dan satu balasan di staging).
+
+## Putaran 12: promo Gratis 1 outlet dan promo semua add-on
+
+Jalankan dulu `npm run db:migrate` (staging) lalu `npm run db:migrate:prod` (produksi). Migration `20261104000020_free_outlet_addon_promo.sql` dan `20261104000021_addon_promo_where.sql` terpasang.
+
+Jenis potongan (Admin → Katalog, semua paket dan add-on):
+- [ ] Pilihannya: **Tanpa promo**, Persen, Nominal, dan (khusus paket dengan beberapa pilihan jumlah outlet, yaitu Performance) **Gratis 1 outlet**.
+- [ ] Tanpa promo menyembunyikan isian dan menghentikan promo setelah disimpan.
+- [ ] Pratinjau di bawah form menampilkan harga setiap pilihan sebelum dan sesudah promo.
+
+Performance gratis 1 outlet:
+- [ ] Pilih Gratis 1 outlet, isi tanggal mulai dan selesai (tanpa nilai), simpan. Daftar paket menampilkan "Promo · Gratis 1 outlet".
+- [ ] Landing dan halaman Pilih paket: label "Gratis 1 outlet", keterangan "4 outlet cukup bayar harga 3 outlet", dan tanggal akhir promo. Harga mulai 3 outlet tidak dicoret.
+- [ ] Checkout 3 outlet: muncul ajakan **Tambah 1 outlet, gratis**. Setelah diklik, ringkasan menampilkan Performance (4 outlet) Rp4.999.000 dan baris "Promo gratis 1 outlet -Rp1.000.000", total Rp3.999.000.
+- [ ] 5 outlet bayar harga 4 outlet. Outlet tambahan di atas 5 tetap dihitung penuh.
+- [ ] Invoice (halaman Tagihan dan PDF) menampilkan baris "Promo gratis 1 outlet" dengan jumlah negatif.
+
+Promo semua add-on (Admin → Katalog → Add-on, kartu paling atas):
+- [ ] Pilih Persen atau Nominal, isi nilai dan tanggal, simpan. Kartu menampilkan "Berlaku · Hemat …" atau "Dijadwalkan · … mulai …".
+- [ ] Checkout dan halaman laporan (Audit ulang) serta Konsultasi menampilkan harga coret dan label Hemat untuk add-on berharga pasti. Add-on berharga dikonfirmasi admin tidak ikut.
+- [ ] Kalau masih ada add-on dengan promo sendiri yang berlaku atau dijadwalkan di periode yang sama, promo tidak tersimpan dan muncul pesan dengan nama add-on itu.
+- [ ] Potongan nominal yang tidak lebih kecil dari harga add-on termurah ditolak dengan nama add-on itu.
+- [ ] Selama promo semua add-on berlaku atau dijadwalkan, isian promo di setiap add-on terkunci dengan keterangan sampai kapan.
+
+Bagian Add-on di landing (Admin → Konten):
+- [ ] Bagian **Add-on** ada di editor, tepat setelah Paket dan harga, bisa dinyalakan/dimatikan dan digeser. Judul dan pengantarnya bisa diedit.
+- [ ] Landing menampilkan semua add-on aktif dari Katalog: nama, deskripsi, harga dan satuan (atau "Dikonfirmasi admin, mulai …"), harga coret dan label Hemat kalau ada promo, "Untuk paket …" kalau hanya untuk paket tertentu, dan "Dipesan setelah laporan terbit" untuk Audit ulang dan Konsultasi tambahan.
+- [ ] Add-on yang dinonaktifkan di Katalog hilang dari landing. Kalau tidak ada add-on aktif, bagian ini tidak tampil.
+- [ ] Di HP kartu tersusun satu kolom.
+
+Diuji otomatis: `tests/putaran12.test.ts` (16 tes) dan `tests/e2e/putaran12-promo.mjs` (tanpa `E2E_TULIS=1` hanya membuka form; dengan `E2E_TULIS=1` memasang promo uji di staging lalu mengembalikannya, tanpa membuat pesanan).

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { BookingForm, BuyForm } from "./consultation-forms";
 import { MonthCalendar, type CalendarEvent } from "@/components/month-calendar";
 import { gridRange, isDay, isMonth, requestTime, todayWib, wibDay } from "@/lib/calendar";
-import { displayPrice } from "@/lib/catalog";
+import { displayPrice, withAddonPromo, type AddonPromo } from "@/lib/catalog";
 import { canReschedule, consultationState, getClientConsultations, getOpenTimes, type Consultation } from "@/lib/consultation";
 import { date, dateTime, rupiah } from "@/lib/format";
 import { dict } from "@/lib/i18n";
@@ -14,18 +14,20 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Konsultasi" };
 
-type Addon = { price: number; max_qty: number; promo_pct: number | null; promo_amount: number | null; promo_starts_at: string | null; promo_ends_at: string | null };
+type Addon = { pricing: "fixed" | "quote"; price: number; max_qty: number; promo_pct: number | null; promo_amount: number | null; promo_starts_at: string | null; promo_ends_at: string | null };
 
 export default async function ConsultationPage({ searchParams }: PageProps<"/app/consultation">) {
   const [viewer, lang, params] = await Promise.all([requireRole("client", "/app/consultation"), getLang(), searchParams]);
   const t = dict(lang).consultation;
   const supabase = await createClient();
-  const [items, projects, addonRes] = await Promise.all([
+  const [items, projects, addonRes, promoRes] = await Promise.all([
     getClientConsultations(viewer.id),
     getClientProjects(viewer.id),
-    supabase.from("addons").select("price, max_qty, promo_pct, promo_amount, promo_starts_at, promo_ends_at").eq("key", "additional_consultation").eq("active", true).maybeSingle(),
+    supabase.from("addons").select("pricing, price, max_qty, promo_pct, promo_amount, promo_starts_at, promo_ends_at").eq("key", "additional_consultation").eq("active", true).maybeSingle(),
+    supabase.from("addon_promo").select("promo_pct, promo_amount, promo_starts_at, promo_ends_at").maybeSingle(),
   ]);
-  const addon = addonRes.data as Addon | null;
+  // Promo add-on ini sendiri, atau promo global add-on.
+  const addon = addonRes.data ? withAddonPromo([addonRes.data as Addon], promoRes.data as AddonPromo | null)[0] : null;
   const now = requestTime();
   const minutes = (n: number) => t.minutes(n);
 

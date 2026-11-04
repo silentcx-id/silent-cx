@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import type { Addon, BusinessType, City, Package, PackagePrice, PaymentSettings } from "./catalog-types";
+import type { Addon, AddonPromo, BusinessType, City, Package, PackagePrice, PaymentSettings } from "./catalog-types";
 import { createClient } from "./supabase/server";
 
 export * from "./catalog-types";
@@ -8,10 +8,11 @@ export * from "./catalog-types";
 // Katalog untuk tampilan. Admin melihat yang nonaktif juga (diatur RLS).
 export async function getCatalog() {
   const supabase = await createClient();
-  const [{ data: packages }, { data: addons }, { data: cities }] = await Promise.all([
+  const [{ data: packages }, { data: addons }, { data: cities }, { data: addonPromo }] = await Promise.all([
     supabase.from("packages").select("*, package_prices(outlets, price)").order("sort_order").order("name"),
     supabase.from("addons").select("*").order("sort_order").order("name"),
     supabase.from("service_cities").select("id, name, active").order("name"),
+    supabase.from("addon_promo").select("promo_pct, promo_amount, promo_starts_at, promo_ends_at").maybeSingle(),
   ]);
   return {
     packages: (packages ?? []).map(({ package_prices, ...p }) => ({
@@ -20,6 +21,8 @@ export async function getCatalog() {
     })) as Package[],
     addons: (addons ?? []) as Addon[],
     cities: (cities ?? []) as City[],
+    // Promo global semua add-on; untuk tampilan client pakai withAddonPromo(addons, addonPromo).
+    addonPromo: (addonPromo ?? null) as AddonPromo | null,
   };
 }
 

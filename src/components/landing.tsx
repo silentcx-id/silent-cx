@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AutoCarousel } from "./auto-carousel";
 import { Logo } from "./logo";
 import { PrefsSwitch } from "./prefs-switch";
-import { displayPrice, promoActive, promoSaving, promoUntil, type Package } from "@/lib/catalog-types";
+import { displayPrice, promoActive, promoSaving, promoUntil, type Addon, type Package } from "@/lib/catalog-types";
 import { waLink } from "@/lib/field";
 import { rupiah } from "@/lib/format";
 import { dict, type Lang } from "@/lib/i18n";
@@ -10,7 +10,8 @@ import { LANDING_ICONS, type LandingIcon } from "@/lib/landing-icons";
 import { pick, type Section, type SectionKey, type SiteContent } from "@/lib/site-content";
 import { socialHref, SOCIALS, websiteHref, websiteLabel } from "@/lib/site-links";
 
-type Props = { content: SiteContent; packages: Package[]; lang: Lang; banner?: React.ReactNode };
+// addons: add-on aktif dari Katalog, promo sudah diterapkan (withAddonPromo).
+type Props = { content: SiteContent; packages: Package[]; addons?: Addon[]; lang: Lang; banner?: React.ReactNode };
 
 const h2 = "text-[clamp(28px,3.8vw,42px)] font-extrabold leading-[1.08] tracking-tight";
 const NAV: SectionKey[] = ["steps", "audited", "sample", "packages", "faq", "contact"];
@@ -19,7 +20,7 @@ const shadow = "shadow-[0_10px_30px_-18px_rgba(6,8,12,0.35)]";
 // Landing page dari dokumen konten (CMS). Dipakai halaman utama (versi terbit) dan pratinjau admin (draf).
 // Bagian tampil sesuai urutan dan status tampil yang diatur admin; paket diambil dari Katalog.
 // Hanya untuk pengunjung yang belum masuk; yang sudah masuk diarahkan ke dashboard.
-export function Landing({ content, packages, lang, banner }: Props) {
+export function Landing({ content, packages, addons = [], lang, banner }: Props) {
   const t = dict(lang);
   const L = t.landing;
   const { site } = content;
@@ -41,7 +42,7 @@ export function Landing({ content, packages, lang, banner }: Props) {
   // Bagian yang benar-benar tampil: Kontak butuh info kontak, Paket butuh paket aktif, bagian kartu baru butuh minimal satu kartu.
   const needsItems: SectionKey[] = ["features", "industries", "partners"];
   const shown = visible.filter(
-    (k) => (k !== "contact" || hasContact) && (k !== "packages" || packages.length > 0) && (!needsItems.includes(k) || sections[k].items.length > 0),
+    (k) => (k !== "contact" || hasContact) && (k !== "packages" || packages.length > 0) && (k !== "addons" || addons.length > 0) && (!needsItems.includes(k) || sections[k].items.length > 0),
   );
   const nav = NAV.filter((k) => shown.includes(k));
   // Warna latar selang-seling hitam dan putih mengikuti urutan bagian yang tampil, mulai dari hero hitam.
@@ -243,13 +244,14 @@ export function Landing({ content, packages, lang, banner }: Props) {
                     <p className="text-sm text-muted">{pkg.tagline}</p>
                   </div>
                   <div className="grid justify-items-center border-y border-line py-4">
-                    {promoActive(pkg) && <s className="text-sm text-muted tabular-nums">{rupiah(from.price)}</s>}
+                    {displayPrice(from.price, pkg) !== from.price && <s className="text-sm text-muted tabular-nums">{rupiah(from.price)}</s>}
                     <span className="font-display text-4xl font-extrabold tabular-nums">
                       {rupiah(displayPrice(from.price, pkg))}
                     </span>
                     {promoActive(pkg) && (
                       <span className="mt-1 grid justify-items-center gap-1">
                         <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-bold text-accent-ink">{promoSaving(pkg, lang)}</span>
+                        {pkg.promo_free_outlet && <span className="text-xs font-semibold">{t.orders.freeOutletHint(from.outlets)}</span>}
                         <span className="text-xs text-muted">{promoUntil(pkg, lang)}</span>
                       </span>
                     )}
@@ -271,6 +273,49 @@ export function Landing({ content, packages, lang, banner }: Props) {
                   <Link href={choose(pkg.key)} className="btn btn-primary mt-auto w-full">
                     {t.client.choosePackage}
                   </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      ),
+    addons: (s) =>
+      addons.length > 0 && (
+        <>
+          {head(s, "addons", true)}
+          <ul className="grid gap-4 pt-2 sm:grid-cols-2 lg:grid-cols-3">
+            {addons.map((a) => {
+              const names = a.applicable_packages.map((k) => packages.find((x) => x.key === k)?.name.replace(/^SilentCX\s+/, "")).filter(Boolean);
+              const price = displayPrice(a.price, a);
+              return (
+                <li key={a.key} className={`card grid content-start gap-3 p-5 ${shadow}`}>
+                  <div className="grid gap-1">
+                    <h3 className="font-display text-lg font-extrabold">{a.name}</h3>
+                    {a.description && <p className="text-sm text-muted">{a.description}</p>}
+                  </div>
+                  <div className="grid gap-1 border-t border-line pt-3 text-sm tabular-nums">
+                    {a.pricing === "quote" ? (
+                      <span className="font-semibold">{a.price ? t.orders.addonQuoteFrom(rupiah(a.price)) : t.orders.addonQuote}</span>
+                    ) : (
+                      <span className="flex flex-wrap items-baseline gap-x-2">
+                        {price !== a.price && <s className="text-muted">{rupiah(a.price)}</s>}
+                        <span className="font-display text-xl font-extrabold">{rupiah(price)}</span>
+                        {a.unit && <span className="text-muted">{a.unit}</span>}
+                      </span>
+                    )}
+                    {a.pricing !== "quote" && promoActive(a) && (
+                      <span className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="rounded-full bg-accent px-2.5 py-0.5 font-bold text-accent-ink">{promoSaving(a, lang)}</span>
+                        <span className="text-muted">{promoUntil(a, lang)}</span>
+                      </span>
+                    )}
+                  </div>
+                  {(names.length > 0 || a.after_report) && (
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      {names.length > 0 && <span className="rounded-full border border-line px-2.5 py-0.5 text-muted">{L.addonFor(names.join(", "))}</span>}
+                      {a.after_report && <span className="rounded-full border border-accent/60 px-2.5 py-0.5 font-semibold text-mark">{L.addonAfterReport}</span>}
+                    </div>
+                  )}
                 </li>
               );
             })}

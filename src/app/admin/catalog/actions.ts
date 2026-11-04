@@ -12,23 +12,41 @@ const PATHS = ["/admin", "/app", "/"];
 const money = z.coerce.number().int("Harga harus bilangan bulat.").min(0, "Harga tidak boleh negatif.").max(1_000_000_000);
 const key = z.string().regex(/^[a-z0-9_]{2,40}$/, "Kode hanya huruf kecil, angka, dan garis bawah (2–40 karakter).");
 
-// Promo: persen (1–90) atau potongan nominal Rp per unit. Nilai kosong berarti tidak ada promo; kalau diisi,
-// tanggal mulai dan selesai wajib. Batas potongan nominal terhadap harga dicek di skema paket/add-on.
-const promo = z
-  .object({ promo_kind: z.enum(["pct", "amount"]), promo_value: z.string(), promo_starts_at: z.string(), promo_ends_at: z.string() })
-  .transform((p, ctx) => {
-    const none = { promo_pct: null, promo_amount: null, promo_starts_at: null, promo_ends_at: null };
-    const raw = p.promo_value.replace(/[.\s]/g, "");
-    if (!raw) return none;
-    const value = Number(raw);
-    const starts = fromWibInput(p.promo_starts_at);
-    const ends = fromWibInput(p.promo_ends_at);
-    if (p.promo_kind === "pct" && (!Number.isInteger(value) || value < 1 || value > 90)) ctx.addIssue({ code: "custom", message: "Diskon promo 1 sampai 90 persen." });
-    else if (p.promo_kind === "amount" && (!Number.isInteger(value) || value < 1)) ctx.addIssue({ code: "custom", message: "Potongan promo harus bilangan bulat rupiah, minimal Rp1." });
-    else if (!starts || !ends) ctx.addIssue({ code: "custom", message: "Isi tanggal mulai dan selesai promo." });
-    else if (ends <= starts) ctx.addIssue({ code: "custom", message: "Tanggal selesai promo harus setelah tanggal mulai." });
-    return { ...none, [p.promo_kind === "pct" ? "promo_pct" : "promo_amount"]: value, promo_starts_at: starts, promo_ends_at: ends };
-  });
+// Promo: tanpa promo, persen (1–90), potongan nominal Rp per unit, atau gratis 1 outlet (hanya paket). Selain tanpa
+// promo, tanggal mulai dan selesai wajib. Batas potongan nominal terhadap harga dicek di skema paket/add-on.
+const PROMO_KINDS = ["none", "pct", "amount", "free_outlet"] as const;
+const promoInput = z.object({ promo_kind: z.enum(PROMO_KINDS), promo_value: z.string(), promo_starts_at: z.string(), promo_ends_at: z.string() });
+const NO_PROMO = { promo_pct: null as number | null, promo_amount: null as number | null, promo_starts_at: null as string | null, promo_ends_at: null as string | null };
+
+function parsePromo(p: z.infer<typeof promoInput>, ctx: z.RefinementCtx) {
+  const raw = p.promo_value.replace(/[.s]/g, "");
+  if (p.promo_kind === "none" || (p.promo_kind !== "free_outlet" && !raw)) return { ...NO_PROMO, free: false };
+  const value = Number(raw);
+  const starts = fromWibInput(p.promo_starts_at);
+  const ends = fromWibInput(p.promo_ends_at);
+  if (p.promo_kind === "pct" && (!Number.isInteger(value) || value < 1 || value > 90)) ctx.addIssue({ code: "custom", message: "Diskon promo 1 sampai 90 persen." });
+  else if (p.promo_kind === "amount" && (!Number.isInteger(value) || value < 1)) ctx.addIssue({ code: "custom", message: "Potongan promo harus bilangan bulat rupiah, minimal Rp1." });
+  else if (!starts || !ends) ctx.addIssue({ code: "custom", message: "Isi tanggal mulai dan selesai promo." });
+  else if (ends <= starts) ctx.addIssue({ code: "custom", message: "Tanggal selesai promo harus setelah tanggal mulai." });
+  return {
+    promo_pct: p.promo_kind === "pct" ? value : null,
+    promo_amount: p.promo_kind === "amount" ? value : null,
+    promo_starts_at: starts,
+    promo_ends_at: ends,
+    free: p.promo_kind === "free_outlet",
+  };
+}
+
+const packagePromo = promoInput.transform((p, ctx) => {
+  const { free, ...rest } = parsePromo(p, ctx);
+  return { ...rest, promo_free_outlet: free };
+});
+
+const addonPromo = promoInput.transform((p, ctx) => {
+  const { free, ...rest } = parsePromo(p, ctx);
+  if (free) ctx.addIssue({ code: "custom", message: "Gratis 1 outlet hanya untuk paket." });
+  return rest;
+});
 
 const amountBelow = (price: number, what: string) => (p: { promo: { promo_amount: number | null } }) =>
   p.promo.promo_amount == null || p.promo.promo_amount < price || { message: `Potongan promo harus lebih kecil dari ${what} (Rp${new Intl.NumberFormat("id-ID").format(price)}).` };
@@ -50,8 +68,10 @@ const packageSchema = z.object({
     .array(z.object({ outlets: z.coerce.number().int().min(1, "Jumlah outlet minimal 1.").max(50), price: money }))
     .min(1, "Paket wajib punya minimal satu harga.")
     .refine((rows) => new Set(rows.map((r) => r.outlets)).size === rows.length, "Jumlah outlet di daftar harga tidak boleh dobel."),
-  promo,
+  promo: packagePromo,
 }).superRefine((p, ctx) => {
+  // Gratis 1 outlet: client membayar harga untuk satu outlet lebih sedikit, jadi paket perlu beberapa pilihan jumlah outlet.
+  if (p.promo.promo_free_outlet && p.prices.length < 2) ctx.addIssue({ code: "custom", message: "Gratis 1 outlet hanya untuk paket dengan beberapa pilihan jumlah outlet." });
   // Potongan nominal mengurangi setiap harga per jumlah outlet dengan jumlah yang sama.
   const res = amountBelow(Math.min(...p.prices.map((r) => r.price)), "harga termurah paket")(p);
   if (res !== true) ctx.addIssue({ code: "custom", message: res.message });
@@ -64,9 +84,15 @@ export async function savePackage(raw: unknown) {
     raw,
     async ({ id, prices, promo: p, ...fields }) => {
       const supabase = await createClient();
+      const savePrices = async () => {
+        check(await supabase.from("package_prices").upsert(prices.map((r) => ({ package_id: id, ...r }))));
+        check(await supabase.from("package_prices").delete().eq("package_id", id).not("outlets", "in", `(${prices.map((r) => r.outlets).join(",")})`));
+      };
+      // Gratis 1 outlet dicek database terhadap daftar harga, jadi harga disimpan dulu. Selain itu promo dulu,
+      // supaya potongan nominal yang dikecilkan bersamaan dengan harga tidak ditolak.
+      if (p.promo_free_outlet) await savePrices();
       check(await supabase.from("packages").update({ ...fields, ...p }).eq("id", id));
-      check(await supabase.from("package_prices").upsert(prices.map((r) => ({ package_id: id, ...r }))));
-      check(await supabase.from("package_prices").delete().eq("package_id", id).not("outlets", "in", `(${prices.map((r) => r.outlets).join(",")})`));
+      if (!p.promo_free_outlet) await savePrices();
     },
     PATHS,
   );
@@ -102,7 +128,7 @@ const addonSchema = z.object({
   applicable_packages: z.array(key).max(20),
   active: z.boolean(),
   sort_order: z.coerce.number().int().min(0).max(999),
-  promo,
+  promo: addonPromo,
 }).superRefine((a, ctx) => {
   const res = amountBelow(a.price, "harga add-on")(a);
   if (res !== true) ctx.addIssue({ code: "custom", message: res.message });
@@ -116,6 +142,21 @@ export async function saveAddon(raw: unknown) {
     async ({ id, promo: p, ...fields }) => {
       const supabase = await createClient();
       check(await supabase.from("addons").update({ ...fields, ...p }).eq("id", id));
+    },
+    PATHS,
+  );
+}
+
+// Promo global semua add-on berharga pasti. Bentrok dengan promo per add-on dan batas harga dicek database
+// (admin_set_addon_promo) supaya pesannya bisa menyebut nama add-on.
+export async function saveAddonPromo(raw: unknown) {
+  await requireRole("admin", "/admin/catalog");
+  return run(
+    addonPromo,
+    raw,
+    async (p) => {
+      const supabase = await createClient();
+      check(await supabase.rpc("admin_set_addon_promo", { p_pct: p.promo_pct, p_amount: p.promo_amount, p_starts: p.promo_starts_at, p_ends: p.promo_ends_at }));
     },
     PATHS,
   );
