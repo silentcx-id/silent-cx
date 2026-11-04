@@ -783,3 +783,54 @@ Bagian Add-on di landing (Admin → Konten):
 - [ ] Di HP kartu tersusun satu kolom.
 
 Diuji otomatis: `tests/putaran12.test.ts` (16 tes) dan `tests/e2e/putaran12-promo.mjs` (tanpa `E2E_TULIS=1` hanya membuka form; dengan `E2E_TULIS=1` memasang promo uji di staging lalu mengembalikannya, tanpa membuat pesanan).
+
+## Putaran 13: persetujuan kuesioner oleh client dan edit profil
+
+Jalankan dulu `npm run db:migrate` (staging) lalu `npm run db:migrate:prod` (produksi). Migration `20261104000022_questionnaire_review_profile_edit.sql` terpasang. Proyek yang sudah pernah menawarkan tugas dianggap kuesionernya sudah disetujui, jadi tidak macet. Proyek lain mengikuti alur baru.
+
+Untuk email ganti alamat, lakukan dulu langkah **8b nomor 3 (Change Email Address)** dan **8b nomor 7 (Secure email change)** di `docs/SETUP.md`, di staging dan produksi.
+
+Persetujuan kuesioner (Admin → Proyek → tab Jadwal, semua paket):
+- [ ] Setelah kuesioner ditetapkan, kartu **Kuesioner proyek** berstatus **Belum dikirim**. Tugas bisa dibuat, tapi di setiap tugas muncul "Tugas bisa ditawarkan ke shopper setelah kuesioner proyek disetujui client".
+- [ ] **Kirim ke client** mengubah status menjadi **Menunggu client · versi 1**, dengan batas waktu dan sisa waktunya (3×24 jam).
+- [ ] Client mendapat notifikasi di lonceng dan email "Kuesioner audit siap Anda tinjau". Isinya menyebut batas waktu dan bahwa kuesioner dianggap disetujui kalau tidak ada tanggapan.
+- [ ] Beranda client dan halaman **Audit berjalan** menampilkan tombol **Tinjau kuesioner**.
+
+Halaman Tinjau kuesioner (client):
+- [ ] Pertanyaan dikelompokkan per area dan diberi nomor berurutan. Yang tampil hanya teks pertanyaan, keterangan, dan tanda "Perlu foto", tanpa bobot atau detail penilaian.
+- [ ] Ada kalimat "Mohon tinjau sebelum … WIB" dan sisa kesempatan perbaikan.
+- [ ] **Setujui kuesioner** meminta konfirmasi dulu ("Ya, setujui").
+- [ ] **Ajukan perbaikan**: setiap pertanyaan punya tombol **Perlu diubah**. Setelah diklik, muncul kotak "Apa yang perlu diubah?". Di bawah ada kotak "Ada pertanyaan yang ingin ditambahkan?".
+- [ ] Bar bawah yang menempel menampilkan jumlah pertanyaan yang ditandai. Tombol kirim baru aktif kalau setiap pertanyaan yang ditandai sudah diberi catatan.
+- [ ] Kalau halaman tertutup sebelum dikirim, isian perbaikan muncul lagi saat **Ajukan perbaikan** diklik di browser yang sama.
+- [ ] Di HP tampil satu kolom, tombol besar, dan bar bawah tidak tertutup tombol Chat Sisca.
+
+Setelah client mengajukan perbaikan (admin):
+- [ ] Admin mendapat notifikasi di lonceng dan email "Client mengajukan perbaikan kuesioner".
+- [ ] Status kartu menjadi **Perlu perbaikan**. Pertanyaan yang ditandai tampil dengan garis merah dan catatan client, begitu juga usulan pertanyaan tambahan.
+- [ ] **Salin untuk proyek ini** membuka editor salinan bernama "… · PRJ-xxxx". Salinan ini langsung dipakai proyek, dan template asli tidak berubah. Di editor ada kotak "Salinan khusus proyek" berisi catatan client, dan pertanyaan yang ditandai disorot.
+- [ ] Di menu Kuesioner, salinan bertanda **Khusus PRJ-xxxx**, dan tidak bisa ditetapkan ke proyek lain.
+- [ ] **Kirim ulang versi 2** mengirim isi terbaru. Client melihat "Sisa 1 kali perbaikan", dan bisa membuka "Perbaikan yang Anda minta di versi 1".
+- [ ] Setelah perbaikan kedua, tombol admin menjadi **Kirim draft final**. Client hanya bisa melihat versi 3 dengan keterangan "Ini versi final setelah 2 kali perbaikan", dan tugas langsung bisa ditawarkan.
+- [ ] Setelah disetujui (oleh client, otomatis, atau versi final), status menjadi **Disetujui client**, **Disetujui otomatis**, atau **Final**, dan form tawaran tugas muncul.
+- [ ] Mengganti kuesioner setelah dikirim membuat statusnya kembali **Belum dikirim**. Jumlah perbaikan yang sudah dipakai tetap dihitung.
+
+Pengingat dan persetujuan otomatis (jadwal `silentcx-expire`, setiap 5 menit):
+- [ ] 24 jam setelah dikirim tanpa tanggapan, client mendapat email pengingat (sekali saja).
+- [ ] 3×24 jam setelah dikirim, kuesioner disetujui otomatis. Client mendapat email "Kuesioner audit disetujui otomatis", admin mendapat notifikasi di lonceng.
+
+Akun saya (shopper dan client):
+- [ ] Halaman dibagi per bagian. Setiap bagian menampilkan ringkasan dan tombol **Ubah**. Form terbuka di tempat, dan **Batal** menutupnya tanpa menyimpan.
+- [ ] Shopper aktif: **Data diri** (nama, jenis kelamin, tanggal lahir, pekerjaan, kendaraan), **Kontak**, **Domisili dan jangkauan**, **Minat dan waktu berkunjung** (jenis bisnis, hari, jam), **Rekening**, **Ganti password**.
+- [ ] Client: **Data diri**, **Kontak**, **Perusahaan** (nama usaha, jenis usaha, kota, alamat), **Ganti password**.
+- [ ] Ganti email: setelah disimpan muncul "Tautan konfirmasi dikirim ke …", dan di atas bagian Kontak ada "Menunggu konfirmasi email baru". Email lama tetap dipakai untuk masuk sampai tautan diklik.
+- [ ] Setelah tautan diklik: masuk ke Akun saya dengan pesan "Email baru sudah dikonfirmasi". Email lama menerima "Email akun SilentCX Anda diganti dari … ke …".
+- [ ] Email yang sudah dipakai akun lain ditolak dengan pesan yang jelas.
+- [ ] Usia di bawah 18 tahun, kota di luar daftar, atau tanpa kota/minat ditolak.
+
+Admin → Akun → Detail akun:
+- [ ] Bagian **Riwayat perubahan data** menampilkan, misalnya, "Nama diubah dari Rina ke Rina Putri", lengkap dengan waktu dan siapa yang mengubah (pemilik akun, admin, atau lewat tautan konfirmasi email). Nomor rekening hanya tampil 4 angka terakhir.
+- [ ] Kalau nama akun shopper berbeda dengan nama pemilik rekening, muncul tanda kuning di Detail akun dan di antrean **Payout**. Gelar dan nama yang dipotong bank (misalnya "Sari Dewi" untuk "Sari Dewi Putri") tidak ditandai.
+- [ ] Ringkasan lamaran menampilkan hari dan jam berkunjung kalau sudah diisi.
+
+Diuji otomatis: `tests/putaran13.test.ts` (22 tes) dan `tests/e2e/putaran13-kuesioner-profil.mjs`. Tanpa `E2E_TULIS=1` skrip hanya membuka halaman. Dengan `E2E_TULIS=1` skrip membuat proyek uji sementara PRJ-E2E13 untuk client demo, menjalankan alur kirim, perbaikan, salin, versi 2, dan setuju lewat browser, mengubah hari berkunjung shopper demo lalu mengembalikannya, kemudian menghapus proyek uji dan salinan kuesionernya.

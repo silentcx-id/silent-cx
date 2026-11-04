@@ -76,5 +76,12 @@ export async function createTestDb() {
     return res.rows[0];
   }
 
-  return { db, signUp, provision, createAdmin, as, profile };
+  // Kuesioner proyek dikirim admin lalu disetujui client pemilik proyek (Putaran 13), supaya tugas bisa ditawarkan.
+  async function approveQuestionnaire(adminId: string, projectId: string) {
+    await as(adminId, "select public.admin_send_questionnaire($1)", [projectId]);
+    const owner = (await db.query<{ client_id: string }>("select client_id from public.projects where id = $1", [projectId])).rows[0].client_id;
+    await as(owner, "select public.client_review_questionnaire($1, true)", [projectId]);
+  }
+
+  return { db, signUp, provision, createAdmin, as, profile, approveQuestionnaire };
 }

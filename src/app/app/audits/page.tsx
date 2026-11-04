@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Stepper } from "@/components/stepper";
 import { dayLabel } from "@/lib/field";
+import { dateTime } from "@/lib/format";
 import { dict } from "@/lib/i18n";
 import { getClientProjects } from "@/lib/orders";
 import { getLang } from "@/lib/prefs";
+import { getClientReview, type ClientReview } from "@/lib/questionnaire-review";
 import { requireRole } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -51,6 +53,31 @@ function projectStep(status: string, detailsDone: boolean, outlets: Row[]): numb
   return 6;
 }
 
+const REVIEW_TEXT: Record<ClientReview["status"], string> = {
+  pending: "Kuesioner audit siap Anda tinjau.",
+  changes_requested: "Permintaan perbaikan kuesioner sedang dikerjakan tim SilentCX.",
+  approved: "Kuesioner audit sudah Anda setujui.",
+  auto_approved: "Kuesioner audit disetujui otomatis.",
+  final: "Kuesioner audit versi final.",
+};
+
+// Status kuesioner proyek; tombolnya menonjol saat menunggu tinjauan client.
+function QuestionnaireRow({ review }: { review: ClientReview | null }) {
+  if (!review) return null;
+  const waiting = review.status === "pending";
+  return (
+    <div className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm ${waiting ? "border-accent bg-accent/10" : "border-line"}`}>
+      <span>
+        <strong>{REVIEW_TEXT[review.status]}</strong>
+        {waiting && review.due_at && <span className="block text-muted">Mohon tinjau sebelum {dateTime(review.due_at, "id")} WIB.</span>}
+      </span>
+      <Link href={`/app/questionnaire/${review.project}`} className={`btn btn-sm ${waiting ? "btn-primary" : ""}`}>
+        {waiting ? "Tinjau kuesioner" : "Lihat kuesioner"} →
+      </Link>
+    </div>
+  );
+}
+
 // Timeline per proyek, lalu progres per outlet tanpa tanggal kunjungan, nama shopper, atau jawaban
 // (angkanya dihitung di client_audit_progress).
 export default async function AuditsPage() {
@@ -61,6 +88,7 @@ export default async function AuditsPage() {
   const rows = (data ?? []) as Row[];
   const detailsDone = new Map(projects.map((p) => [p.id, Boolean(p.details_completed_at)]));
   const ids = [...new Set(rows.map((r) => r.project_id))];
+  const reviews = new Map(await Promise.all(ids.map(async (id) => [id, await getClientReview(id)] as const)));
 
   return (
     <>
@@ -97,6 +125,7 @@ export default async function AuditsPage() {
                 )}
               </div>
               <Stepper steps={t.steps} current={step} label={t.timeline} hereLabel={t.here} />
+              <QuestionnaireRow review={reviews.get(projectId) ?? null} />
             </div>
 
             <h3 className="eyebrow">{t.perOutlet}</h3>

@@ -126,6 +126,9 @@ export type ShopperApplication = {
   experience_note: string;
   // Kode jenis usaha dari daftar yang diatur admin (business_types).
   industries: string[];
+  // Hari dan waktu bisa berkunjung (opsional, diisi di Akun saya).
+  available_days?: string[];
+  available_times?: string[];
   quiz_attempts: number;
   submitted_at: string | null;
   decided_at: string | null;
@@ -134,7 +137,7 @@ export type ShopperApplication = {
 };
 
 export const APPLICATION_COLUMNS =
-  "id, status, domicile, reachable_cities, birth_date, gender, occupation, vehicle, experience, experience_note, industries, quiz_attempts, submitted_at, decided_at, decision_note, created_at";
+  "id, status, domicile, reachable_cities, birth_date, gender, occupation, vehicle, experience, experience_note, industries, available_days, available_times, quiz_attempts, submitted_at, decided_at, decision_note, created_at";
 
 export const REAPPLY_DAYS = 30;
 

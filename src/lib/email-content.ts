@@ -1,5 +1,6 @@
 // Isi email untuk notifikasi penting. Teksnya sama dengan notifikasi di lonceng, ditambah tombol ke halaman terkait.
-// Admin hanya menerima email untuk bukti bayar yang perlu diverifikasi; notifikasi admin lain cukup di lonceng.
+// Admin hanya menerima email untuk bukti bayar yang perlu diverifikasi dan permintaan perbaikan kuesioner;
+// notifikasi admin lain cukup di lonceng.
 import { notificationLink, notificationText, type Notification } from "./notification-text";
 
 export const EMAIL_KINDS: Record<string, string> = {
@@ -15,10 +16,17 @@ export const EMAIL_KINDS: Record<string, string> = {
   "invoice.rejected": "Bukti pembayaran perlu diunggah ulang",
   "invoice.due_soon": "Pengingat: tagihan jatuh tempo",
   "report.published": "Laporan audit Anda sudah terbit",
+  "questionnaire.review": "Kuesioner audit siap Anda tinjau",
+  "questionnaire.reminder": "Pengingat: tinjau kuesioner audit Anda",
+  "questionnaire.auto_approved": "Kuesioner audit disetujui otomatis",
+  "questionnaire.final": "Kuesioner audit versi final",
+  // Semua akun: dikirim ke alamat email lama setelah email baru dikonfirmasi.
+  "account.email_changed": "Email akun SilentCX Anda diganti",
   // Live chat: dikirim kalau balasan Sisca belum dibaca 5 menit.
   "chat.reply": "Sisca membalas pesan Anda",
   // Admin
   "admin.payment": "Bukti bayar perlu diverifikasi",
+  "admin.questionnaire_changes": "Client mengajukan perbaikan kuesioner",
 };
 
 export const isEmailKind = (kind: string) => Object.hasOwn(EMAIL_KINDS, kind);

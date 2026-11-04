@@ -98,6 +98,7 @@ describe("kuesioner", () => {
 
   it("menetapkan kuesioner menyimpan salinan yang tidak terlihat client", async () => {
     await t.as(admin, "select public.admin_assign_questionnaire($1, $2)", [project, template]);
+    await t.approveQuestionnaire(admin, project);
     const snap = await snapshot();
     expect(snap.sections).toHaveLength(7);
     expect(snap.photo_limit).toBe(5);

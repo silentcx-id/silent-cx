@@ -116,9 +116,10 @@ Ada dua project Supabase:
 2. **Authentication > URL Configuration**:
    - **Site URL**: `https://silentcx.com`
    - **Redirect URLs**: `https://silentcx.com/**` dan `https://www.silentcx.com/**`
-3. **Authentication > Emails > Templates**: ganti tautan di dua template berikut, supaya tautannya juga bisa dibuka di perangkat lain:
+3. **Authentication > Emails > Templates**: ganti tautan di tiga template berikut, supaya tautannya juga bisa dibuka di perangkat lain:
    - **Confirm signup**: `<a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email">Konfirmasi email</a>`
    - **Reset Password**: `<a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery">Buat password baru</a>`
+   - **Change Email Address** (ganti email dari Akun saya): `<a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email_change">Konfirmasi email baru</a>`
 4. **SMTP lewat Resend**:
    1. Di resend.com: **Domains > Add Domain** `silentcx.com`, region **Tokyo (ap-northeast-1)**. Pasang record DNS yang ditampilkan Resend (MX dan TXT di subdomain `send`, TXT `resend._domainkey`), ditambah TXT `_dmarc` berisi `v=DMARC1; p=none;`. Tunggu statusnya **Verified**.
    2. **API Keys > Create API Key**, permission **Sending access**, domain `silentcx.com`. Kuncinya hanya tampil sekali; langsung tempel di Supabase pada langkah berikut.
@@ -128,8 +129,11 @@ Ada dua project Supabase:
    1. Di [dash.cloudflare.com](https://dash.cloudflare.com) → **Turnstile > Add widget**: nama `SilentCX`, hostname `silentcx.com` dan `www.silentcx.com`, mode **Managed**. Salin **Site Key** dan **Secret Key**.
    2. Di Supabase **Authentication > Attack Protection**: nyalakan **Enable Captcha protection**, provider **Turnstile by Cloudflare**, tempel **Secret Key**.
    3. Site Key diisi di Vercel sebagai `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (langkah 8d). Isi keduanya bersamaan: kalau captcha di Supabase menyala tetapi Site Key belum ada di Vercel, tidak ada yang bisa masuk atau daftar.
+7. **Authentication > Sign In / Providers > Email**: matikan **Secure email change**. Dengan begitu, ganti email cukup dikonfirmasi lewat tautan di email baru. Email lama tetap menerima pemberitahuan dari aplikasi setelah penggantian berhasil (notifikasi `account.email_changed`). Kalau dibiarkan menyala, pengguna harus mengklik tautan di email lama dan email baru.
 
-### 8b-2. Email notifikasi (tawaran tugas, tagihan, laporan, dan lain-lain)
+### 8b-2. Email notifikasi (tawaran tugas, tagihan, laporan, kuesioner, dan lain-lain)
+
+Email kuesioner (siap ditinjau, pengingat 24 jam, disetujui otomatis, versi final, permintaan perbaikan untuk admin), pemberitahuan ganti email, dan email bukti bayar untuk admin memakai jalur ini juga. Tidak ada pengaturan tambahan.
 
 Email notifikasi dikirim aplikasi lewat Resend, memakai API key yang sama dengan SMTP. Jadwal database memanggil `https://silentcx.com/api/email/dispatch` setiap menit dengan kunci rahasia.
 

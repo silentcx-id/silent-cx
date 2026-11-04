@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CancelForm, ReviewForm, VerifyForm } from "../project-actions";
-import { OutletSchedule, QuestionnairePicker, type AdminTask, type Candidate, type OutletTasks } from "./scheduling";
+import { OutletSchedule, QuestionnairePicker, type AdminTask, type Candidate, type OutletTasks, type QuestionnaireReview, type ReviewStatus } from "./scheduling";
 import { InvoiceView } from "@/components/invoice-view";
 import { pickTab, Tabs } from "@/components/tabs";
 import { businessTypeLabel, getBusinessTypes } from "@/lib/catalog";
@@ -19,17 +19,32 @@ export const metadata: Metadata = { title: "Detail proyek" };
 // Penjadwalan (Fase 3): kuesioner proyek, tugas per outlet, calon shopper, dan hasil check-in.
 async function Scheduling({ project }: { project: Project }) {
   const supabase = await createClient();
-  await supabase.rpc("expire_offers");
-  const [{ data: assigned }, { data: questionnaires }, { data: taskRows }, { data: field }] = await Promise.all([
-    supabase.from("project_questionnaires").select("questionnaire_id, snapshot, assigned_at").eq("project_id", project.id).maybeSingle(),
-    supabase.from("questionnaires").select("id, name").eq("active", true).order("name"),
+  await Promise.all([supabase.rpc("expire_offers"), supabase.rpc("questionnaire_review_tick")]);
+  const [{ data: assigned }, { data: questionnaires }, { data: taskRows }, { data: field }, { data: rounds }] = await Promise.all([
+    supabase.from("project_questionnaires").select("questionnaire_id, snapshot, assigned_at, review_id, questionnaire:questionnaires(project_id)").eq("project_id", project.id).maybeSingle(),
+    // Template umum dan salinan khusus proyek ini; salinan untuk proyek lain tidak ditawarkan.
+    supabase.from("questionnaires").select("id, name").eq("active", true).or(`project_id.is.null,project_id.eq.${project.id}`).order("name"),
     supabase
       .from("audit_tasks")
       .select("*, task_offers(status, respond_by, urgent, followups, last_followup_at), visit_photos(id, kind)")
       .eq("project_id", project.id)
       .order("created_at"),
     supabase.from("app_settings").select("value").eq("key", "field").maybeSingle(),
+    supabase.from("questionnaire_reviews").select("id, version, status, sent_at, due_at, decided_at, flags, additions").eq("project_id", project.id).order("sent_at", { ascending: false }),
   ]);
+  type Round = { id: string; version: number; status: ReviewStatus; sent_at: string; due_at: string | null; decided_at: string | null; flags: NonNullable<QuestionnaireReview["request"]>["flags"]; additions: string };
+  const history = (rounds ?? []) as Round[];
+  const live = history.find((r) => r.id === assigned?.review_id);
+  const lastRequest = history.find((r) => r.status === "changes_requested");
+  const review: QuestionnaireReview = {
+    status: live?.status ?? "none",
+    version: live?.version ?? null,
+    due_at: live?.due_at ?? null,
+    decided_at: live?.decided_at ?? null,
+    revisions_used: history.filter((r) => r.status === "changes_requested").length,
+    request: lastRequest ? { version: lastRequest.version, decided_at: lastRequest.decided_at ?? lastRequest.sent_at, flags: lastRequest.flags ?? [], additions: lastRequest.additions } : null,
+    history: history.map(({ id, version, status, sent_at, decided_at }) => ({ id, version, status, sent_at, decided_at })),
+  };
   const options = await Promise.all(
     (questionnaires ?? []).map(async (q) => {
       const { data: issues } = await supabase.rpc("questionnaire_issues", { p_questionnaire: q.id });
@@ -63,9 +78,18 @@ async function Scheduling({ project }: { project: Project }) {
     hours: settings.default_response_hours ?? 24,
     today: wibDate(),
     inAWeek: wibDate(7),
+    questionnaireApproved: review.status === "approved" || review.status === "auto_approved" || review.status === "final",
   };
   const locked = tasks.some((t) => t.status === "in_progress" || t.status === "submitted");
-  const current = assigned ? { id: assigned.questionnaire_id as string | null, name: (assigned.snapshot as { name?: string }).name ?? "Kuesioner", assigned_at: assigned.assigned_at as string } : null;
+  const copyOf = assigned?.questionnaire as unknown as { project_id: string | null } | null;
+  const current = assigned
+    ? {
+        id: assigned.questionnaire_id as string | null,
+        name: (assigned.snapshot as { name?: string }).name ?? "Kuesioner",
+        assigned_at: assigned.assigned_at as string,
+        projectCopy: copyOf?.project_id === project.id,
+      }
+    : null;
   const canCreate = Boolean(assigned) && Boolean(project.details_completed_at);
   const visitsPlanned = project.package_snapshot.visits ?? 1;
   const { data: earliest } = await supabase.rpc("reaudit_earliest_visit", { p_project: project.id });
@@ -86,7 +110,7 @@ async function Scheduling({ project }: { project: Project }) {
           <strong>Brief kuesioner khusus:</strong> {project.custom_brief || "Belum diisi client."}
         </p>
       )}
-      <QuestionnairePicker projectId={project.id} current={current} options={options} locked={locked} />
+      <QuestionnairePicker projectId={project.id} current={current} options={options} locked={locked} review={review} />
       {outlets.map((o) => (
         <OutletSchedule key={o.id} outlet={o} defaults={defaults} canCreate={canCreate} visitsPlanned={o.is_competitor ? 1 : visitsPlanned + (o.extra_visits ?? 0)} />
       ))}

@@ -1,5 +1,6 @@
 import { businessTypeLabel, getBusinessTypes } from "@/lib/catalog";
 import { dict, type Lang } from "@/lib/i18n";
+import { DAYS, TIMES } from "@/lib/profile-changes";
 import { age, EXPERIENCE, GENDERS, optionLabel, VEHICLES, type ShopperApplication } from "@/lib/shopper-application";
 
 // Isi lamaran shopper dalam bentuk ringkas. Dipakai di halaman shopper dan antrian seleksi admin.
@@ -30,6 +31,10 @@ export async function ApplicationSummary({ app, lang }: { app: ShopperApplicatio
     [t.experience, optionLabel(EXPERIENCE, app.experience, lang)],
     [t.industries, app.industries.length ? app.industries.map((i) => businessTypeLabel(types, i, lang)).join(", ") : "—"],
   ];
+  const pick = (values: string[] | undefined, labels: readonly { value: string; label: Record<Lang, string> }[]) =>
+    (values ?? []).map((v) => labels.find((o) => o.value === v)?.label[lang] ?? v).join(", ");
+  if (app.available_days?.length) rows.push([dict(lang).account.days, pick(app.available_days, DAYS)]);
+  if (app.available_times?.length) rows.push([dict(lang).account.times, pick(app.available_times, TIMES)]);
   return (
     <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
       {rows.map(([label, value]) => (

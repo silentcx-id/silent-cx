@@ -65,6 +65,7 @@ beforeAll(async () => {
   }
   const template = (await one<{ id: string }>("select id from public.questionnaires limit 1")).id;
   await t.as(admin, "select public.admin_assign_questionnaire($1, $2)", [project, template]);
+  await t.approveQuestionnaire(admin, project);
 
   task.A = await visit(outlets[0], sari, 50000);
   await t.as(admin, "select public.admin_qc_approve($1, false, null)", [task.A]);

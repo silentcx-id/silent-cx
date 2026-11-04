@@ -68,6 +68,7 @@ beforeAll(async () => {
   outlet = (await one<{ id: string }>("insert into public.project_outlets (project_id, position, city, name, address) values ($1, 1, 'Jakarta', 'Kopi Senja Kemang', 'Jl. Satu') returning id", [project])).id;
   const template = (await one<{ id: string }>("select id from public.questionnaires limit 1")).id;
   await t.as(admin, "select public.admin_assign_questionnaire($1, $2)", [project, template]);
+  await t.approveQuestionnaire(admin, project);
 });
 
 describe("kompetitor diisi client", () => {

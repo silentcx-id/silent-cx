@@ -43,6 +43,14 @@ beforeAll(async () => {
       [project, outlet, shopper],
     )
   ).id;
+  // Tawaran tugas butuh kuesioner yang sudah disetujui client (Putaran 13).
+  const review = (
+    await one<{ id: string }>(
+      "insert into public.questionnaire_reviews (project_id, version, snapshot, due_at, status, decided_at) values ($1, 1, '{}', now(), 'approved', now()) returning id",
+      [project],
+    )
+  ).id;
+  await t.db.query("insert into public.project_questionnaires (project_id, snapshot, review_id) values ($1, '{}', $2)", [project, review]);
 });
 
 describe("notifikasi untuk admin", () => {

@@ -262,13 +262,20 @@ function QuestionFields({ id, value, onChange, stages }: { id: string; value: Qu
   );
 }
 
-function QuestionRow({ q, n, first, last, stages }: { q: Question; n: number; first: boolean; last: boolean; stages: JourneyStage[] }) {
+// flag: catatan perbaikan client untuk pertanyaan ini (salinan khusus proyek).
+function QuestionRow({ q, n, first, last, stages, flag }: { q: Question; n: number; first: boolean; last: boolean; stages: JourneyStage[]; flag?: string }) {
   const { pending, status, act } = useAction();
   const saved: QuestionDraft = { prompt: q.prompt, help: q.help, kind: q.kind, photo_required: q.photo_required, is_sop: q.is_sop, red_flag: q.red_flag, journey_stage_id: q.journey_stage_id };
   const [v, setV] = useState<QuestionDraft>(saved);
   const dirty = !sameQuestion(v, saved);
   return (
-    <li className="grid gap-2 rounded-xl border border-line p-3">
+    <li className={`grid gap-2 rounded-xl border p-3 ${flag ? "border-bad/60 bg-bad/5" : "border-line"}`}>
+      {flag && (
+        <p className="text-sm">
+          <span className="font-semibold text-bad">Catatan client: </span>
+          {flag}
+        </p>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="flex flex-wrap items-center gap-1">
           <span className="font-mono text-xs text-muted">P{n}</span>
@@ -298,7 +305,20 @@ function QuestionRow({ q, n, first, last, stages }: { q: Question; n: number; fi
   );
 }
 
-export function SectionCard({ section, first, last, stages }: { section: Section; first: boolean; last: boolean; stages: JourneyStage[] }) {
+export function SectionCard({
+  section,
+  first,
+  last,
+  stages,
+  flags = {},
+}: {
+  section: Section;
+  first: boolean;
+  last: boolean;
+  stages: JourneyStage[];
+  // Catatan perbaikan client per teks pertanyaan.
+  flags?: Record<string, string>;
+}) {
   const { pending, status, act } = useAction();
   const [title, setTitle] = useState(section.title);
   const [weight, setWeight] = useState(String(section.weight));
@@ -349,7 +369,7 @@ export function SectionCard({ section, first, last, stages }: { section: Section
       </p>
       <ol className="grid gap-2">
         {section.questions.map((q, i) => (
-          <QuestionRow key={q.id} q={q} n={i + 1} first={i === 0} last={i === section.questions.length - 1} stages={stages} />
+          <QuestionRow key={q.id} q={q} n={i + 1} first={i === 0} last={i === section.questions.length - 1} stages={stages} flag={flags[q.prompt]} />
         ))}
       </ol>
       {draft ? (

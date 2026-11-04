@@ -33,6 +33,30 @@ export async function assignQuestionnaire(raw: unknown) {
   );
 }
 
+// Mengirim kuesioner proyek ke client untuk ditinjau (atau draft final setelah 2 kali perbaikan).
+export async function sendQuestionnaire(raw: unknown) {
+  const supabase = await admin();
+  return run(
+    z.object({ projectId: id }),
+    raw,
+    async ({ projectId }) => {
+      check(await supabase.rpc("admin_send_questionnaire", { p_project: projectId }));
+    },
+    PATHS,
+  );
+}
+
+// Salinan kuesioner khusus proyek ini, langsung dipakai proyek; mengembalikan id salinan untuk dibuka di editor.
+export async function copyQuestionnaireForProject(raw: unknown) {
+  const supabase = await admin();
+  return run(
+    z.object({ projectId: id }),
+    raw,
+    async ({ projectId }) => checkData<string>(await supabase.rpc("admin_copy_questionnaire_for_project", { p_project: projectId })),
+    PATHS,
+  );
+}
+
 const brief = z.object({
   windowStart: date,
   windowEnd: date,

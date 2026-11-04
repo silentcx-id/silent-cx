@@ -106,6 +106,7 @@ describe("kuesioner: SOP, red flag, tahap journey, target", () => {
   it("salinan proyek memuat target bagian dan tanda pertanyaan", async () => {
     const p = await project("PRJ-S1", ["report_basic", "report_detailed", "sop"]);
     await t.as(admin, "select public.admin_assign_questionnaire($1, $2)", [p.id, template]);
+    await t.approveQuestionnaire(admin, p.id);
     const snap = await snapshotOf(p.id);
     expect(snap.sections[0].target).toBe(85);
     const greet = snap.sections[0].questions[0];
@@ -122,6 +123,7 @@ describe("kuesioner: SOP, red flag, tahap journey, target", () => {
     await expect(t.as(admin, "select public.admin_assign_questionnaire($1, $2)", [insight.id, template])).rejects.toThrow(/pertanyaan SOP/);
     const essential = await project("PRJ-S3", ["report_basic"]);
     await t.as(admin, "select public.admin_assign_questionnaire($1, $2)", [essential.id, template]);
+    await t.approveQuestionnaire(admin, essential.id);
 
     await t.db.query(
       `update public.questionnaire_questions q set is_sop = (q.kind = 'yes_no' and q.position = 1),
@@ -130,6 +132,7 @@ describe("kuesioner: SOP, red flag, tahap journey, target", () => {
       [template],
     );
     await t.as(admin, "select public.admin_assign_questionnaire($1, $2)", [insight.id, template]);
+    await t.approveQuestionnaire(admin, insight.id);
     const perf = await project("PRJ-S4", ["report_basic", "sop", "multi_outlet", "benchmarking"]);
     await expect(t.as(admin, "select public.admin_assign_questionnaire($1, $2)", [perf.id, template])).rejects.toThrow(/red flag/);
   });
@@ -149,6 +152,7 @@ describe("laporan: kepatuhan SOP, journey, gap, red flag", () => {
         as v(prompt, sop, flag, stage) where q.prompt like v.prompt || '%'`);
     p = await project("PRJ-R1", ["report_basic", "report_detailed", "sop", "evidence", "multi_outlet", "benchmarking"], [], 2);
     await t.as(admin, "select public.admin_assign_questionnaire($1, $2)", [p.id, template]);
+    await t.approveQuestionnaire(admin, p.id);
     await t.db.query("update public.projects set details_completed_at = now() where id = $1", [p.id]);
     await visit(p.id, p.outlets[0], ["Staf menyapa", "Meja dan kursi"]);
     await visit(p.id, p.outlets[1], ["Staf menyapa", "Nominal di struk"]);
@@ -197,6 +201,7 @@ describe("kunjungan tambahan", () => {
   beforeAll(async () => {
     p = await project("PRJ-V1", ["report_basic", "additional_visit"], [{ item_key: "additional_visit", label: "Kunjungan tambahan", quantity: 2 }], 2);
     await t.as(admin, "select public.admin_assign_questionnaire($1, $2)", [p.id, template]);
+    await t.approveQuestionnaire(admin, p.id);
   });
 
   it("client membagikan ke outlet yang sudah bernama, tidak lebih dari yang dibeli", async () => {
@@ -230,6 +235,7 @@ describe("laporan express", () => {
   it("perkiraan terbit muncul setelah semua kunjungan lolos QC: express 2 hari kerja, biasa 5", async () => {
     const fast = await project("PRJ-E1", ["report_basic", "priority"]);
     await t.as(admin, "select public.admin_assign_questionnaire($1, $2)", [fast.id, template]);
+    await t.approveQuestionnaire(admin, fast.id);
     await t.db.query("update public.projects set details_completed_at = now() where id = $1", [fast.id]);
     const eta = async (id: string) => (await t.as<{ e: { express: boolean; days: number; due: string | null } }>(client, "select public.project_report_eta($1) as e", [id])).rows[0].e;
     expect(await eta(fast.id)).toMatchObject({ express: true, days: 2, due: null });
@@ -262,6 +268,7 @@ describe("audit ulang", () => {
   it("hanya bisa dipesan setelah laporan terbit", async () => {
     parent = await project("PRJ-A1", ["report_basic", "report_detailed", "sop", "consultation", "priority"], [], 2);
     await t.as(admin, "select public.admin_assign_questionnaire($1, $2)", [parent.id, template]);
+    await t.approveQuestionnaire(admin, parent.id);
     await t.db.query("update public.projects set details_completed_at = now(), objectives = 'Naikkan kepatuhan SOP' where id = $1", [parent.id]);
     await expect(t.as(client, "select public.client_order_reaudit($1)", [parent.id])).rejects.toThrow(/setelah laporan terbit/);
     for (const o of parent.outlets) await visit(parent.id, o, ["Staf menyapa"]);

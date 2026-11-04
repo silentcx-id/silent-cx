@@ -8,6 +8,7 @@ import { TASK_STATUS_LABEL, TASK_STATUS_TONE, type TaskStatus } from "@/lib/fiel
 import { date, dateTime, rupiah } from "@/lib/format";
 import { dict, type Lang } from "@/lib/i18n";
 import { maskAccountNumber } from "@/lib/mask";
+import { changeFieldLabel, changeValue, holderMismatch, type ProfileChange } from "@/lib/profile-changes";
 import type { InvoiceStatus, ProjectStatus } from "@/lib/orders";
 import { getLang } from "@/lib/prefs";
 import { PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE } from "@/lib/project-labels";
@@ -72,7 +73,8 @@ export default async function AccountDetailPage({ params }: PageProps<"/admin/ac
             </dl>
             {profile.status_note && <p className="rounded-lg border border-line bg-raise p-3 text-sm text-muted">Catatan status: {profile.status_note}</p>}
           </section>
-          {role === "shopper" ? <ShopperDetail id={id} lang={lang} /> : <ClientDetail id={id} lang={lang} types={types} />}
+          {role === "shopper" ? <ShopperDetail id={id} name={profile.full_name} lang={lang} /> : <ClientDetail id={id} lang={lang} types={types} />}
+          <ChangeHistory id={id} lang={lang} types={types} />
         </div>
         <aside className="card grid gap-3 p-5 lg:sticky lg:top-6">
           <h2 className="font-extrabold">Status akun</h2>
@@ -100,7 +102,7 @@ type Task = {
   outlet: { name: string; city: string } | null;
 };
 
-async function ShopperDetail({ id, lang }: { id: string; lang: Lang }) {
+async function ShopperDetail({ id, name, lang }: { id: string; name: string; lang: Lang }) {
   const supabase = await createClient();
   const [{ data: apps }, { data: bank }, { data: taskRows }, { data: payouts }] = await Promise.all([
     supabase.from("shopper_applications").select(APPLICATION_COLUMNS).eq("shopper_id", id).order("created_at", { ascending: false }),
@@ -162,6 +164,12 @@ async function ShopperDetail({ id, lang }: { id: string; lang: Lang }) {
 
       <section className="card grid gap-3 p-5">
         <h2 className="text-lg font-extrabold">Rekening pembayaran</h2>
+        {bank && holderMismatch(name, bank.account_holder as string) && (
+          <p className="rounded-lg border border-warn/50 bg-warn/10 p-3 text-sm" data-testid="holder-mismatch">
+            <strong>Nama akun berbeda dengan nama rekening.</strong> Akun atas nama {name}, rekening atas nama {bank.account_holder as string}. Pastikan rekening ini
+            milik shopper sebelum mentransfer fee.
+          </p>
+        )}
         {bank ? (
           <dl className="grid gap-4 sm:grid-cols-3">
             <Fact label="Bank">{bank.bank_name}</Fact>
@@ -386,5 +394,41 @@ async function ClientDetail({ id, lang, types }: { id: string; lang: Lang; types
         )}
       </section>
     </>
+  );
+}
+
+// Riwayat perubahan data akun oleh pemilik akun (atau admin), terbaru di atas.
+async function ChangeHistory({ id, lang, types }: { id: string; lang: Lang; types: BusinessType[] }) {
+  const supabase = await createClient();
+  const { data } = await supabase.from("profile_changes").select("id, field, old_value, new_value, changed_by, changed_at").eq("user_id", id).order("changed_at", { ascending: false }).limit(100);
+  const rows = (data ?? []) as ProfileChange[];
+  const label = (k: string) => businessTypeLabel(types, k, lang);
+  const who = (r: ProfileChange) => (r.changed_by === null ? "lewat tautan konfirmasi email" : r.changed_by === id ? "oleh pemilik akun" : "oleh admin");
+  return (
+    <section className="card grid gap-3 p-5" aria-labelledby="riwayat-perubahan">
+      <div className="grid gap-1">
+        <h2 id="riwayat-perubahan" className="text-lg font-extrabold">
+          Riwayat perubahan data
+        </h2>
+        <p className="text-sm text-muted">Setiap perubahan data akun tercatat di sini. Perubahan jenis kelamin dan tanggal lahir hanya berlaku untuk tawaran tugas berikutnya.</p>
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-sm text-muted">Belum ada perubahan sejak akun dibuat.</p>
+      ) : (
+        <ul className="divide-y divide-line text-sm" data-testid="change-history">
+          {rows.map((r) => (
+            <li key={r.id} className="grid gap-0.5 py-2">
+              <span>
+                <strong>{changeFieldLabel(r.field)}</strong> diubah dari <span className="text-muted line-through">{changeValue(r.field, r.old_value, lang, label)}</span> ke{" "}
+                <strong>{changeValue(r.field, r.new_value, lang, label)}</strong>
+              </span>
+              <span className="text-xs text-muted">
+                {dateTime(r.changed_at, lang)} · {who(r)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

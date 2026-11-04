@@ -197,3 +197,24 @@ export async function orderReaudit(raw: unknown) {
     PATHS,
   );
 }
+
+const reviewSchema = z.object({
+  projectId: z.uuid(),
+  approve: z.boolean(),
+  flags: z.array(z.object({ question: z.uuid(), note: z.string().trim().max(500, "Catatan perbaikan maksimal 500 karakter.") })).max(200),
+  additions: z.string().trim().max(2000, "Usulan pertanyaan tambahan maksimal 2000 karakter."),
+});
+
+// Tanggapan client atas kuesioner yang dikirim admin: setujui, atau ajukan perbaikan.
+export async function reviewQuestionnaire(raw: unknown) {
+  await requireRole("client", "/app/audits");
+  return run(
+    reviewSchema,
+    raw,
+    async (r) => {
+      const supabase = await createClient();
+      check(await supabase.rpc("client_review_questionnaire", { p_project: r.projectId, p_approve: r.approve, p_flags: r.flags, p_additions: r.additions }));
+    },
+    PATHS,
+  );
+}

@@ -18,7 +18,7 @@ export default async function QuestionnaireDetail({ params }: PageProps<"/admin/
     supabase
       .from("questionnaires")
       .select(
-        "id, name, business_type, description, photo_limit, active, questionnaire_sections(id, position, title, weight, target, questionnaire_questions(id, position, prompt, help, kind, photo_required, is_sop, red_flag, journey_stage_id))",
+        "id, name, business_type, description, photo_limit, active, project_id, project:projects(id, code), questionnaire_sections(id, position, title, weight, target, questionnaire_questions(id, position, prompt, help, kind, photo_required, is_sop, red_flag, journey_stage_id))",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -34,6 +34,21 @@ export default async function QuestionnaireDetail({ params }: PageProps<"/admin/
     .order("position")
     .order("title");
   const stages = (stageRows ?? []) as JourneyStage[];
+  // Salinan khusus proyek: permintaan perbaikan terakhir client ditampilkan dan pertanyaannya disorot.
+  const project = q.project as unknown as { id: string; code: string } | null;
+  type Flag = { prompt: string; note: string; section: string };
+  const { data: request } = project
+    ? await supabase
+        .from("questionnaire_reviews")
+        .select("version, decided_at, flags, additions")
+        .eq("project_id", project.id)
+        .eq("status", "changes_requested")
+        .order("sent_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    : { data: null };
+  const requestFlags = (request?.flags ?? []) as Flag[];
+  const flagByPrompt = Object.fromEntries(requestFlags.map((f) => [f.prompt, f.note]));
 
   type Q = {
     id: string;
@@ -84,6 +99,41 @@ export default async function QuestionnaireDetail({ params }: PageProps<"/admin/
         ← Semua kuesioner
       </Link>
       <h1 className="text-3xl font-extrabold">{q.name}</h1>
+
+      {project && (
+        <section className="card grid gap-3 border-accent p-5" aria-label="Salinan khusus proyek">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm">
+              Salinan khusus proyek <strong className="font-mono">{project.code}</strong>. Perubahan di sini tidak mengubah template client lain.
+            </p>
+            <Link href={`/admin/projects/${project.id}?tab=jadwal`} className="btn btn-sm btn-primary">
+              Kembali ke proyek dan kirim ke client
+            </Link>
+          </div>
+          {request && (
+            <div className="grid gap-2 text-sm">
+              <p className="font-semibold">Permintaan perbaikan client (versi {request.version as number})</p>
+              {requestFlags.length > 0 && (
+                <ul className="grid gap-1">
+                  {requestFlags.map((f) => (
+                    <li key={f.prompt} className="rounded-lg border-l-4 border-bad bg-bad/5 p-2">
+                      <span className="font-semibold">{f.prompt}</span>
+                      <span className="block text-muted">Catatan: {f.note}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {(request.additions as string) && (
+                <p className="whitespace-pre-line rounded-lg bg-raise p-2">
+                  <span className="font-semibold">Usulan pertanyaan tambahan: </span>
+                  {request.additions as string}
+                </p>
+              )}
+              <p className="text-xs text-muted">Pertanyaan yang ditandai client diberi garis merah di bawah. Sorotan hilang setelah teks pertanyaannya diubah.</p>
+            </div>
+          )}
+        </section>
+      )}
 
       <QuestionnaireHeader
         questionnaire={{
@@ -160,7 +210,7 @@ export default async function QuestionnaireDetail({ params }: PageProps<"/admin/
 
       <section className="grid gap-4">
         {sections.map((s, i) => (
-          <SectionCard key={s.id} section={s} first={i === 0} last={i === sections.length - 1} stages={stages} />
+          <SectionCard key={s.id} section={s} first={i === 0} last={i === sections.length - 1} stages={stages} flags={flagByPrompt} />
         ))}
       </section>
 

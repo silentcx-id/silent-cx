@@ -11,7 +11,7 @@ export default async function QuestionnairesPage() {
   await requireRole("admin", "/admin/questionnaires");
   const supabase = await createClient();
   const [{ data: list }, { data: field }, types] = await Promise.all([
-    supabase.from("questionnaires").select("id, name, business_type, photo_limit, active, updated_at, questionnaire_sections(weight, questionnaire_questions(id))").order("name"),
+    supabase.from("questionnaires").select("id, name, business_type, photo_limit, active, updated_at, project:projects(code), questionnaire_sections(weight, questionnaire_questions(id))").order("name"),
     supabase.from("app_settings").select("value").eq("key", "field").maybeSingle(),
     getBusinessTypes(),
   ]);
@@ -44,6 +44,7 @@ export default async function QuestionnairesPage() {
                   <span className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-lg font-extrabold">{q.name}</span>
                     <span className="flex gap-2">
+                      {(q.project as unknown as { code: string } | null) && <span className="chip border-accent text-mark">Khusus {(q.project as unknown as { code: string }).code}</span>}
                       {!q.active && <span className="chip text-muted">Nonaktif</span>}
                       <span className={`chip ${q.issues.length ? "border-warn/50 text-warn" : "border-good/50 text-good"}`}>{q.issues.length ? `${q.issues.length} perlu dibenahi` : "Siap dipakai"}</span>
                     </span>

@@ -136,8 +136,12 @@ try {
     await s.page.locator("main h1").first().waitFor();
     const body = await text(s.page);
     check(`${email}: menu Akun saya membuka halaman akun`, body.includes("Data akun") && body.includes("Ganti password"));
-    check(`${email}: email tampil dan tidak bisa diubah`, (await s.page.inputValue("#account-email")) === email && (await s.page.getAttribute("#account-email", "readonly")) !== null);
-    check(`${email}: nama dan nomor terisi`, (await s.page.inputValue("#account-name")).length > 0 && (await s.page.inputValue("#account-phone")).length > 0);
+    // Sejak Putaran 13 email dan nama tampil sebagai ringkasan per bagian; formnya terbuka lewat tombol Ubah.
+    check(`${email}: email tampil di bagian Kontak`, (await s.page.getByTestId("section-contact").innerText()).includes(email));
+    await s.page.getByTestId("section-contact").getByRole("button", { name: /^Ubah/ }).click();
+    check(`${email}: email dan nomor terisi di form Kontak`, (await s.page.inputValue("#account-email")) === email && (await s.page.inputValue("#account-phone")).length > 0);
+    await s.page.getByTestId("section-contact").getByRole("button", { name: "Batal" }).click();
+    check(`${email}: nama terisi di bagian Data diri`, (await s.page.getByTestId("section-personal").locator("dd").first().innerText()).trim().length > 1);
     await s.page.fill("#current-password", "bukan-password-ini-1");
     await s.page.fill("#new-password", "passwordbaru1");
     await s.page.fill("#confirm-password", "passwordbaru1");

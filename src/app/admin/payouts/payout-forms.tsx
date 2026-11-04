@@ -4,6 +4,7 @@ import { useState } from "react";
 import { StatusText, useAction } from "@/components/use-action";
 import { waLink } from "@/lib/field";
 import { dateTime, rupiah } from "@/lib/format";
+import { holderMismatch } from "@/lib/profile-changes";
 import { shrinkImage } from "@/lib/shrink-image";
 import { createClient } from "@/lib/supabase/client";
 import { payoutProofUrl, preparePayoutProof, recordPayout, replacePayoutProof, saveAdminContact } from "./actions";
@@ -101,6 +102,11 @@ export function ShopperPayout({
             </p>
           ) : (
             <p className="text-sm font-semibold text-warn">Belum mengisi rekening. Shopper sudah diberi notifikasi.</p>
+          )}
+          {bank && holderMismatch(name, bank.account_holder) && (
+            <p className="text-sm font-semibold text-warn" data-testid="holder-mismatch">
+              Nama akun berbeda dengan nama rekening. Cek riwayat perubahan di Detail akun sebelum transfer.
+            </p>
           )}
         </div>
         {!bank && phone && (

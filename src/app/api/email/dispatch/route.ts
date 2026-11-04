@@ -66,7 +66,8 @@ export async function POST(request: NextRequest) {
       .select("id");
     if (!claimed?.length) continue;
 
-    const to = n.profiles?.email;
+    // Pemberitahuan ganti email dikirim ke alamat lama, supaya pemilik akun tahu kalau penggantian itu bukan dari dirinya.
+    const to = n.kind === "account.email_changed" ? n.detail.old_email : n.profiles?.email;
     if (!to || n.profiles?.status === "suspended" || !isEmailKind(n.kind)) {
       await admin.from("notifications").update({ email_status: "skipped", email_at: new Date().toISOString() }).eq("id", n.id);
       continue;

@@ -5,6 +5,7 @@ import { dateTime, rupiah } from "@/lib/format";
 import { dict } from "@/lib/i18n";
 import { clientState, getClientProjects, type ClientStage, type Project } from "@/lib/orders";
 import { getLang } from "@/lib/prefs";
+import { getClientReview } from "@/lib/questionnaire-review";
 import { requireRole } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Beranda" };
@@ -19,6 +20,8 @@ export default async function ClientHome() {
   const projects = await getClientProjects(viewer.id);
   const state = clientState(projects);
   const { stage, milestone, open, live, lastClosed } = state;
+  // Kuesioner yang menunggu tinjauan client didahulukan di beranda.
+  const review = live?.status === "active" ? await getClientReview(live.id) : null;
 
   let hero: { title: string; lede: string; cta?: { href: string; label: string } };
   if (open) {
@@ -31,6 +34,12 @@ export default async function ClientHome() {
           : { title: o.stagePayTitle, lede: o.stagePayLede(dateTime(inv?.due_at, lang)), cta: { href: "/app/billing", label: o.openBilling } };
   } else if (live?.status === "completed") {
     hero = { title: o.stageReportTitle, lede: o.stageReportLede, cta: { href: `/app/reports/${live.id}`, label: o.openReport } };
+  } else if (live && review?.status === "pending") {
+    hero = {
+      title: "Tinjau kuesioner audit Anda",
+      lede: `Mohon tinjau sebelum ${dateTime(review.due_at, lang)} WIB. Kalau belum ada tanggapan, kuesioner dianggap disetujui dan kunjungan mulai dijadwalkan.`,
+      cta: { href: `/app/questionnaire/${live.id}`, label: "Tinjau kuesioner" },
+    };
   } else if (live) {
     hero = live.details_completed_at
       ? { title: o.stageReadyTitle, lede: o.stageReadyLede }

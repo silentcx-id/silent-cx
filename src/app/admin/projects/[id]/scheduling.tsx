@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { assignQuestionnaire, cancelTask, checkLocation, createTask, offerTask, recordFollowup, updateTask, visitPhotoLink, withdrawOffer } from "../field-actions";
+import { assignQuestionnaire, cancelTask, copyQuestionnaireForProject, checkLocation, createTask, offerTask, recordFollowup, sendQuestionnaire, updateTask, visitPhotoLink, withdrawOffer } from "../field-actions";
 import { CheckinMap } from "@/components/checkin-map";
 import { StatusText, useAction } from "@/components/use-action";
 import { followupMessage, TASK_STATUS_LABEL, TASK_STATUS_TONE, waLink, windowLabel, type TaskStatus } from "@/lib/field";
@@ -45,41 +47,189 @@ export type AdminTask = {
 
 export type OutletTasks = { id: string; position: number; name: string; city: string; address: string; maps_url: string; is_competitor: boolean; extra_visits?: number; tasks: AdminTask[] };
 
-type Defaults = { fee: number; reimburse: number; hours: number; today: string; inAWeek: string };
+// questionnaireApproved: tawaran ke shopper baru bisa dikirim setelah kuesioner disetujui client.
+type Defaults = { fee: number; reimburse: number; hours: number; today: string; inAWeek: string; questionnaireApproved: boolean };
+
+export type ReviewStatus = "none" | "pending" | "changes_requested" | "approved" | "auto_approved" | "final";
+
+// Kiriman kuesioner ke client (Putaran 13). Kiriman sebelumnya ikut tampil sebagai riwayat.
+export type QuestionnaireReview = {
+  status: ReviewStatus;
+  version: number | null;
+  due_at: string | null;
+  decided_at: string | null;
+  revisions_used: number;
+  // Permintaan perbaikan terakhir dari client.
+  request: { version: number; decided_at: string; flags: { question: string; section: string; prompt: string; note: string }[]; additions: string } | null;
+  history: { id: string; version: number; status: ReviewStatus; sent_at: string; decided_at: string | null }[];
+};
+
+const REVIEW_LABEL: Record<ReviewStatus, string> = {
+  none: "Belum dikirim",
+  pending: "Menunggu client",
+  changes_requested: "Perlu perbaikan",
+  approved: "Disetujui client",
+  auto_approved: "Disetujui otomatis",
+  final: "Final",
+};
+const REVIEW_TONE: Record<ReviewStatus, string> = {
+  none: "border-warn/50 text-warn",
+  pending: "border-accent text-mark",
+  changes_requested: "border-bad/50 text-bad",
+  approved: "border-good/50 text-good",
+  auto_approved: "border-good/50 text-good",
+  final: "border-good/50 text-good",
+};
+
+// Sisa waktu sampai batas tinjauan, misalnya "2 hari 5 jam lagi".
+function remaining(due: string) {
+  const ms = new Date(due).getTime() - Date.now();
+  if (ms <= 0) return "batas lewat, disetujui otomatis sebentar lagi";
+  const h = Math.floor(ms / 3600_000);
+  return h >= 24 ? `${Math.floor(h / 24)} hari ${h % 24} jam lagi` : h > 0 ? `${h} jam lagi` : `${Math.max(1, Math.round(ms / 60_000))} menit lagi`;
+}
 
 export function QuestionnairePicker({
   projectId,
   current,
   options,
   locked,
+  review,
 }: {
   projectId: string;
-  current: { id: string | null; name: string; assigned_at: string } | null;
+  current: { id: string | null; name: string; assigned_at: string; projectCopy: boolean } | null;
   options: { id: string; name: string; ready: boolean }[];
   locked: boolean;
+  review: QuestionnaireReview;
 }) {
+  const router = useRouter();
   const { pending, status, act } = useAction();
   const [choice, setChoice] = useState(current?.id ?? options.find((o) => o.ready)?.id ?? "");
+  const [changing, setChanging] = useState(false);
+  const canSend = Boolean(current) && !locked && (review.status === "none" || review.status === "changes_requested");
+  const finalNext = review.revisions_used >= 2;
+  const approved = review.status === "approved" || review.status === "auto_approved" || review.status === "final";
+  const showPicker = !locked && (!current || changing || review.status === "none" || review.status === "changes_requested");
   return (
-    <section className={`card grid gap-3 p-5 ${current ? "" : "border-warn/60"}`}>
-      <div className="grid gap-1">
-        <h2 className="text-xl font-extrabold">Kuesioner proyek</h2>
-        {current ? (
-          <p className="text-sm">
-            <span className="font-semibold">{current.name}</span> <span className="text-muted">· ditetapkan {dateTime(current.assigned_at, "id")}</span>
-          </p>
-        ) : (
-          <p className="text-sm text-muted">Tetapkan kuesioner dulu sebelum membuat tugas. Kuesioner disalin dan dikunci di proyek ini.</p>
+    <section className={`card grid gap-4 p-5 ${approved ? "" : "border-warn/60"}`} aria-labelledby="kuesioner-proyek">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="grid gap-1">
+          <h2 id="kuesioner-proyek" className="text-xl font-extrabold">
+            Kuesioner proyek
+          </h2>
+          {current ? (
+            <p className="text-sm">
+              <span className="font-semibold">{current.name}</span> <span className="text-muted">· ditetapkan {dateTime(current.assigned_at, "id")}</span>
+              {current.projectCopy && <span className="chip ml-2 border-accent text-mark">Salinan khusus proyek ini</span>}
+            </p>
+          ) : (
+            <p className="text-sm text-muted">Tetapkan kuesioner, lalu kirim ke client untuk disetujui. Tugas bisa ditawarkan ke shopper setelah disetujui.</p>
+          )}
+        </div>
+        {current && (
+          <span className={`chip ${REVIEW_TONE[review.status]}`} data-testid="questionnaire-status">
+            {REVIEW_LABEL[review.status]}
+            {review.version ? ` · versi ${review.version}` : ""}
+          </span>
         )}
       </div>
+
+      {current && (
+        <p className="rounded-lg border border-line bg-raise p-3 text-sm" role="status">
+          {review.status === "none" &&
+            (finalNext
+              ? "Client sudah 2 kali mengajukan perbaikan. Kiriman berikutnya adalah draft final: client hanya bisa melihat, dan tugas langsung bisa ditawarkan."
+              : "Kuesioner belum dikirim ke client. Tugas bisa dibuat, tapi baru bisa ditawarkan ke shopper setelah client menyetujui.")}
+          {review.status === "pending" && review.due_at && (
+            <>
+              Menunggu tanggapan client sampai <strong>{dateTime(review.due_at, "id")} WIB</strong> ({remaining(review.due_at)}). Kalau tidak ada tanggapan,
+              kuesioner disetujui otomatis.
+            </>
+          )}
+          {review.status === "changes_requested" &&
+            (finalNext
+              ? "Client mengajukan perbaikan kedua (terakhir). Perbaiki kuesioner, lalu kirim sebagai draft final. Client tidak bisa mengajukan perbaikan lagi."
+              : `Client mengajukan perbaikan. Perbaiki kuesioner, lalu kirim ulang sebagai versi ${review.revisions_used + 1}. Sisa ${2 - review.revisions_used} kali perbaikan untuk client.`)}
+          {review.status === "approved" && review.decided_at && <>Disetujui client {dateTime(review.decided_at, "id")}. Tugas sudah bisa ditawarkan ke shopper.</>}
+          {review.status === "auto_approved" && review.decided_at && <>Disetujui otomatis {dateTime(review.decided_at, "id")} karena 3×24 jam tanpa tanggapan. Tugas sudah bisa ditawarkan.</>}
+          {review.status === "final" && <>Draft final setelah 2 kali perbaikan sudah dikirim ke client. Tugas sudah bisa ditawarkan.</>}
+        </p>
+      )}
+
+      {review.request && (review.status === "changes_requested" || review.status === "none") && (
+        <div className="grid gap-3 rounded-xl border border-bad/40 bg-bad/5 p-4" aria-label="Permintaan perbaikan client">
+          <p className="text-sm font-semibold">
+            Permintaan perbaikan client (versi {review.request.version}, {dateTime(review.request.decided_at, "id")})
+          </p>
+          {review.request.flags.length > 0 && (
+            <ol className="grid gap-2">
+              {review.request.flags.map((f) => (
+                <li key={f.question} className="grid gap-1 rounded-lg border-l-4 border-bad bg-surface p-3 text-sm">
+                  <span className="text-xs text-muted">{f.section}</span>
+                  <span className="font-semibold">{f.prompt}</span>
+                  <span>
+                    <span className="text-muted">Catatan client: </span>
+                    {f.note}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+          {review.request.additions && (
+            <div className="grid gap-1 rounded-lg bg-surface p-3 text-sm">
+              <span className="text-xs font-semibold text-muted">Usulan pertanyaan tambahan</span>
+              <p className="whitespace-pre-line">{review.request.additions}</p>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {current?.projectCopy && current.id ? (
+              <Link href={`/admin/questionnaires/${current.id}`} className="btn btn-sm">
+                Edit kuesioner proyek ini
+              </Link>
+            ) : (
+              current?.id &&
+              !locked && (
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  disabled={pending}
+                  onClick={() => act(() => copyQuestionnaireForProject({ projectId }), undefined, (id) => id && router.push(`/admin/questionnaires/${id}`))}
+                >
+                  Salin untuk proyek ini
+                </button>
+              )
+            )}
+          </div>
+          {!current?.projectCopy && (
+            <p className="text-xs text-muted">
+              Salin untuk proyek ini membuat salinan kuesioner khusus client ini dan langsung memakainya di proyek. Template di menu Kuesioner tidak ikut berubah.
+            </p>
+          )}
+        </div>
+      )}
+
+      {canSend && (
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={pending}
+            onClick={() => act(() => sendQuestionnaire({ projectId }), finalNext ? "Draft final dikirim ke client." : "Kuesioner dikirim ke client.")}
+          >
+            {finalNext ? "Kirim draft final" : review.status === "changes_requested" ? `Kirim ulang versi ${review.revisions_used + 1}` : "Kirim ke client"}
+          </button>
+          <span className="text-xs text-muted">Isi terbaru kuesioner yang ditetapkan yang dikirim. Client mendapat notifikasi dan email.</span>
+        </div>
+      )}
+
       {locked ? (
         <p className="text-sm text-muted">Sudah ada kunjungan yang dimulai, jadi kuesioner tidak bisa diganti lagi.</p>
-      ) : (
+      ) : showPicker ? (
         <form
           className="flex flex-wrap items-end gap-3"
           onSubmit={(e) => {
             e.preventDefault();
-            act(() => assignQuestionnaire({ projectId, questionnaireId: choice }), "Kuesioner ditetapkan.");
+            act(() => assignQuestionnaire({ projectId, questionnaireId: choice }), "Kuesioner ditetapkan.", () => setChanging(false));
           }}
         >
           <label className={`${label} min-w-64 flex-1`} htmlFor="pick-q">
@@ -94,11 +244,39 @@ export function QuestionnairePicker({
               ))}
             </select>
           </label>
-          <button className="btn btn-primary" disabled={pending || !choice}>
+          <button className="btn" disabled={pending || !choice || choice === current?.id}>
             {current ? "Ganti" : "Tetapkan"}
           </button>
-          <StatusText status={status} />
+          {changing && (
+            <button type="button" className="btn btn-sm" onClick={() => setChanging(false)}>
+              Batal
+            </button>
+          )}
         </form>
+      ) : (
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" className="btn btn-sm w-fit" onClick={() => setChanging(true)}>
+            Ganti kuesioner
+          </button>
+          <span className="text-xs text-muted">{review.status === "pending" ? "Mengganti menarik kiriman yang sedang ditinjau client." : "Mengganti membuat kuesioner perlu disetujui client lagi."}</span>
+        </div>
+      )}
+      <StatusText status={status} />
+
+      {review.history.length > 1 && (
+        <details className="text-sm">
+          <summary className="cursor-pointer font-semibold">Riwayat kiriman ({review.history.length})</summary>
+          <ul className="mt-2 grid gap-1">
+            {review.history.map((h) => (
+              <li key={h.id} className="flex flex-wrap gap-x-2 text-muted">
+                <span className="font-semibold text-fg">Versi {h.version}</span>
+                <span>dikirim {dateTime(h.sent_at, "id")}</span>
+                <span>· {REVIEW_LABEL[h.status]}</span>
+                {h.decided_at && h.status !== "final" && <span>{dateTime(h.decided_at, "id")}</span>}
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
     </section>
   );
@@ -444,7 +622,11 @@ function TaskCard({ task, outlet, defaults }: { task: AdminTask; outlet: OutletT
             onSubmit={(b) => act(() => updateTask({ taskId: task.id, ...b }), "Brief diperbarui.", () => setEditing(false))}
           />
         ) : (
-          <OfferForm task={task} defaultHours={defaults.hours} />
+          defaults.questionnaireApproved ? (
+            <OfferForm task={task} defaultHours={defaults.hours} />
+          ) : (
+            <p className="rounded-lg border border-warn/50 bg-warn/10 p-3 text-sm">Tugas bisa ditawarkan ke shopper setelah kuesioner proyek disetujui client.</p>
+          )
         ))}
 
       {(task.status === "in_progress" || task.status === "submitted") && task.checkin_at && <LocationReview task={task} outlet={outlet} />}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ApplicationForm, type ApplicationInput } from "./application-form";
 import { BankForm } from "./bank-form";
 import { ApplicationSummary } from "@/components/application-summary";
@@ -102,7 +103,12 @@ export default async function ShopperProfilePage() {
             <BankForm initial={bank} lang={lang} />
           </section>
           <section className="card grid gap-4 p-5">
-            <h2 className="eyebrow">{t.summaryTitle}</h2>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="eyebrow">{t.summaryTitle}</h2>
+              <Link href="/shopper/account" className="btn btn-sm">
+                Ubah data di Akun saya
+              </Link>
+            </div>
             {app?.status === "approved" ? <ApplicationSummary app={app} lang={lang} /> : <p className="text-sm text-muted">{t.provisioned}</p>}
           </section>
         </>

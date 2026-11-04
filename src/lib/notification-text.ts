@@ -27,6 +27,10 @@ export type Notification = {
     thread?: string;
     preview?: string;
     home?: string;
+    version?: number;
+    auto?: boolean;
+    old_email?: string;
+    new_email?: string;
   };
   read_at: string | null;
   created_at: string;
@@ -87,6 +91,20 @@ export function notificationText(n: Notification, lang: Lang): string {
       return t.invoiceRejected(code, note);
     case "invoice.due_soon":
       return t.invoiceDueSoon(code, rupiah(d.total ?? 0), when(d.due));
+    case "questionnaire.review":
+      return t.questionnaireReview(code, when(d.due));
+    case "questionnaire.reminder":
+      return t.questionnaireReminder(code, when(d.due));
+    case "questionnaire.auto_approved":
+      return t.questionnaireAutoApproved(code);
+    case "questionnaire.final":
+      return t.questionnaireFinal(code);
+    case "admin.questionnaire_changes":
+      return t.adminQuestionnaireChanges(name, code, Number(d.count ?? 0));
+    case "admin.questionnaire_approved":
+      return d.auto ? t.adminQuestionnaireAutoApproved(name, code) : t.adminQuestionnaireApproved(name, code);
+    case "account.email_changed":
+      return t.emailChanged(d.old_email ?? "—", d.new_email ?? "—");
     case "project.started":
       return t.projectStarted(code);
     case "admin.application":
@@ -123,6 +141,8 @@ export function notificationLink(n: Notification, lang: Lang): { href: string; l
   if (n.kind === "application.approved") return { href: "/shopper/profile", label: t.openProfile };
   if (n.kind.startsWith("consultation.")) return { href: d.consultation ? `/app/consultation/${d.consultation}` : "/app/consultation", label: t.openConsultation };
   if (n.kind.startsWith("order.") || n.kind.startsWith("invoice.")) return { href: "/app/billing", label: t.openBilling };
+  if (n.kind.startsWith("questionnaire.") && d.project) return { href: `/app/questionnaire/${d.project}`, label: t.openQuestionnaire };
+  if (n.kind.startsWith("admin.questionnaire_") && d.project) return { href: `/admin/projects/${d.project}?tab=jadwal`, label: t.openProject };
   if (n.kind === "project.started") return { href: "/app/audits", label: t.openAudits };
   if (n.kind === "admin.application" && d.application) return { href: `/admin/accounts/applications/${d.application}`, label: t.openApplication };
   if (n.kind === "admin.payment" && d.project) return { href: `/admin/projects/${d.project}`, label: t.openPayment };
