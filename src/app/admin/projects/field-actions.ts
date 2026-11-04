@@ -64,7 +64,7 @@ const brief = z.object({
   hoursEnd: time,
   fee: money,
   reimburse: money,
-  scenario: z.string().trim().max(2000),
+  scenario: z.string().trim().max(4000, "Instruksi maksimal 4000 karakter."),
   purchase: z.string().trim().max(500),
 });
 

@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isSupabaseConfigured, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/env";
 import { currentUser } from "@/lib/supabase/user";
 
-const PROTECTED = /^\/(app|shopper|admin)(\/|$)/;
+const PROTECTED = /^\/(app|shopper|admin|cs)(\/|$)/;
 
 // Memperbarui sesi Supabase di setiap permintaan dan menahan halaman dashboard bagi yang belum masuk.
 // Pemeriksaan role dilakukan lagi di server oleh layout tiap area (lib/session.ts) dan oleh RLS database.

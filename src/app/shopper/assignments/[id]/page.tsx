@@ -36,7 +36,6 @@ export default async function AssignmentPage({ params }: PageProps<"/shopper/ass
     [t.reimburse, rupiah(task.reimburse_cap)],
   ];
   if (task.mandatory_purchase) brief.push([t.purchase, task.mandatory_purchase]);
-  if (task.scenario) brief.push([t.scenario, <span key="s" className="whitespace-pre-line">{task.scenario}</span>]);
 
   return (
     <>
@@ -56,12 +55,18 @@ export default async function AssignmentPage({ params }: PageProps<"/shopper/ass
         <h2 className="eyebrow">{t.brief}</h2>
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           {brief.map(([k, v]) => (
-            <div key={k} className={`grid gap-0.5 ${k === t.scenario || k === t.outlet ? "sm:col-span-2" : ""}`}>
+            <div key={k} className={`grid gap-0.5 ${k === t.outlet ? "sm:col-span-2" : ""}`}>
               <dt className="text-muted">{k}</dt>
               <dd>{v}</dd>
             </div>
           ))}
         </dl>
+        {task.scenario && (
+          <div className="grid gap-1 rounded-xl border-l-4 border-accent bg-accent/5 p-4 text-sm" data-testid="instruksi">
+            <h3 className="font-semibold">{t.scenario}</h3>
+            <p className="whitespace-pre-line leading-relaxed">{task.scenario}</p>
+          </div>
+        )}
         <p className="rounded-lg border border-line p-3 text-xs text-muted">{t.excessRule}</p>
         <p className="text-xs text-muted">{t.secrecy}</p>
       </section>

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { check, checkData, run } from "@/lib/action";
 import { QUESTION_KIND_VALUES } from "@/lib/field";
 import { BUSINESS_KEY } from "@/lib/catalog-types";
+import { INSTRUCTION_MAX, PURCHASE_MAX, TEMPLATE_LIMIT } from "@/lib/instructions";
 import { journeyReference } from "@/lib/journey";
 import { requireRole } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
@@ -61,6 +62,7 @@ export async function duplicateQuestionnaire(raw: unknown) {
         business_type: string;
         description: string;
         photo_limit: number;
+        instruction_templates: unknown;
         questionnaire_sections: {
           position: number;
           title: string;
@@ -72,14 +74,14 @@ export async function duplicateQuestionnaire(raw: unknown) {
       const src = checkData<Source>(
         await supabase
           .from("questionnaires")
-          .select("name, business_type, description, photo_limit, questionnaire_sections(position, title, weight, target, questionnaire_questions(position, prompt, help, kind, photo_required, is_sop, red_flag, journey_stage_id))")
+          .select("name, business_type, description, photo_limit, instruction_templates, questionnaire_sections(position, title, weight, target, questionnaire_questions(position, prompt, help, kind, photo_required, is_sop, red_flag, journey_stage_id))")
           .eq("id", id)
           .single(),
       );
       const copy = checkData<{ id: string }>(
         await supabase
           .from("questionnaires")
-          .insert({ name: `${src.name} (salinan)`.slice(0, 120), business_type: src.business_type, description: src.description, photo_limit: src.photo_limit, active: false })
+          .insert({ name: `${src.name} (salinan)`.slice(0, 120), business_type: src.business_type, description: src.description, photo_limit: src.photo_limit, instruction_templates: src.instruction_templates ?? [], active: false })
           .select("id")
           .single(),
       );
@@ -316,6 +318,31 @@ export async function addReferenceStages(raw: unknown) {
         .map((s) => ({ business_type: businessType, title: s.title, hint: s.hint, position: ++position }));
       if (rows.length) check(await supabase.from("journey_stages").insert(rows));
       return rows.length;
+    },
+    PATHS,
+  );
+}
+
+// Template instruksi shopper per kuesioner (Putaran 16). Disimpan utuh sebagai satu daftar.
+export async function saveInstructionTemplates(raw: unknown) {
+  const supabase = await admin();
+  return run(
+    z.object({
+      id,
+      templates: z
+        .array(
+          z.object({
+            name: z.string().trim().min(2, "Nama template minimal 2 karakter.").max(60, "Nama template maksimal 60 karakter."),
+            scenario: z.string().trim().min(10, "Isi instruksi minimal 10 karakter.").max(INSTRUCTION_MAX, `Isi instruksi maksimal ${INSTRUCTION_MAX} karakter.`),
+            purchase: z.string().trim().max(PURCHASE_MAX, `Pembelian wajib maksimal ${PURCHASE_MAX} karakter.`),
+          }),
+        )
+        .max(TEMPLATE_LIMIT, `Maksimal ${TEMPLATE_LIMIT} template per kuesioner.`)
+        .refine((list) => new Set(list.map((t) => t.name.toLowerCase())).size === list.length, "Nama template tidak boleh kembar."),
+    }),
+    raw,
+    async ({ id, templates }) => {
+      check(await supabase.from("questionnaires").update({ instruction_templates: templates }).eq("id", id));
     },
     PATHS,
   );

@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   // react-pdf berjalan di Node apa adanya (tidak dibundel), dan font serta logo PDF ikut terbawa saat deploy.
   serverExternalPackages: ["@react-pdf/renderer"],
-  outputFileTracingIncludes: { "/**": ["./assets/pdf/**"] },
+  outputFileTracingIncludes: { "/**": ["./assets/pdf/**", "./assets/og/**"] },
   poweredByHeader: false,
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];

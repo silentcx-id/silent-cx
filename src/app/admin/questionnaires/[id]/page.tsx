@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AddSectionForm, JourneyPanel, QuestionnaireHeader, SectionCard } from "../builder";
+import { InstructionTemplates } from "../instruction-templates";
+import { cleanTemplates, draftFromQuestionnaire } from "@/lib/instructions";
 import { getBusinessTypes } from "@/lib/catalog";
 import { businessTypeLabel } from "@/lib/catalog-types";
 import type { JourneyStage } from "@/lib/journey";
@@ -18,7 +20,7 @@ export default async function QuestionnaireDetail({ params }: PageProps<"/admin/
     supabase
       .from("questionnaires")
       .select(
-        "id, name, business_type, description, photo_limit, active, project_id, project:projects(id, code), questionnaire_sections(id, position, title, weight, target, questionnaire_questions(id, position, prompt, help, kind, photo_required, is_sop, red_flag, journey_stage_id))",
+        "id, name, business_type, description, photo_limit, active, project_id, instruction_templates, project:projects(id, code), questionnaire_sections(id, position, title, weight, target, questionnaire_questions(id, position, prompt, help, kind, photo_required, is_sop, red_flag, journey_stage_id))",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -218,6 +220,12 @@ export default async function QuestionnaireDetail({ params }: PageProps<"/admin/
         <h2 className="text-lg font-extrabold">Tambah bagian</h2>
         <AddSectionForm questionnaireId={q.id} remaining={Math.max(0, 100 - totalWeight)} />
       </section>
+
+      <InstructionTemplates
+        questionnaireId={q.id}
+        initial={cleanTemplates(q.instruction_templates)}
+        draft={draftFromQuestionnaire({ photo_limit: q.photo_limit, sections: sections.map((s) => ({ title: s.title, questions: s.questions })) })}
+      />
     </>
   );
 }

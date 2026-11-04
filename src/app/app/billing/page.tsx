@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { PaymentPanel } from "./payment-panel";
 import { PaymentPlan } from "./payment-plan";
+import { VoucherPanel } from "./voucher-panel";
 import { InvoiceStatusChip, InvoiceView } from "@/components/invoice-view";
 import { getPaymentSettings } from "@/lib/catalog";
 import { dateTime, rupiah } from "@/lib/format";
@@ -9,19 +11,26 @@ import { dict } from "@/lib/i18n";
 import { dueNow, getClientProjects } from "@/lib/orders";
 import { getLang } from "@/lib/prefs";
 import { requireRole } from "@/lib/session";
+import { VOUCHER_COOKIE } from "@/lib/vouchers";
 
 export const metadata: Metadata = { title: "Tagihan" };
 
 export default async function BillingPage() {
   const [viewer, lang] = await Promise.all([requireRole("client", "/app/billing"), getLang()]);
   const t = dict(lang).orders;
-  const [projects, settings] = await Promise.all([getClientProjects(viewer.id), getPaymentSettings()]);
+  const [projects, settings, jar] = await Promise.all([getClientProjects(viewer.id), getPaymentSettings(), cookies()]);
+  // Kode dari halaman /voucher/KODE yang belum dipakai.
+  const savedCode = jar.get(VOUCHER_COOKIE)?.value ?? "";
   // Invoice pesanan (paket); tagihan tambahan ditampilkan terpisah di atas.
   const order = (p: (typeof projects)[number]) => p.invoices.find((i) => i.kind === "order");
   const withInvoice = projects.filter((p) => order(p));
   const current = withInvoice[0];
   const invoice = current ? order(current) : undefined;
   const rejected = invoice?.payment_proofs.find((p) => p.status === "rejected");
+  // Voucher yang terpasang tercatat sebagai baris potongan "Voucher KODE · Brand".
+  const voucherLine = invoice?.invoice_lines.find((l) => l.kind === "promo" && l.item_key === "voucher");
+  const [voucherCode, ...voucherBrand] = voucherLine ? voucherLine.label.replace(/^Voucher /, "").split(" · ") : [];
+  const applied = voucherLine ? { code: voucherCode, brand: voucherBrand.join(" · "), discount: -(voucherLine.amount ?? 0) } : null;
   // Tagihan tambahan: pelunasan setelah DP dan kelebihan pembelian (terbit bersama laporan), serta konsultasi tambahan yang masih berjalan.
   const extras = projects.flatMap((p) =>
     p.invoices
@@ -62,6 +71,7 @@ export default async function BillingPage() {
       {!current || !invoice ? (
         <section className="card grid gap-4 p-6">
           <p className="text-muted">{t.noInvoices}</p>
+          {savedCode && <p className="rounded-lg border border-accent/60 bg-accent/10 p-3 text-sm" data-testid="voucher-pending">{t.voucherPending} ({savedCode})</p>}
           <Link href="/app/paket" className="btn btn-primary w-fit">
             {dict(lang).client.choosePackage} →
           </Link>
@@ -88,7 +98,8 @@ export default async function BillingPage() {
                   </p>
                 )}
                 {/* DP hanya untuk pesanan paket, bukan audit ulang. */}
-                {!current.parent_project_id && <PaymentPlan invoiceId={invoice.id} total={invoice.total} dp={invoice.dp_amount ?? null} lang={lang} />}
+                {!current.parent_project_id && <VoucherPanel key={applied?.code ?? "none"} invoiceId={invoice.id} applied={applied} savedCode={savedCode} lang={lang} />}
+                {!current.parent_project_id && <PaymentPlan key={`${invoice.total}-${invoice.dp_amount}`} invoiceId={invoice.id} total={invoice.total} dp={invoice.dp_amount ?? null} lang={lang} />}
                 <PaymentPanel key={dueNow(invoice)} invoiceId={invoice.id} total={dueNow(invoice)} settings={settings} lang={lang} />
               </>
             )}

@@ -104,7 +104,7 @@ try {
       check("admin tetap bisa membuka pratinjau landing", r?.status() === 200 && (await s.page.locator("#hero").count()) === 1);
       await s.page.goto(`${BASE}/admin/content`, { waitUntil: "networkidle" });
       const editor = (await s.page.textContent("main")) ?? "";
-      check("editor menampilkan peringatan testimoni dan kontak contoh", editor.includes("Testimoni masih berisi contoh fiktif") && editor.includes("Kontak di footer masih contoh"));
+      check("editor konten tanpa peringatan contoh dan draf hukum", !editor.includes("contoh fiktif") && !editor.includes("Kontak di footer masih contoh") && !editor.includes("masih draf"));
     }
     await s.ctx.close();
   }

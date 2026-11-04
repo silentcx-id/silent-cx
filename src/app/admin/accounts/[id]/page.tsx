@@ -14,6 +14,8 @@ import { getLang } from "@/lib/prefs";
 import { PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE } from "@/lib/project-labels";
 import { isRole, type AccountStatus } from "@/lib/roles";
 import { requireRole } from "@/lib/session";
+import { FollowupTimeline } from "@/components/followup-timeline";
+import type { FollowupEntry } from "@/lib/cs-data";
 import { APPLICATION_COLUMNS, type ShopperApplication } from "@/lib/shopper-application";
 import { createClient } from "@/lib/supabase/server";
 
@@ -73,7 +75,13 @@ export default async function AccountDetailPage({ params }: PageProps<"/admin/ac
             </dl>
             {profile.status_note && <p className="rounded-lg border border-line bg-raise p-3 text-sm text-muted">Catatan status: {profile.status_note}</p>}
           </section>
-          {role === "shopper" ? <ShopperDetail id={id} name={profile.full_name} lang={lang} /> : <ClientDetail id={id} lang={lang} types={types} />}
+          {role === "shopper" && <ShopperDetail id={id} name={profile.full_name} lang={lang} />}
+          {role === "client" && (
+            <>
+              <ClientDetail id={id} lang={lang} types={types} />
+              <ClientFollowups id={id} />
+            </>
+          )}
           <ChangeHistory id={id} lang={lang} types={types} />
         </div>
         <aside className="card grid gap-3 p-5 lg:sticky lg:top-6">
@@ -429,6 +437,30 @@ async function ChangeHistory({ id, lang, types }: { id: string; lang: Lang; type
           ))}
         </ul>
       )}
+    </section>
+  );
+}
+
+// Riwayat follow-up CS dan konfirmasi WA admin untuk client ini (Putaran 16).
+async function ClientFollowups({ id }: { id: string }) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("client_followups")
+    .select("id, created_at, channel, purpose, outcome, note, message, next_at, staff_id, staff:profiles!client_followups_staff_id_fkey(full_name, role), project:projects(code)")
+    .eq("client_id", id)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  type Row = Omit<FollowupEntry, "staff" | "staff_role" | "project_code"> & { staff: { full_name: string; role: "admin" | "cs" } | null; project: { code: string } | null };
+  const items: FollowupEntry[] = ((data ?? []) as unknown as Row[]).map(({ staff, project, ...f }) => ({
+    ...f,
+    staff: staff?.full_name || null,
+    staff_role: staff?.role ?? null,
+    project_code: project?.code ?? null,
+  }));
+  return (
+    <section className="card grid gap-3 p-5">
+      <h2 className="text-lg font-extrabold">Riwayat follow-up</h2>
+      <FollowupTimeline items={items} viewerId="" isAdmin />
     </section>
   );
 }

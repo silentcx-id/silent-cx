@@ -17,6 +17,8 @@ const PATHS: Record<IconName, string> = {
   layers: "M12 3 2 8l10 5 10-5zM2 13l10 5 10-5M2 18l10 5 10-5",
   calendar: "M4 5h16v16H4zM4 10h16M9 3v4M15 3v4",
   pen: "M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4",
+  tag: "M3 12V4h8l10 10-8 8zM7.5 8.5h.01",
+  doc: "M5 3h10l4 4v14H5zM9 9h6M9 13h6M9 17h4",
   settings: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12l2-1-1-3-2 .5-1.5-1.5L17 5l-3-1-1 2h-2L10 4 7 5l.5 2L6 8.5 4 8l-1 3 2 1v0l-2 1 1 3 2-.5L7.5 17 7 19l3 1 1-2h2l1 2 3-1-.5-2 1.5-1.5 2 .5 1-3z",
 };
 

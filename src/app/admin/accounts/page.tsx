@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AccountActions } from "./account-actions";
+import { CsAccountForm } from "./cs-form";
+import { appOrigin } from "@/lib/app-origin";
 import { Tabs } from "@/components/tabs";
 import { businessTypeLabel, getBusinessTypes, type BusinessType } from "@/lib/catalog";
 import { dateTime } from "@/lib/format";
@@ -13,7 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Akun" };
 
-const TABS = ["pending", "shopper", "client", "all"] as const;
+const TABS = ["pending", "shopper", "client", "cs", "all"] as const;
 type Tab = (typeof TABS)[number];
 
 const STATUS_TONE: Record<AccountStatus, string> = {
@@ -41,6 +43,7 @@ export default async function AccountsPage({ searchParams }: PageProps<"/admin/a
     pending: t.admin.applicationsTab,
     shopper: t.roles.shopper,
     client: t.roles.client,
+    cs: "Tim CS",
     all: t.admin.filterAll,
   };
 
@@ -90,6 +93,8 @@ export default async function AccountsPage({ searchParams }: PageProps<"/admin/a
           )}
           <ApplicationsQueue city={filters.city} lang={lang} />
         </>
+      ) : tab === "cs" ? (
+        <CsTeam lang={lang} />
       ) : (
         <>
           <FilterForm tab={tab} filters={filters} cities={cities} types={types} lang={lang} />
@@ -101,7 +106,7 @@ export default async function AccountsPage({ searchParams }: PageProps<"/admin/a
 }
 
 // Pencarian dan filter. Form GET biasa, jadi hasilnya bisa di-refresh dan dibagikan sebagai link.
-function FilterForm({ tab, filters, cities, types, lang }: { tab: Exclude<Tab, "pending">; filters: Filters; cities: string[]; types: BusinessType[]; lang: Lang }) {
+function FilterForm({ tab, filters, cities, types, lang }: { tab: Exclude<Tab, "pending" | "cs">; filters: Filters; cities: string[]; types: BusinessType[]; lang: Lang }) {
   const t = dict(lang);
   const active = Boolean(filters.q || filters.status || filters.city || filters.interest || filters.gender);
   return (
@@ -371,5 +376,43 @@ async function AccountsTable({ tab, filters, types, lang }: { tab: Exclude<Tab, 
         </span>
       </nav>
     </section>
+  );
+}
+
+// Tim CS (Putaran 16): akun dibuat admin, langsung aktif. Penangguhan memakai tombol yang sama dengan akun lain.
+async function CsTeam({ lang }: { lang: Lang }) {
+  const t = dict(lang);
+  const supabase = await createClient();
+  const [{ data }, origin] = await Promise.all([
+    supabase.from("profiles").select("id, full_name, email, phone, status, status_note, created_at").eq("role", "cs").order("created_at", { ascending: false }),
+    appOrigin(),
+  ]);
+  const team = (data ?? []) as { id: string; full_name: string; email: string; phone: string | null; status: AccountStatus; status_note: string | null; created_at: string }[];
+  return (
+    <>
+      <section className="card grid gap-3 p-5">
+        <h2 className="text-lg font-extrabold">Buat akun CS</h2>
+        <CsAccountForm loginUrl={`${origin}/login`} />
+      </section>
+      {team.length === 0 ? (
+        <p className="card p-6 text-muted">Belum ada akun CS.</p>
+      ) : (
+        <ul className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+          {team.map((m) => (
+            <li key={m.id} className="card grid content-start gap-2 p-4 text-sm">
+              <span className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold">{m.full_name || "—"}</span>
+                <span className={`chip ${STATUS_TONE[m.status]}`}>{t.status[m.status]}</span>
+              </span>
+              <span className="text-muted">{m.email}</span>
+              {m.phone && <span className="font-mono text-xs text-muted">{m.phone}</span>}
+              {m.status_note && <span className="text-xs text-muted">{m.status_note}</span>}
+              <span className="text-xs text-muted">Dibuat {dateTime(m.created_at, lang)}</span>
+              <AccountActions userId={m.id} role="cs" status={m.status} lang={lang} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   );
 }

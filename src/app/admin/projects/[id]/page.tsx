@@ -6,7 +6,10 @@ import { OutletSchedule, QuestionnairePicker, type AdminTask, type Candidate, ty
 import { InvoiceView } from "@/components/invoice-view";
 import { pickTab, Tabs } from "@/components/tabs";
 import { businessTypeLabel, getBusinessTypes } from "@/lib/catalog";
-import { dayLabel, wibDate } from "@/lib/field";
+import { dayLabel, wibDate, windowLabel } from "@/lib/field";
+import { clientPhones } from "@/lib/followups";
+import { cleanTemplates, draftFromQuestionnaire, type QuestionnaireLike } from "@/lib/instructions";
+import { ConfirmWa } from "./confirm-wa";
 import { dateTime, rupiah } from "@/lib/format";
 import { dict } from "@/lib/i18n";
 import { getProject, type Invoice, type PaymentProof, type Project } from "@/lib/orders";
@@ -20,8 +23,8 @@ export const metadata: Metadata = { title: "Detail proyek" };
 async function Scheduling({ project }: { project: Project }) {
   const supabase = await createClient();
   await Promise.all([supabase.rpc("expire_offers"), supabase.rpc("questionnaire_review_tick")]);
-  const [{ data: assigned }, { data: questionnaires }, { data: taskRows }, { data: field }, { data: rounds }] = await Promise.all([
-    supabase.from("project_questionnaires").select("questionnaire_id, snapshot, assigned_at, review_id, questionnaire:questionnaires(project_id)").eq("project_id", project.id).maybeSingle(),
+  const [{ data: assigned }, { data: questionnaires }, { data: taskRows }, { data: field }, { data: rounds }, { data: company }] = await Promise.all([
+    supabase.from("project_questionnaires").select("questionnaire_id, snapshot, assigned_at, review_id, questionnaire:questionnaires(project_id, instruction_templates)").eq("project_id", project.id).maybeSingle(),
     // Template umum dan salinan khusus proyek ini; salinan untuk proyek lain tidak ditawarkan.
     supabase.from("questionnaires").select("id, name").eq("active", true).or(`project_id.is.null,project_id.eq.${project.id}`).order("name"),
     supabase
@@ -31,6 +34,7 @@ async function Scheduling({ project }: { project: Project }) {
       .order("created_at"),
     supabase.from("app_settings").select("value").eq("key", "field").maybeSingle(),
     supabase.from("questionnaire_reviews").select("id, version, status, sent_at, due_at, decided_at, flags, additions").eq("project_id", project.id).order("sent_at", { ascending: false }),
+    supabase.from("companies").select("name").eq("client_id", project.client_id).maybeSingle(),
   ]);
   type Round = { id: string; version: number; status: ReviewStatus; sent_at: string; due_at: string | null; decided_at: string | null; flags: NonNullable<QuestionnaireReview["request"]>["flags"]; additions: string };
   const history = (rounds ?? []) as Round[];
@@ -71,6 +75,7 @@ async function Scheduling({ project }: { project: Project }) {
   );
   const outlets: OutletTasks[] = project.project_outlets.map((o) => ({ ...o, tasks: tasks.filter((t) => t.outlet_id === o.id) }));
 
+  const copyOf = assigned?.questionnaire as unknown as { project_id: string | null; instruction_templates: unknown } | null;
   const settings = (field?.value ?? {}) as { default_fee?: number; default_response_hours?: number };
   const defaults = {
     fee: settings.default_fee ?? 150000,
@@ -79,9 +84,11 @@ async function Scheduling({ project }: { project: Project }) {
     today: wibDate(),
     inAWeek: wibDate(7),
     questionnaireApproved: review.status === "approved" || review.status === "auto_approved" || review.status === "final",
+    // Template instruksi dari kuesioner proyek; draf otomatis dari isi kuesioner selalu tersedia di urutan pertama.
+    instructions: assigned ? [draftFromQuestionnaire(assigned.snapshot as QuestionnaireLike), ...cleanTemplates(copyOf?.instruction_templates)] : [],
+    brand: (company?.name as string | undefined) ?? "",
   };
   const locked = tasks.some((t) => t.status === "in_progress" || t.status === "submitted");
-  const copyOf = assigned?.questionnaire as unknown as { project_id: string | null } | null;
   const current = assigned
     ? {
         id: assigned.questionnaire_id as string | null,
@@ -128,15 +135,24 @@ const TABS = ["ringkasan", "outlet", "jadwal", "pembayaran"] as const;
 
 export default async function ProjectDetail({ params, searchParams }: PageProps<"/admin/projects/[id]">) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  await requireRole("admin", `/admin/projects/${id}`);
+  const viewer = await requireRole("admin", `/admin/projects/${id}`);
   const project = await getProject(id);
   if (!project) notFound();
   const supabase = await createClient();
-  const [{ data: client }, { data: company }, { data: cities }, types] = await Promise.all([
+  const [{ data: client }, { data: company }, { data: cities }, types, { data: windows }, { data: lastConfirm }] = await Promise.all([
     supabase.from("profiles").select("full_name, email, phone").eq("id", project.client_id).single(),
     supabase.from("companies").select("*").eq("client_id", project.client_id).maybeSingle(),
     supabase.from("service_cities").select("name").eq("active", true),
     getBusinessTypes(),
+    supabase.from("audit_tasks").select("outlet_id, window_start, window_end, hours_start, hours_end").eq("project_id", project.id).neq("status", "cancelled").order("window_start"),
+    supabase
+      .from("client_followups")
+      .select("created_at, staff:profiles!client_followups_staff_id_fkey(full_name)")
+      .eq("project_id", project.id)
+      .eq("purpose", "project_confirm")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
   const served = new Set((cities ?? []).map((c) => c.name.trim().toLowerCase()));
   const invoice = project.invoices[0];
@@ -170,6 +186,33 @@ export default async function ProjectDetail({ params, searchParams }: PageProps<
           </p>
         </div>
         <span className={`chip ${PROJECT_STATUS_TONE[project.status]}`}>{PROJECT_STATUS_LABEL[project.status]}</span>
+      </section>
+
+      <section className="flex flex-wrap items-center gap-x-3 gap-y-2" aria-label="Konfirmasi ke client">
+        <ConfirmWa
+          clientId={project.client_id}
+          projectId={project.id}
+          phones={clientPhones({ pic_name: company?.pic_name, pic_phone: company?.pic_phone, full_name: client?.full_name, phone: client?.phone })}
+          hasSchedule={(windows ?? []).length > 0}
+          base={{
+            name: company?.pic_name || client?.full_name || "",
+            brand: company?.name ?? "",
+            projectCode: project.code,
+            packageName: project.package_snapshot.name,
+            statusLabel: PROJECT_STATUS_LABEL[project.status],
+            admin: viewer.fullName,
+            outlets: project.project_outlets.map((o) => {
+              const w = (windows ?? []).find((x) => x.outlet_id === o.id);
+              return { position: o.position, name: o.name, city: o.city, address: o.address, maps_url: o.maps_url, is_competitor: o.is_competitor, window: w ? windowLabel(w) : null };
+            }),
+          }}
+        />
+        {lastConfirm && (
+          <span className="text-xs text-muted">
+            Terakhir dikonfirmasi {dateTime(lastConfirm.created_at as string, "id")}
+            {(lastConfirm.staff as unknown as { full_name: string } | null)?.full_name ? ` oleh ${(lastConfirm.staff as unknown as { full_name: string }).full_name}` : ""}
+          </span>
+        )}
       </section>
 
       <Tabs

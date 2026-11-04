@@ -1,8 +1,10 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { z } from "zod";
 import { check, checkData, run } from "@/lib/action";
 import { requireRole } from "@/lib/session";
+import { VOUCHER_COOKIE } from "@/lib/vouchers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -231,6 +233,59 @@ export async function setPaymentPlan(raw: unknown) {
     async ({ invoiceId, dp }) => {
       const supabase = await createClient();
       check(await supabase.rpc("client_set_payment_plan", { p_invoice: invoiceId, p_dp: dp }));
+    },
+    PATHS,
+  );
+}
+
+// Voucher di tagihan pesanan paket (Putaran 15): cek dulu (perbandingan dengan promo), lalu pasang atau lepas.
+// Semua aturan (masa berlaku, paket, sekali pakai, tidak digabung promo) diperiksa database.
+const voucherInput = z.object({ invoiceId: z.uuid(), code: z.string().trim().min(1, "Masukkan kode voucher.").max(30, "Kode voucher maksimal 30 karakter.") });
+
+export type VoucherQuote = {
+  code: string;
+  brand: string;
+  logo: string;
+  package: string;
+  list_price: number;
+  discount: number;
+  promo: number;
+  promo_label: string | null;
+  current_total: number;
+  voucher_total: number;
+};
+
+export async function quoteVoucher(raw: unknown) {
+  await requireRole("client", "/app/billing");
+  return run(voucherInput, raw, async ({ invoiceId, code }) => {
+    const supabase = await createClient();
+    return checkData(await supabase.rpc("client_voucher_quote", { p_invoice: invoiceId, p_code: code })) as VoucherQuote;
+  });
+}
+
+export async function applyVoucher(raw: unknown) {
+  await requireRole("client", "/app/billing");
+  return run(
+    voucherInput,
+    raw,
+    async ({ invoiceId, code }) => {
+      const supabase = await createClient();
+      checkData(await supabase.rpc("client_apply_voucher", { p_invoice: invoiceId, p_code: code }));
+      // Kode dari halaman voucher sudah terpakai, jadi tidak perlu terisi lagi.
+      (await cookies()).delete(VOUCHER_COOKIE);
+    },
+    PATHS,
+  );
+}
+
+export async function removeVoucher(raw: unknown) {
+  await requireRole("client", "/app/billing");
+  return run(
+    z.object({ invoiceId: z.uuid() }),
+    raw,
+    async ({ invoiceId }) => {
+      const supabase = await createClient();
+      check(await supabase.rpc("client_remove_voucher", { p_invoice: invoiceId }));
     },
     PATHS,
   );

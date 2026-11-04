@@ -531,6 +531,9 @@ export function Landing({ content, packages, addons = [], lang, banner }: Props)
                 {L.nav[k as keyof typeof L.nav]}
               </a>
             ))}
+            <Link href="/artikel" className="hover:text-fg">
+              Artikel & promo
+            </Link>
           </FooterList>
           <FooterList title={L.forShoppers}>
             <Link href="/become-shopper" className="hover:text-fg">

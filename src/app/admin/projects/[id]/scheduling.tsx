@@ -8,6 +8,7 @@ import { CheckinMap } from "@/components/checkin-map";
 import { StatusText, useAction } from "@/components/use-action";
 import { followupMessage, TASK_STATUS_LABEL, TASK_STATUS_TONE, waLink, windowLabel, type TaskStatus } from "@/lib/field";
 import { dateTime, rupiah } from "@/lib/format";
+import { fillPlaceholders, INSTRUCTION_MAX, type InstructionTemplate } from "@/lib/instructions";
 
 const input = "min-h-10 w-full rounded-lg border border-line bg-raise px-3 py-2 text-sm";
 const label = "grid gap-1 text-sm font-semibold";
@@ -45,10 +46,11 @@ export type AdminTask = {
   candidates: Candidate[];
 };
 
-export type OutletTasks = { id: string; position: number; name: string; city: string; address: string; maps_url: string; is_competitor: boolean; extra_visits?: number; tasks: AdminTask[] };
+export type OutletTasks = { id: string; position: number; name: string; city: string; address: string; maps_url: string; notes?: string; is_competitor: boolean; extra_visits?: number; tasks: AdminTask[] };
 
 // questionnaireApproved: tawaran ke shopper baru bisa dikirim setelah kuesioner disetujui client.
-type Defaults = { fee: number; reimburse: number; hours: number; today: string; inAWeek: string; questionnaireApproved: boolean };
+// instructions: template instruksi dari kuesioner proyek (draf otomatis di urutan pertama); brand untuk penanda {brand}.
+type Defaults = { fee: number; reimburse: number; hours: number; today: string; inAWeek: string; questionnaireApproved: boolean; instructions: InstructionTemplate[]; brand: string };
 
 export type ReviewStatus = "none" | "pending" | "changes_requested" | "approved" | "auto_approved" | "final";
 
@@ -284,8 +286,33 @@ export function QuestionnairePicker({
 
 type Brief = { windowStart: string; windowEnd: string; hoursStart: string; hoursEnd: string; fee: string; reimburse: string; scenario: string; purchase: string };
 
-function BriefForm({ initial, submitLabel, onSubmit, onCancel, pending }: { initial: Brief; submitLabel: string; onSubmit: (b: Brief) => void; onCancel: () => void; pending: boolean }) {
+function BriefForm({
+  initial,
+  submitLabel,
+  onSubmit,
+  onCancel,
+  pending,
+  outlet,
+  defaults,
+}: {
+  initial: Brief;
+  submitLabel: string;
+  onSubmit: (b: Brief) => void;
+  onCancel: () => void;
+  pending: boolean;
+  outlet: OutletTasks;
+  defaults: Defaults;
+}) {
   const [b, setB] = useState(initial);
+  const [pick, setPick] = useState(0);
+  const info = { outlet: outlet.name, city: outlet.city, address: outlet.address, brand: defaults.brand };
+  // Template dipakai untuk outlet ini: penanda diganti; instruksi yang sudah diisi hanya ditimpa setelah dikonfirmasi.
+  function useTemplate() {
+    const tpl = defaults.instructions[pick];
+    if (!tpl) return;
+    if (b.scenario.trim() && !confirm("Ganti instruksi yang sudah diisi dengan template ini?")) return;
+    setB({ ...b, scenario: fillPlaceholders(tpl.scenario, info).slice(0, INSTRUCTION_MAX), purchase: tpl.purchase ? fillPlaceholders(tpl.purchase, info) : b.purchase });
+  }
   const set = (k: keyof Brief) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setB({ ...b, [k]: e.target.value });
   return (
     <form
@@ -339,10 +366,53 @@ function BriefForm({ initial, submitLabel, onSubmit, onCancel, pending }: { init
           </div>
         </fieldset>
       </div>
-      <div className="grid gap-3 @2xl:grid-cols-2">
+      <div className="grid gap-3">
+        {defaults.instructions.length > 0 && (
+          <div className="flex flex-wrap items-end gap-2 rounded-lg bg-raise p-3">
+            <label className={`${sub} min-w-0 flex-[1_1_240px]`}>
+              Template instruksi
+              <select className={input} value={pick} onChange={(e) => setPick(Number(e.target.value))} aria-label="Template instruksi">
+                {defaults.instructions.map((t, i) => (
+                  <option key={t.name} value={i}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="button" className="btn btn-sm" onClick={useTemplate}>
+              Pakai template
+            </button>
+          </div>
+        )}
+        {outlet.notes && (
+          <p className="flex flex-wrap items-center gap-2 rounded-lg border border-line p-3 text-sm">
+            <span>
+              <span className="font-semibold">Catatan client untuk outlet ini:</span> {outlet.notes}
+            </span>
+            <button
+              type="button"
+              className="text-xs font-semibold text-mark underline"
+              onClick={() => setB({ ...b, scenario: `${b.scenario.trim()}${b.scenario.trim() ? "\n\n" : ""}Catatan outlet: ${outlet.notes}`.slice(0, INSTRUCTION_MAX) })}
+            >
+              Sisipkan ke instruksi
+            </button>
+          </p>
+        )}
         <label className={`${label} content-start`}>
-          Skenario kunjungan
-          <textarea className={input} rows={2} maxLength={2000} value={b.scenario} onChange={set("scenario")} placeholder="Contoh: datang sendiri, tanyakan menu andalan, bayar dengan QRIS." />
+          <span className="flex flex-wrap items-baseline justify-between gap-2">
+            Instruksi untuk shopper
+            <span className="text-xs font-normal text-muted">
+              {b.scenario.length}/{INSTRUCTION_MAX}
+            </span>
+          </span>
+          <textarea
+            className={input}
+            rows={b.scenario ? 8 : 3}
+            maxLength={INSTRUCTION_MAX}
+            value={b.scenario}
+            onChange={set("scenario")}
+            placeholder="Contoh: datang sendiri, tanyakan menu andalan, bayar dengan QRIS. Pilih template di atas untuk mengisi otomatis."
+          />
         </label>
         <label className={`${label} content-start`}>
           Pembelian wajib
@@ -586,7 +656,12 @@ function TaskCard({ task, outlet, defaults }: { task: AdminTask; outlet: OutletT
           </div>
         ))}
       </dl>
-      {task.scenario && <p className="whitespace-pre-line text-sm">{task.scenario}</p>}
+      {task.scenario && (
+        <details className="text-sm">
+          <summary className="cursor-pointer font-semibold">Instruksi untuk shopper</summary>
+          <p className="mt-1 whitespace-pre-line rounded-lg bg-raise p-3">{task.scenario}</p>
+        </details>
+      )}
       {task.cancel_note && <p className="text-sm text-muted">Dibatalkan: {task.cancel_note}</p>}
 
       {task.shopper && task.status !== "cancelled" && (
@@ -618,6 +693,8 @@ function TaskCard({ task, outlet, defaults }: { task: AdminTask; outlet: OutletT
             }}
             submitLabel="Simpan brief"
             pending={pending}
+            outlet={outlet}
+            defaults={defaults}
             onCancel={() => setEditing(false)}
             onSubmit={(b) => act(() => updateTask({ taskId: task.id, ...b }), "Brief diperbarui.", () => setEditing(false))}
           />
@@ -702,6 +779,8 @@ export function OutletSchedule({ outlet, defaults, canCreate, visitsPlanned }: {
             initial={{ windowStart: defaults.today, windowEnd: defaults.inAWeek, hoursStart: "", hoursEnd: "", fee: String(defaults.fee), reimburse: String(defaults.reimburse), scenario: "", purchase: "" }}
             submitLabel="Buat tugas"
             pending={pending}
+            outlet={outlet}
+            defaults={defaults}
             onCancel={() => setAdding(false)}
             onSubmit={(b) => act(() => createTask({ outletId: outlet.id, ...b }), "Tugas dibuat.", () => setAdding(false))}
           />

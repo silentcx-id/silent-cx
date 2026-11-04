@@ -18,6 +18,8 @@ async function clientEntitlements(clientId: string) {
 
 // Live chat: admin melihat jumlah percakapan yang belum dibaca di menu; client dan shopper mendapat tombol chat.
 async function chatState(role: Role, userId: string) {
+  // CS tidak memakai live chat Sisca.
+  if (role === "cs") return { badges: {} as Record<string, number>, chat: undefined };
   const supabase = await createClient();
   if (role === "admin") {
     const { count } = await supabase.from("chat_threads").select("id", { count: "exact", head: true }).gt("admin_unread", 0);

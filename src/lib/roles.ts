@@ -1,6 +1,6 @@
 import type { Lang } from "./i18n";
 
-export const ROLES = ["client", "shopper", "admin"] as const;
+export const ROLES = ["client", "shopper", "admin", "cs"] as const;
 export type Role = (typeof ROLES)[number];
 export type AccountStatus = "pending" | "active" | "rejected" | "suspended";
 
@@ -13,9 +13,10 @@ export const ROLE_HOME: Record<Role, string> = {
   client: "/app",
   shopper: "/shopper",
   admin: "/admin",
+  cs: "/cs",
 };
 
-export type IconName = "bell" | "home" | "box" | "wallet" | "store" | "eye" | "report" | "chat" | "task" | "check" | "user" | "users" | "layers" | "calendar" | "settings" | "pen";
+export type IconName = "bell" | "home" | "box" | "wallet" | "store" | "eye" | "report" | "chat" | "task" | "check" | "user" | "users" | "layers" | "calendar" | "settings" | "pen" | "tag" | "doc";
 
 type Label = Record<Lang, string>;
 
@@ -51,13 +52,21 @@ export const ROLE_MENU: Record<Role, MenuItem[]> = {
     { slug: "chat", label: { id: "Live chat", en: "Live chat" }, icon: "chat", phase: 0 },
     { slug: "accounts", label: { id: "Akun", en: "Accounts" }, icon: "users", phase: 0 },
     { slug: "catalog", label: { id: "Katalog", en: "Catalog" }, icon: "box", phase: 1 },
+    { slug: "vouchers", label: { id: "Voucher", en: "Vouchers" }, icon: "tag", phase: 6 },
     { slug: "projects", label: { id: "Proyek & verifikasi", en: "Projects & verification" }, icon: "layers", phase: 1 },
     { slug: "questionnaires", label: { id: "Kuesioner", en: "Questionnaires" }, icon: "check", phase: 3 },
     { slug: "qc", label: { id: "Quality control", en: "Quality control" }, icon: "eye", phase: 4 },
     { slug: "reports", label: { id: "Laporan", en: "Reports" }, icon: "report", phase: 4 },
     { slug: "payouts", label: { id: "Keuangan", en: "Finance" }, icon: "wallet", phase: 5 },
     { slug: "content", label: { id: "Konten", en: "Content" }, icon: "pen", phase: 6 },
+    { slug: "articles", label: { id: "Artikel", en: "Articles" }, icon: "doc", phase: 6 },
     { slug: "consultations", label: { id: "Konsultasi", en: "Consultations" }, icon: "calendar", phase: 5 },
+    { slug: "account", label: { id: "Akun saya", en: "My account" }, icon: "settings", phase: 0 },
+  ],
+  // Customer service (Putaran 16): akun dibuat admin, melihat client dan mencatat follow-up.
+  cs: [
+    { slug: "", label: { id: "Client", en: "Clients" }, icon: "users", phase: 6 },
+    { slug: "followups", label: { id: "Riwayat follow-up", en: "Follow-up log" }, icon: "chat", phase: 6 },
     { slug: "account", label: { id: "Akun saya", en: "My account" }, icon: "settings", phase: 0 },
   ],
 };
@@ -94,5 +103,10 @@ export const MILESTONES: Record<Role, Milestone[]> = {
     { title: { id: "Quality control", en: "Quality control" }, goal: { id: "Hanya data valid yang lolos", en: "Only valid data passes" } },
     { title: { id: "Laporan", en: "Report" }, goal: { id: "Laporan terbit", en: "Report published" } },
     { title: { id: "Keuangan", en: "Finance" }, goal: { id: "Payout dan pembayaran tercatat", en: "Payouts and payments recorded" } },
+  ],
+  cs: [
+    { title: { id: "Sapa", en: "Reach out" }, goal: { id: "Client baru disapa", en: "New clients contacted" } },
+    { title: { id: "Pembayaran", en: "Payment" }, goal: { id: "Tagihan dibayar", en: "Invoices paid" } },
+    { title: { id: "Tindak lanjut", en: "Follow-up" }, goal: { id: "Client kembali audit", en: "Clients re-audit" } },
   ],
 };

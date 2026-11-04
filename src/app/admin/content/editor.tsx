@@ -9,9 +9,6 @@ import { SOCIALS } from "@/lib/site-links";
 import {
   LEGAL_KEYS,
   LEGAL_PATH,
-  legalPlaceholders,
-  SAMPLE_MARK,
-  SAMPLE_SITE,
   SECTION_META,
   type Item,
   type LegalDoc,
@@ -27,19 +24,6 @@ import { createClient } from "@/lib/supabase/client";
 const input = "min-h-10 w-full rounded-lg border border-line bg-raise px-3 py-2 text-sm";
 const blank: Text = { id: "", en: "" };
 const newItem = (): Item => ({ title: blank, body: blank, meta: blank, icon: "", image: "", hidden: false });
-// Testimoni contoh bawaan masih dipakai kalau ada nama yang bertanda "(contoh)".
-const hasSampleTestimonials = (c: SiteContent) => c.sections.testimonials.items.some((x) => x.title.id.includes(SAMPLE_MARK));
-const SITE_LABEL: Record<keyof typeof SAMPLE_SITE, string> = {
-  whatsapp: "WhatsApp",
-  phone: "telepon",
-  email: "email",
-  website: "situs web",
-  address: "alamat",
-  ...(Object.fromEntries(SOCIALS.map((s) => [s.key, s.label])) as Record<(typeof SOCIALS)[number]["key"], string>),
-};
-// Isian Info situs yang masih sama dengan kontak contoh bawaan.
-const sampleSiteFields = (c: SiteContent) => (Object.keys(SAMPLE_SITE) as (keyof typeof SAMPLE_SITE)[]).filter((k) => c.site[k] === SAMPLE_SITE[k]).map((k) => SITE_LABEL[k]);
-
 // Editor CMS: semua perubahan tersimpan di layar sampai admin menekan Simpan draf, Pratinjau, atau Terbitkan.
 export function ContentEditor({ initial, unpublished, hasPublished }: { initial: SiteContent; unpublished: boolean; hasPublished: boolean }) {
   const { pending, status, act } = useAction();
@@ -113,26 +97,6 @@ export function ContentEditor({ initial, unpublished, hasPublished }: { initial:
           <StatusText status={status} />
         </div>
       </section>
-
-      {hasSampleTestimonials(c) && (
-        <p role="note" className="rounded-xl border border-warn/50 bg-warn/10 p-4 text-sm">
-          <strong>Testimoni masih berisi contoh fiktif.</strong> Ganti dengan testimoni asli dari client (dengan izin mereka) sebelum situs dibuka untuk umum,
-          atau sembunyikan bagian Testimoni.
-        </p>
-      )}
-      {sampleSiteFields(c).length > 0 && (
-        <p role="note" className="rounded-xl border border-warn/50 bg-warn/10 p-4 text-sm">
-          <strong>Kontak di footer masih contoh:</strong> {sampleSiteFields(c).join(", ")}. Ganti dengan kontak asli di tab Info situs, atau kosongkan supaya tidak
-          ditampilkan.
-        </p>
-      )}
-
-      {legalPlaceholders(c).length > 0 && (
-        <p role="note" className="rounded-xl border border-warn/50 bg-warn/10 p-4 text-sm">
-          <strong>Kebijakan Privasi dan Syarat & Ketentuan masih draf.</strong> Lengkapi isian bertanda kurung siku di tab Halaman hukum:{" "}
-          {legalPlaceholders(c).join(", ")}. Mintalah peninjauan penasihat hukum sebelum situs dibuka untuk umum.
-        </p>
-      )}
 
       <nav aria-label="Bagian editor" className="flex gap-1 overflow-x-auto border-b border-line">
         {(

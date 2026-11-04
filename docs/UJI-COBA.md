@@ -870,3 +870,132 @@ Checkout dan landing:
 - [ ] Bagian Add-on di landing menampilkan label "Benchmark antar-outlet hanya di paket Performance" di Outlet tambahan.
 
 Diuji otomatis: `tests/putaran14.test.ts` (13 tes) dan `tests/e2e/putaran14-dp-pelunasan.mjs`. Tanpa `E2E_TULIS=1` skrip hanya membuka checkout dan landing. Dengan `E2E_TULIS=1` skrip membuat pesanan uji sementara PRJ-E2E14A/B/C untuk client demo, lalu menguji rincian luar kota, pilihan DP, dan laporan terkunci lewat browser. Tidak ada bukti bayar yang diunggah, dan semua pesanan uji dihapus di akhir.
+
+## Putaran 15: voucher promo khusus brand dan artikel
+
+Jalankan dulu `npm run db:migrate` (staging) lalu `npm run db:migrate:prod` (produksi). Migration `20261104000024_vouchers_articles.sql` dan `20261104000025_voucher_terms_testimonial.sql` terpasang. Migration 24 juga mengisi 3 artikel promo launching yang terbit otomatis 5 Nov 2026 00.00 WIB. Tidak ada pengaturan tambahan. Tombol WhatsApp di artikel memakai nomor WhatsApp bisnis di Konten → Kontak.
+
+Admin → Voucher:
+- [ ] Menu **Voucher** ada di admin. Klik **+ Buat voucher**, isi nama brand, dan kode otomatis langsung terlihat, misalnya `KOPISENJA-XXXX`. Empat karakter terakhir dibuat acak saat disimpan.
+- [ ] **Isi kode sendiri** untuk kode khusus, misalnya `KOPISENJA2026`. Kode yang sudah dipakai voucher lain ditolak.
+- [ ] Unggah logo brand (PNG atau JPG). Logo dengan latar transparan tetap transparan.
+- [ ] **Pakai aturan Promo Launching** mengisi Essential 50%, Insight 50%, Performance Rp999.000, dan tanggal 5 Nov–5 Des 2026. Voucher berikutnya otomatis memakai aturan dan tanggal voucher terakhir.
+- [ ] Setiap paket bisa dicentang dengan potongan persen atau nominal. Di sampingnya tampil harga mulai dan harga setelah potongan.
+- [ ] Pratinjau kartu voucher (logo, nama brand, potongan, kode, masa berlaku) berubah mengikuti isian.
+- [ ] Setelah **Buat voucher**, voucher muncul di tab **Bisa dipakai** dengan tombol:
+  - **Salin kode**
+  - **Salin pesan WA:** pesan lengkap berisi kode, potongan, masa berlaku, cara pakai, dan tautan.
+  - **Unduh gambar:** PNG persegi untuk dikirim lewat WA.
+  - **Lihat halaman voucher**
+- [ ] Voucher yang belum dipakai bisa **Diubah** atau **Dibatalkan**. Voucher yang sudah terpasang di tagihan tidak bisa diubah atau dibatalkan.
+- [ ] Tab **Dipakai** menampilkan nama client, kode invoice, total, dan status (Dipasang di tagihan atau Terpakai setelah lunas).
+
+Halaman voucher (`/voucher/KODE`):
+- [ ] Menampilkan kartu voucher brand dan langkah cara pakai.
+- [ ] Pengunjung belum masuk melihat **Daftar & pakai voucher** dan **Sudah punya akun? Masuk**. Client yang sudah masuk melihat **Pakai voucher ini**. Ketiganya menyimpan kode dan menuju Tagihan.
+- [ ] Tautan voucher yang dibagikan di WA menampilkan gambar pratinjau voucher.
+- [ ] Halaman ini tidak diindeks Google. Voucher yang berakhir, dibatalkan, atau sudah dipakai menampilkan keterangannya.
+
+Klaim di Tagihan (client, hanya pesanan paket yang belum dibayar):
+- [ ] Ada kartu **Punya kode voucher?** (opsional). Kalau client datang dari halaman voucher, kodenya sudah terisi.
+- [ ] **Cek voucher** menampilkan logo dan nama brand, potongan, serta "Total jadi Rp… (sebelumnya Rp…)". Total belum berubah sebelum **Pakai voucher** diklik.
+- [ ] Setelah dipakai, invoice punya baris "Voucher KODE · Brand -Rp…". Total dan minimal DP 80% dihitung dari total baru. DP yang sudah dipilih ikut menyesuaikan dengan persentase yang sama.
+- [ ] Kalau paket sedang promo: muncul "Tagihan ini sedang memakai … Voucher tidak bisa digabung", lalu dua total berdampingan (**Dengan promo sekarang** dan **Dengan voucher**) dengan keterangan mana yang lebih hemat. Pilihannya **Lepas promo & pakai voucher** atau **Tetap pakai promo**. Promo add-on tetap berlaku.
+- [ ] **Lepas voucher** (selama bukti bayar belum diunggah) memulihkan harga dan promo semula. Setelah bukti bayar diunggah, voucher terkunci.
+- [ ] Ada pesan yang jelas untuk kode yang salah, voucher yang belum mulai atau sudah berakhir, voucher dibatalkan, voucher yang sudah dipakai, dan paket yang tidak termasuk ("Voucher … berlaku untuk paket …. Pesanan Anda paket …").
+- [ ] Kalau tagihan kedaluwarsa atau dibatalkan, voucher bisa dipakai lagi selama masih berlaku.
+
+Artikel:
+- [ ] Syarat & Ketentuan Promo Launching memuat bagian **Kewajiban brand penerima voucher**: brand wajib memberi testimoni yang ditampilkan di website beserta nama pemberinya, dan logo brand ditampilkan di landing page sebagai mitra SilentCX.
+- [ ] Menu **Artikel** di admin menampilkan 3 artikel promo dengan status **Terjadwal** (terbit 5 Nov 00.00 WIB):
+  - Promo Launching
+  - Syarat & Ketentuan Promo Launching
+  - Cara Klaim Voucher
+- [ ] **Pratinjau** membuka artikel di situs dengan keterangan "Pratinjau admin". Sebelum terbit, pengunjung biasa mendapat halaman tidak ditemukan.
+- [ ] **+ Tulis artikel** membuka editor dengan isian berikut:
+  - Judul, dengan alamat artikel otomatis.
+  - Kategori, ringkasan, dan gambar sampul.
+  - Isi, dengan tombol format (subjudul, tebal, daftar, langkah, tautan) dan tab **Pratinjau**.
+  - Tanggal terbit (kosong = sekarang, tanggal ke depan = terjadwal).
+  - **Tampilan di Google** (judul dan deskripsi beserta penghitung karakternya).
+  - **Tombol WhatsApp** (teks tombol dan pesan awal).
+- [ ] Artikel terbit tampil di `/artikel`, `/artikel/promo`, dan `/artikel/promo/alamat-artikel`, dengan artikel lain di kategori yang sama di bawahnya.
+- [ ] Artikel bisa dikembalikan ke draf. Draf bisa dihapus.
+- [ ] Kategori baru bisa ditambahkan di bagian **Kategori**, misalnya "Tips CX" menjadi `/artikel/tips-cx`.
+- [ ] Footer landing punya tautan **Artikel & promo**.
+
+Persiapan SEO:
+- [ ] `/sitemap.xml` memuat halaman publik dan semua artikel yang sudah terbit.
+- [ ] `/robots.txt` menutup dashboard, halaman masuk, dan voucher.
+- [ ] Setiap artikel punya judul dan deskripsi Google, URL kanonik, gambar share, serta data terstruktur Article dan Breadcrumb.
+
+Diuji otomatis: `tests/putaran15.test.ts` (19 tes) dan `tests/e2e/putaran15-voucher-artikel.mjs`.
+- **Tanpa `E2E_TULIS=1`:** skrip hanya membuka halaman.
+- **Dengan `E2E_TULIS=1`:** skrip membuat voucher uji "Kopi Uji E2E" lewat form admin, membuat pesanan uji PRJ-E2E15A/B untuk client demo, lalu menguji klaim, perbandingan promo, dan lepas voucher lewat browser. Skrip juga menulis dan menerbitkan artikel uji. Tidak ada bukti bayar yang diunggah. Voucher, pesanan, artikel, dan logo uji dihapus di akhir.
+
+## Putaran 16: instruksi shopper, peran CS, dan Konfirmasi WA
+
+Jalankan dulu `npm run db:migrate` (staging) lalu `npm run db:migrate:prod` (produksi). Migration `20261104000026_cs_role.sql` dan `20261104000027_instructions_cs_followups.sql` terpasang. Keduanya harus dijalankan berurutan; skrip migrasi sudah menjalankannya satu per satu. Tidak ada pengaturan tambahan.
+
+Instruksi shopper (admin):
+- [ ] Buka satu kuesioner di **Kuesioner**. Di bawah, ada kartu **Template instruksi shopper**.
+- [ ] **Buat dari isi kuesioner** mengisi draf berisi alur kunjungan (urutan bagian), foto wajib (check-in, struk, dan pertanyaan wajib foto), dan petunjuk pertanyaan. Beri nama (misalnya Dine-in), isi pembelian wajib kalau perlu, lalu **Tambah template**. Satu kuesioner bisa punya sampai 12 template.
+- [ ] Penanda `{outlet}`, `{kota}`, `{alamat}`, dan `{brand}` dijelaskan di kartu itu.
+- [ ] Di proyek, buka tab **Jadwal kunjungan**, lalu **+ Tugas kunjungan** di salah satu outlet. Ada pilihan **Template instruksi**: **Susun otomatis dari kuesioner** di urutan pertama, lalu template kuesioner proyek.
+- [ ] **Pakai template** mengisi **Instruksi untuk shopper** dan pembelian wajib. Nama, kota, dan alamat outlet terisi otomatis. Kalau instruksi sudah diisi, ada konfirmasi sebelum ditimpa.
+- [ ] Kalau client menulis catatan untuk outlet itu, catatannya tampil di form dan bisa **Disisipkan ke instruksi**.
+- [ ] Instruksi tiap outlet bisa berbeda (maksimal 4000 karakter). Di kartu tugas, instruksi tampil di **Instruksi untuk shopper** yang bisa dibuka.
+- [ ] Salinan kuesioner khusus proyek dan **Duplikat** ikut membawa template instruksinya.
+- [ ] Shopper melihat **Instruksi kunjungan** sebagai kotak tersendiri di brief tugas.
+
+Akun CS (admin):
+- [ ] **Akun** → tab **Tim CS**. Isi nama, email, dan nomor HP, lalu **Buat akun CS**.
+- [ ] Password sementara tampil sekali. **Salin info login** menyalin pesan berisi alamat masuk, email, dan password untuk dikirim ke CS.
+- [ ] Akun CS langsung aktif dan tampil di daftar Tim CS. Akun bisa ditangguhkan dan diaktifkan kembali dengan tombol yang sama seperti akun lain.
+- [ ] Pendaftaran publik tidak bisa menjadi CS.
+
+Area CS (`/cs`, masuk dengan akun CS):
+- [ ] Menu: **Client**, **Riwayat follow-up**, dan **Akun saya**. CS yang membuka `/admin` dialihkan kembali ke `/cs`. Tidak ada tombol live chat.
+- [ ] **Client** menampilkan semua akun pemilik bisnis dengan tab:
+  - **Perlu follow-up** (jadwal hari ini atau terlewat; terbuka otomatis kalau ada isinya)
+  - **Semua**
+  - **Belum pesan**
+  - **Ditinjau admin**
+  - **Menunggu bayar**
+  - **Verifikasi bayar**
+  - **Audit berjalan**
+  - **Laporan terbit**
+  - **Batal / kedaluwarsa**
+- [ ] Pencarian: nama, email, nomor HP, brand, atau kode proyek.
+- [ ] Tiap kartu client menampilkan:
+  - kontak
+  - tahap
+  - kode proyek, paket, dan jumlah outlet
+  - tagihan yang belum lunas beserta batas bayarnya
+  - follow-up terakhir (hasil, waktu, oleh siapa, berapa kali)
+  - jadwal berikutnya
+- [ ] **Follow-up WA** membuka template pesan sesuai tahap. Contohnya, client yang menunggu bayar mendapat pengingat dengan kode invoice, nominal, batas bayar, dan tautan Tagihan. Pesan bisa diubah, dan nomor tujuan bisa dipilih antara PIC dan pemilik akun.
+- [ ] **Buka WhatsApp** membuka WA di tab baru dan langsung mencatatnya. Setelah itu isi **Hasil** (Dibalas, Tertarik, dan lainnya), catatan, dan **Follow-up berikutnya**, lalu **Simpan hasil**. Client dengan jadwal hari ini masuk tab **Perlu follow-up**.
+- [ ] **Detail & outlet** menampilkan:
+  - data perusahaan
+  - semua pesanan beserta invoice
+  - outlet tiap pesanan: alamat, tautan Maps, catatan client, dan tanda kompetitor
+  - riwayat follow-up, termasuk isi pesan yang dikirim
+- [ ] **+ Catat manual** dipakai untuk telepon, email, atau WA di luar tombol.
+- [ ] **Ubah hasil** hanya tersedia untuk catatan sendiri.
+- [ ] **Riwayat follow-up** menampilkan catatan saya, dan bisa diganti ke seluruh tim atau staf tertentu. Konfirmasi proyek dari admin ikut tampil.
+- [ ] CS tidak bisa mengubah pesanan, pembayaran, atau data client.
+
+Konfirmasi WA (admin, halaman proyek):
+- [ ] Di bawah judul proyek ada tombol **Konfirmasi WA**. Pesannya sudah berisi:
+  - kode proyek
+  - paket dan jumlah outlet
+  - status
+  - daftar outlet beserta kota, alamat, dan tautan Maps
+- [ ] **Pesan dari admin** langsung tersisip ke pesan. Kalau tugas sudah dijadwalkan, ada pilihan **Sertakan jadwal kunjungan per outlet**. Isinya hanya rentang tanggal, tanpa data shopper.
+- [ ] **Buka WhatsApp** mencatat konfirmasi di riwayat follow-up client. Di samping tombol tampil "Terakhir dikonfirmasi … oleh …".
+- [ ] **Akun** → detail akun client menampilkan **Riwayat follow-up** dari CS dan admin.
+
+Uji otomatis:
+- [ ] `npx vitest run tests/putaran16.test.ts`: 18 tes, meliputi peran CS, daftar dan detail client, log follow-up, hak akses, template instruksi, batas 4000 karakter, draf dari kuesioner, dan isi pesan WA.
+- [ ] `node --env-file=.env.local tests/e2e/putaran16-cs-instruksi.mjs` (baca saja), lalu dengan `E2E_TULIS=1` untuk membuat akun CS, follow-up, template, Konfirmasi WA, dan tugas uji. Semua data uji dihapus di akhir.

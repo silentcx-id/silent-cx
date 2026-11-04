@@ -93,6 +93,21 @@ try {
   await a.page.getByRole("button", { name: "Tetapkan" }).click();
   await a.page.getByText("Kuesioner ditetapkan.").first().waitFor({ timeout: 30000 });
   check("admin menetapkan kuesioner", true);
+  // Sejak Putaran 13 tugas baru bisa ditawarkan setelah client menyetujui kuesioner. Alur persetujuannya diuji di
+  // putaran13-kuesioner-profil.mjs; di sini kiriman yang sudah disetujui dicatat langsung supaya alur Fase 3 bisa lanjut.
+  {
+    const { data: pq } = await admin.from("project_questionnaires").select("snapshot").eq("project_id", projectId).single();
+    const now = new Date().toISOString();
+    const { data: review, error: reviewErr } = await admin
+      .from("questionnaire_reviews")
+      .insert({ project_id: projectId, version: 1, snapshot: pq.snapshot, sent_at: now, due_at: new Date(Date.now() + 3 * 86400_000).toISOString(), status: "approved", decided_at: now })
+      .select("id")
+      .single();
+    if (reviewErr) throw new Error(`Gagal mencatat persetujuan kuesioner: ${reviewErr.message}`);
+    await admin.from("project_questionnaires").update({ review_id: review.id }).eq("project_id", projectId);
+    await a.page.reload({ waitUntil: "networkidle" });
+    check("kuesioner berstatus disetujui client", (await text(a.page)).includes("Disetujui client"));
+  }
   await a.page.getByRole("button", { name: "+ Tugas kunjungan" }).click();
   await a.page.getByRole("button", { name: "Buat tugas" }).click();
   await a.page.getByText("Tugas dibuat.").first().waitFor({ timeout: 30000 });
