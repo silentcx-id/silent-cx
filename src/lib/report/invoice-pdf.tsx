@@ -79,7 +79,10 @@ export function InvoiceDocument({ invoice, projectCode, billTo, payment }: Invoi
           </View>
           {invoice.invoice_lines.map((l) => (
             <View key={l.id} style={s.row} wrap={false}>
-              <Text style={[s.td, { flexGrow: 1, flexShrink: 1, paddingRight: 8 }]}>{l.label}</Text>
+              <View style={[s.td, { flexGrow: 1, flexShrink: 1, paddingRight: 8 }]}>
+                <Text>{l.label}</Text>
+                {!!l.details?.length && <Text style={{ fontSize: 8, color: C.muted, marginTop: 2 }}>{l.details.map((d) => `${d.label} ${rupiah(d.amount)}`).join(" · ")}</Text>}
+              </View>
               <Text style={[s.td, { width: 40, textAlign: "right" }]}>{l.quantity}</Text>
               <Text style={[s.td, { width: 110, textAlign: "right" }]}>{l.amount == null ? "Menunggu harga" : rupiah(l.amount)}</Text>
             </View>
@@ -88,12 +91,20 @@ export function InvoiceDocument({ invoice, projectCode, billTo, payment }: Invoi
             <Text style={{ color: C.muted }}>Total (sudah termasuk PPN)</Text>
             <Text style={{ fontFamily: "Bricolage", fontWeight: 800, fontSize: 20, color: C.ink, lineHeight: 1.1 }}>{rupiah(invoice.total)}</Text>
           </View>
+          {invoice.dp_amount != null && (
+            <View style={{ marginTop: 8, alignItems: "flex-end", gap: 2 }}>
+              <Text>
+                {invoice.status === "paid" ? "DP dibayar" : "DP dibayar sekarang"}: {rupiah(invoice.dp_amount)}
+              </Text>
+              <Text style={{ color: C.muted }}>Sisa pelunasan, ditagih saat laporan siap: {rupiah(invoice.total - invoice.dp_amount)}</Text>
+            </View>
+          )}
         </View>
 
         {invoice.status === "unpaid" && (payment.bank_name || payment.qris_url) && (
           <View style={{ marginTop: 32, borderWidth: 1, borderColor: C.gold, borderRadius: 8, padding: 14, backgroundColor: C.goldSoft }} wrap={false}>
             <Text style={s.eyebrow}>Cara bayar</Text>
-            <Text>Bayar tepat {rupiah(invoice.total)}, lalu unggah bukti di menu Tagihan pada dashboard SilentCX.</Text>
+            <Text>Bayar tepat {rupiah(invoice.dp_amount ?? invoice.total)}, lalu unggah bukti di menu Tagihan pada dashboard SilentCX.</Text>
             {payment.bank_name && (
               <Text style={{ marginTop: 4, fontWeight: 600 }}>
                 {payment.bank_name} {payment.account_number} a.n. {payment.account_holder}

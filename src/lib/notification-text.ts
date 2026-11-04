@@ -30,6 +30,7 @@ export type Notification = {
     version?: number;
     auto?: boolean;
     old_email?: string;
+    locked?: boolean;
     new_email?: string;
   };
   read_at: string | null;
@@ -62,7 +63,9 @@ export function notificationText(n: Notification, lang: Lang): string {
     case "task.rejected":
       return t.taskRejected(code, note);
     case "report.published":
-      return t.reportPublished(code);
+      return d.locked ? t.reportReadyLocked(code, rupiah(d.total ?? 0)) : t.reportPublished(code);
+    case "report.unlocked":
+      return t.reportUnlocked(code);
     case "payout.paid":
       return t.payoutPaid(code, rupiah(d.total ?? 0));
     case "payout.need_bank":
@@ -135,7 +138,8 @@ export function notificationLink(n: Notification, lang: Lang): { href: string; l
   const t = dict(lang).notifications;
   const d = n.detail;
   if (["task.offered", "task.revision", "task.approved", "task.rejected"].includes(n.kind) && d.task) return { href: `/shopper/assignments/${d.task}`, label: t.openTask };
-  if (n.kind === "report.published" && d.project) return { href: `/app/reports/${d.project}`, label: t.openReport };
+  if (n.kind === "report.published" && d.locked) return { href: "/app/billing", label: t.paySettlement };
+  if ((n.kind === "report.published" || n.kind === "report.unlocked") && d.project) return { href: `/app/reports/${d.project}`, label: t.openReport };
   if (n.kind === "payout.paid" || n.kind === "payout.proof_replaced") return { href: "/shopper/payments", label: t.openPayments };
   if (n.kind === "payout.need_bank") return { href: "/shopper/profile", label: t.openProfile };
   if (n.kind === "application.approved") return { href: "/shopper/profile", label: t.openProfile };

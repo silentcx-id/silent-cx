@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ReauditCard } from "./reaudit";
+import { ReportPreviewView } from "@/components/report-preview";
 import { ReportView } from "@/components/report-view";
 import { getCatalog } from "@/lib/catalog";
 import { displayPrice, withAddonPromo } from "@/lib/catalog-types";
@@ -10,6 +11,8 @@ import { dict } from "@/lib/i18n";
 import { getClientProjects, OPEN_STATUSES } from "@/lib/orders";
 import { getLang } from "@/lib/prefs";
 import { loadClientReport } from "@/lib/report/load";
+import { getReportPreview } from "@/lib/report/preview";
+import { date } from "@/lib/format";
 import { requireRole } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Laporan" };
@@ -19,7 +22,24 @@ export default async function ReportPage({ params }: PageProps<"/app/reports/[id
   const [viewer, lang] = await Promise.all([requireRole("client", `/app/reports/${id}`), getLang()]);
   const t = dict(lang).reports;
   const [report, projects, { addons, addonPromo }] = await Promise.all([loadClientReport(id), getClientProjects(viewer.id), getCatalog()]);
-  if (!report) notFound();
+  if (!report) {
+    // Laporan terbit tapi pelunasan belum lunas: hanya ringkasan.
+    const preview = await getReportPreview(id);
+    if (!preview) notFound();
+    return (
+      <>
+        <Link href="/app/reports" className="text-sm text-muted hover:text-fg">
+          ← {t.back}
+        </Link>
+        <section className="grid gap-1">
+          <span className="eyebrow">Laporan audit pengalaman pelanggan · {preview.code}</span>
+          <h1 className="text-[clamp(28px,4vw,40px)] font-extrabold leading-tight">{preview.company}</h1>
+          <p className="text-sm text-muted">{t.published(date(preview.published_at, lang))}</p>
+        </section>
+        <ReportPreviewView preview={preview} />
+      </>
+    );
+  }
 
   // Audit ulang: hanya setelah laporan terbit, untuk paket yang boleh memakainya.
   const project = projects.find((p) => p.id === id);

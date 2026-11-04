@@ -65,7 +65,8 @@ try {
     const pub = await ctx.newPage();
     await pub.goto(`${BASE}/`, { waitUntil: "networkidle" });
     const sec = pub.locator("section#addons");
-    const active = (await admin.from("addons").select("name").eq("active", true)).data ?? [];
+    // Kelebihan biaya pembelian tidak tampil di landing (ditagih setelah laporan terbit, Putaran 14).
+    const active = (await admin.from("addons").select("name").eq("active", true).neq("key", "excess_purchase")).data ?? [];
     check("landing: bagian Add-on tampil dengan semua add-on aktif", (await sec.count()) === 1 && (await sec.locator("li.card").count()) === active.length, `${await sec.locator("li.card").count()} dari ${active.length}`);
     check("landing: Audit ulang bertanda Dipesan setelah laporan terbit", (await sec.locator("li", { hasText: "Audit ulang" }).getByText("Dipesan setelah laporan terbit").count()) === 1);
     check("landing: keterangan paket yang berlaku", (await sec.getByText(/^Untuk paket /).count()) >= 1);

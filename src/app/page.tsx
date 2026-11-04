@@ -23,6 +23,6 @@ export default async function Home() {
   const [lang, content] = await Promise.all([getLang(), getPublishedContent()]);
   const catalog = isSupabaseConfigured ? await getCatalog() : null;
   const packages = catalog ? catalog.packages.filter((p) => p.active && p.prices.length > 0) : [];
-  const addons = catalog ? withAddonPromo(catalog.addons.filter((a) => a.active), catalog.addonPromo) : [];
+  const addons = catalog ? withAddonPromo(catalog.addons.filter((a) => a.active && a.key !== "excess_purchase"), catalog.addonPromo) : [];
   return <Landing content={content} packages={packages} addons={addons} lang={lang} />;
 }

@@ -172,6 +172,11 @@ export function Checkout({ packages, addons, cities, initialKey, lang }: { packa
                     <span className="grid min-w-0 gap-0.5">
                       <span className="font-semibold">{a.name}</span>
                       <span className="text-sm text-muted">{a.description}</span>
+                      {a.adds_outlets && !pkg.entitlements.includes("benchmarking") && (
+                        <span className="text-xs font-semibold text-mark" data-testid="benchmark-note">
+                          {t.benchmarkPerformanceOnly}
+                        </span>
+                      )}
                       <span className="text-sm tabular-nums">
                         {a.pricing === "quote" ? (
                           a.price ? t.addonQuoteFrom(rupiah(a.price)) : t.addonQuote
@@ -205,6 +210,9 @@ export function Checkout({ packages, addons, cities, initialKey, lang }: { packa
               );
             })}
           </ul>
+          <p className="text-xs text-muted" data-testid="excess-note">
+            {t.excessNote(rupiah(pkg.purchase_allowance))}
+          </p>
         </section>
 
         <section id="kota-outlet" className="grid scroll-mt-24 gap-3">

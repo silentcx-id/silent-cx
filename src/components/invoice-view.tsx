@@ -32,27 +32,32 @@ export function InvoiceView({ invoice, projectCode, lang, pdfHref }: { invoice: 
         </div>
         <InvoiceStatusChip status={invoice.status} lang={lang} />
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[420px] text-sm">
+      <div>
+        <table className="w-full table-fixed text-sm">
           <thead className="border-b border-line text-left text-xs uppercase tracking-wider text-muted">
             <tr>
               <th className="py-2 font-semibold">{t.item}</th>
-              <th className="py-2 text-right font-semibold">{t.amount}</th>
+              <th className="w-32 py-2 text-right font-semibold">{t.amount}</th>
             </tr>
           </thead>
           <tbody>
             {invoice.invoice_lines.map((l) => (
               <tr key={l.id} className="border-b border-line last:border-0">
-                <td className="py-2 pr-3">
+                <td className="break-words py-2 pr-3">
                   {l.label}
                   {l.quantity > 1 && <span className="text-muted"> × {l.quantity}</span>}
+                  {!!l.details?.length && (
+                    <span className="mt-1 block text-xs text-muted" data-testid="line-details">
+                      {l.details.map((d) => `${d.label} ${rupiah(d.amount)}`).join(" · ")}
+                    </span>
+                  )}
                 </td>
-                <td className="py-2 text-right tabular-nums">
+                <td className="whitespace-nowrap py-2 text-right align-top tabular-nums">
                   {l.amount == null ? (
                     <span className="text-muted">{t.pendingQuote}</span>
                   ) : (
                     <>
-                      {l.list_price != null && l.list_price * l.quantity !== l.amount && <s className="mr-2 text-xs text-muted">{rupiah(l.list_price * l.quantity)}</s>}
+                      {l.list_price != null && l.list_price * l.quantity !== l.amount && <s className="block text-xs text-muted">{rupiah(l.list_price * l.quantity)}</s>}
                       {rupiah(l.amount)}
                     </>
                   )}
@@ -68,6 +73,18 @@ export function InvoiceView({ invoice, projectCode, lang, pdfHref }: { invoice: 
         </span>
         <span className="font-display text-2xl font-extrabold tabular-nums">{rupiah(invoice.total)}</span>
       </div>
+      {invoice.dp_amount != null && (
+        <dl className="grid gap-1 rounded-lg border border-accent bg-accent/10 p-3 text-sm" data-testid="dp-summary">
+          <div className="flex justify-between gap-3">
+            <dt>{invoice.status === "paid" ? t.dpPaid : t.dpNow}</dt>
+            <dd className="font-semibold tabular-nums">{rupiah(invoice.dp_amount)}</dd>
+          </div>
+          <div className="flex justify-between gap-3 text-muted">
+            <dt>{t.settlementLater}</dt>
+            <dd className="tabular-nums">{rupiah(invoice.total - invoice.dp_amount)}</dd>
+          </div>
+        </dl>
+      )}
       {pdfHref && invoice.status !== "draft" && (
         <a href={pdfHref} className="btn btn-sm w-fit">
           {t.downloadPdf}

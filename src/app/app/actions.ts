@@ -11,7 +11,10 @@ const PATHS = ["/app", "/admin"];
 const orderSchema = z.object({
   package: z.string().regex(/^[a-z0-9_]{2,40}$/),
   cities: z.array(z.string().trim().min(2, "Isi kota setiap outlet.").max(80)).min(1).max(100),
-  addons: z.array(z.object({ key: z.string().regex(/^[a-z0-9_]{2,40}$/), qty: z.number().int().min(1).max(20) })).max(20),
+  // Kelebihan biaya pembelian tidak dipesan: ditagih otomatis setelah laporan terbit.
+  addons: z
+    .array(z.object({ key: z.string().regex(/^[a-z0-9_]{2,40}$/).refine((k) => k !== "excess_purchase", "Kelebihan biaya pembelian ditagih setelah laporan terbit."), qty: z.number().int().min(1).max(20) }))
+    .max(20),
 });
 
 // Pesanan dibuat dan harganya dihitung ulang di database.
@@ -214,6 +217,20 @@ export async function reviewQuestionnaire(raw: unknown) {
     async (r) => {
       const supabase = await createClient();
       check(await supabase.rpc("client_review_questionnaire", { p_project: r.projectId, p_approve: r.approve, p_flags: r.flags, p_additions: r.additions }));
+    },
+    PATHS,
+  );
+}
+
+// Cara bayar invoice pesanan paket: penuh (dp kosong) atau DP minimal 80%. Aturan diperiksa database.
+export async function setPaymentPlan(raw: unknown) {
+  await requireRole("client", "/app/billing");
+  return run(
+    z.object({ invoiceId: z.uuid(), dp: z.number().int().positive().nullable() }),
+    raw,
+    async ({ invoiceId, dp }) => {
+      const supabase = await createClient();
+      check(await supabase.rpc("client_set_payment_plan", { p_invoice: invoiceId, p_dp: dp }));
     },
     PATHS,
   );

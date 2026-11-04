@@ -8,14 +8,16 @@ export type InvoiceStatus = "draft" | "unpaid" | "verifying" | "paid" | "expired
 export type InvoiceLine = {
   id: string;
   position: number;
-  // promo = baris potongan (jumlah negatif), misalnya gratis 1 outlet.
-  kind: "package" | "addon" | "promo";
+  // promo = baris potongan (jumlah negatif), misalnya gratis 1 outlet; settlement = sisa pesanan yang dilunasi.
+  kind: "package" | "addon" | "promo" | "settlement";
   item_key: string;
   label: string;
   quantity: number;
   unit_price: number | null;
   amount: number | null;
   list_price: number | null;
+  // Rincian biaya dari admin, misalnya transportasi dan penginapan Tugas luar kota.
+  details?: { label: string; amount: number }[];
 };
 
 export type PaymentProof = {
@@ -38,8 +40,11 @@ export type Invoice = {
   paid_at: string | null;
   status_note: string | null;
   created_at: string;
-  // order = pesanan paket; excess = tagihan tambahan kelebihan pembelian (Fase 4); consultation = sesi konsultasi tambahan.
-  kind: "order" | "excess" | "consultation";
+  // order = pesanan paket; excess = tagihan tambahan kelebihan pembelian (Fase 4); consultation = sesi konsultasi tambahan;
+  // settlement = pelunasan setelah DP, ditagih saat laporan siap (Putaran 14).
+  kind: "order" | "excess" | "consultation" | "settlement";
+  // DP yang dipilih client untuk invoice pesanan; kosong = bayar penuh.
+  dp_amount?: number | null;
   invoice_lines: InvoiceLine[];
   payment_proofs: PaymentProof[];
 };
@@ -129,3 +134,8 @@ export function clientState(projects: Project[]) {
   const entitlements = [...new Set(projects.filter((p) => LIVE_STATUSES.includes(p.status)).flatMap((p) => p.entitlements))];
   return { open, live, current, lastClosed, stage, milestone, entitlements };
 }
+
+// Nominal yang dibayar sekarang: DP kalau dipilih, selain itu total.
+export const dueNow = (i: Pick<Invoice, "total" | "dp_amount">) => i.dp_amount ?? i.total;
+// DP minimal 80% dari total (sama dengan dp_minimum di database).
+export const dpMinimum = (total: number) => Math.ceil(total * 0.8);

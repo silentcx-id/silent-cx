@@ -16,6 +16,7 @@ export const EMAIL_KINDS: Record<string, string> = {
   "invoice.rejected": "Bukti pembayaran perlu diunggah ulang",
   "invoice.due_soon": "Pengingat: tagihan jatuh tempo",
   "report.published": "Laporan audit Anda sudah terbit",
+  "report.unlocked": "Laporan audit Anda sudah terbuka penuh",
   "questionnaire.review": "Kuesioner audit siap Anda tinjau",
   "questionnaire.reminder": "Pengingat: tinjau kuesioner audit Anda",
   "questionnaire.auto_approved": "Kuesioner audit disetujui otomatis",

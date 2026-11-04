@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PaymentPanel } from "./payment-panel";
+import { PaymentPlan } from "./payment-plan";
 import { InvoiceStatusChip, InvoiceView } from "@/components/invoice-view";
 import { getPaymentSettings } from "@/lib/catalog";
 import { dateTime, rupiah } from "@/lib/format";
 import { dict } from "@/lib/i18n";
-import { getClientProjects } from "@/lib/orders";
+import { dueNow, getClientProjects } from "@/lib/orders";
 import { getLang } from "@/lib/prefs";
 import { requireRole } from "@/lib/session";
 
@@ -21,10 +22,10 @@ export default async function BillingPage() {
   const current = withInvoice[0];
   const invoice = current ? order(current) : undefined;
   const rejected = invoice?.payment_proofs.find((p) => p.status === "rejected");
-  // Tagihan tambahan: kelebihan pembelian (terbit bersama laporan) dan konsultasi tambahan yang masih berjalan.
+  // Tagihan tambahan: pelunasan setelah DP dan kelebihan pembelian (terbit bersama laporan), serta konsultasi tambahan yang masih berjalan.
   const extras = projects.flatMap((p) =>
     p.invoices
-      .filter((i) => (i.kind === "excess" && i.status !== "cancelled") || (i.kind === "consultation" && ["unpaid", "verifying", "paid"].includes(i.status)))
+      .filter((i) => ((i.kind === "excess" || i.kind === "settlement") && i.status !== "cancelled") || (i.kind === "consultation" && ["unpaid", "verifying", "paid"].includes(i.status)))
       .map((i) => ({ invoice: i, code: p.code })),
   );
 
@@ -38,10 +39,10 @@ export default async function BillingPage() {
         <section key={x.id} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,420px)] xl:items-start">
           <div className="card grid gap-3 border-accent p-5">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-xl font-extrabold">{x.kind === "consultation" ? t.consultationTitle : t.excessTitle}</h2>
+              <h2 className="text-xl font-extrabold">{x.kind === "consultation" ? t.consultationTitle : x.kind === "settlement" ? t.settlementTitle : t.excessTitle}</h2>
               <InvoiceStatusChip status={x.status} lang={lang} />
             </div>
-            <p className="text-sm text-muted">{x.kind === "consultation" ? t.consultationLede : t.excessLede}</p>
+            <p className="text-sm text-muted">{x.kind === "consultation" ? t.consultationLede : x.kind === "settlement" ? t.settlementLede : t.excessLede}</p>
             {x.status === "unpaid" && (
               <>
                 {x.status_note && (
@@ -86,7 +87,9 @@ export default async function BillingPage() {
                     <strong>{rejected ? t.proofRejected : t.adminNote}</strong> {rejected?.review_note ?? invoice.status_note}
                   </p>
                 )}
-                <PaymentPanel invoiceId={invoice.id} total={invoice.total} settings={settings} lang={lang} />
+                {/* DP hanya untuk pesanan paket, bukan audit ulang. */}
+                {!current.parent_project_id && <PaymentPlan invoiceId={invoice.id} total={invoice.total} dp={invoice.dp_amount ?? null} lang={lang} />}
+                <PaymentPanel key={dueNow(invoice)} invoiceId={invoice.id} total={dueNow(invoice)} settings={settings} lang={lang} />
               </>
             )}
             {invoice.status === "verifying" && (

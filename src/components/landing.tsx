@@ -310,8 +310,9 @@ export function Landing({ content, packages, addons = [], lang, banner }: Props)
                       </span>
                     )}
                   </div>
-                  {(names.length > 0 || a.after_report) && (
+                  {(names.length > 0 || a.after_report || a.adds_outlets) && (
                     <div className="flex flex-wrap gap-2 text-xs">
+                      {a.adds_outlets && <span className="rounded-full border border-line px-2.5 py-0.5 text-muted">{L.addonBenchmark}</span>}
                       {names.length > 0 && <span className="rounded-full border border-line px-2.5 py-0.5 text-muted">{L.addonFor(names.join(", "))}</span>}
                       {a.after_report && <span className="rounded-full border border-accent/60 px-2.5 py-0.5 font-semibold text-mark">{L.addonAfterReport}</span>}
                     </div>

@@ -111,7 +111,8 @@ export function PaymentPanel({ invoiceId, total, settings, lang }: { invoiceId: 
         }}
       >
         <h2 className="text-xl font-extrabold">{t.uploadTitle}</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        {/* Dua kolom (metode, nominal) lalu nama pengirim selebar kartu, supaya isian tidak keluar dari kartu yang sempit. */}
+        <div className="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
           <div className="field">
             <label htmlFor="pay-method">{t.method}</label>
             <select id="pay-method" value={method} onChange={(e) => setMethod(e.target.value as "transfer" | "qris")}>
@@ -123,7 +124,7 @@ export function PaymentPanel({ invoiceId, total, settings, lang }: { invoiceId: 
             <label htmlFor="pay-amount">{t.paidAmount}</label>
             <input id="pay-amount" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))} required />
           </div>
-          <div className="field">
+          <div className="field sm:col-span-2">
             <label htmlFor="pay-payer">{t.payerName}</label>
             <input id="pay-payer" value={payer} maxLength={120} onChange={(e) => setPayer(e.target.value)} />
           </div>

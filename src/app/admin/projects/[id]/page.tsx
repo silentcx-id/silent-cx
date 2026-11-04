@@ -140,6 +140,7 @@ export default async function ProjectDetail({ params, searchParams }: PageProps<
   ]);
   const served = new Set((cities ?? []).map((c) => c.name.trim().toLowerCase()));
   const invoice = project.invoices[0];
+  const settlement = project.invoices.find((i) => i.kind === "settlement");
   // Invoice yang buktinya menunggu diperiksa: pesanan, atau tagihan tambahan setelah laporan terbit.
   const verifyingInvoice = project.invoices.find((i) => i.status === "verifying");
   const pendingProof = verifyingInvoice?.payment_proofs.find((p) => p.status === "pending");
@@ -194,7 +195,11 @@ export default async function ProjectDetail({ params, searchParams }: PageProps<
                     <li key={r}>{REASON[r] ?? r}</li>
                   ))}
                 </ul>
-                <ReviewForm projectId={project.id} pendingLines={invoice.invoice_lines.filter((l) => l.amount == null)} />
+                <ReviewForm
+                  projectId={project.id}
+                  pendingLines={invoice.invoice_lines.filter((l) => l.amount == null)}
+                  cities={project.project_outlets.filter((o) => !served.has(o.city.trim().toLowerCase())).map((o) => o.city)}
+                />
               </section>
             )}
 
@@ -214,6 +219,13 @@ export default async function ProjectDetail({ params, searchParams }: PageProps<
                 <Fact label="Data outlet" value={project.details_completed_at ? `Lengkap sejak ${dateTime(project.details_completed_at, "id")}` : "Belum ditandai lengkap"} />
                 <Fact label="Total pesanan" value={invoice ? rupiah(invoice.total) : "—"} />
                 <Fact label="Status invoice" value={invoice ? invoiceStatus[invoice.status] : "—"} />
+                {invoice && !project.parent_project_id && (
+                  <Fact
+                    label="Cara bayar"
+                    value={invoice.dp_amount != null ? `DP ${rupiah(invoice.dp_amount)} · sisa ${rupiah(invoice.total - invoice.dp_amount)} ditagih saat laporan siap` : "Bayar penuh"}
+                  />
+                )}
+                {settlement && <Fact label="Pelunasan" value={`${settlement.code} · ${rupiah(settlement.total)} · ${invoiceStatus[settlement.status]}`} />}
               </dl>
               {project.addons_snapshot.length > 0 && (
                 <ul className="flex flex-wrap gap-2">
@@ -364,7 +376,7 @@ function Fact({ label, value }: { label: string; value: string }) {
 function VerifyCard({ invoice, proof }: { invoice: Invoice; proof: PaymentProof }) {
   return (
     <section className="card grid gap-4 border-accent p-5">
-      <h2 className="text-xl font-extrabold">{invoice.kind === "excess" ? "Verifikasi tagihan tambahan" : invoice.kind === "consultation" ? "Verifikasi konsultasi tambahan" : "Verifikasi pembayaran"}</h2>
+      <h2 className="text-xl font-extrabold">{invoice.kind === "settlement" ? "Verifikasi pelunasan" : invoice.kind === "excess" ? "Verifikasi tagihan tambahan" : invoice.kind === "consultation" ? "Verifikasi konsultasi tambahan" : "Verifikasi pembayaran"}</h2>
       <dl className="grid gap-2 text-sm sm:grid-cols-2">
         <div>
           <dt className="text-muted">Tagihan</dt>

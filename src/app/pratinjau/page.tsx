@@ -13,7 +13,7 @@ export default async function PreviewPage() {
   await requireRole("admin", "/pratinjau");
   const [lang, { content }, catalog] = await Promise.all([getLang(), getAdminContent(), getCatalog()]);
   const packages = catalog.packages.filter((p) => p.active && p.prices.length > 0);
-  const addons = withAddonPromo(catalog.addons.filter((a) => a.active), catalog.addonPromo);
+  const addons = withAddonPromo(catalog.addons.filter((a) => a.active && a.key !== "excess_purchase"), catalog.addonPromo);
   const banner = (
     <div className="sticky top-0 z-30 flex flex-wrap items-center justify-center gap-3 border-b border-accent bg-accent px-4 py-2 text-sm font-semibold text-accent-ink">
       Pratinjau draf. Pengunjung belum melihat perubahan ini.

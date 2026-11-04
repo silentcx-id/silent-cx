@@ -834,3 +834,39 @@ Admin → Akun → Detail akun:
 - [ ] Ringkasan lamaran menampilkan hari dan jam berkunjung kalau sudah diisi.
 
 Diuji otomatis: `tests/putaran13.test.ts` (22 tes) dan `tests/e2e/putaran13-kuesioner-profil.mjs`. Tanpa `E2E_TULIS=1` skrip hanya membuka halaman. Dengan `E2E_TULIS=1` skrip membuat proyek uji sementara PRJ-E2E13 untuk client demo, menjalankan alur kirim, perbaikan, salin, versi 2, dan setuju lewat browser, mengubah hari berkunjung shopper demo lalu mengembalikannya, kemudian menghapus proyek uji dan salinan kuesionernya.
+
+## Putaran 14: DP dan pelunasan, laporan terkunci, rincian biaya luar kota
+
+Jalankan dulu `npm run db:migrate` (staging) lalu `npm run db:migrate:prod` (produksi). Migration `20261104000023_dp_settlement_quote_details.sql` terpasang. Tidak ada pengaturan email tambahan: email "Laporan audit Anda sudah terbuka penuh" lewat jalur email notifikasi yang sama.
+
+Cara bayar (client → Tagihan, hanya pesanan paket):
+- [ ] Invoice yang siap dibayar menampilkan kartu **Cara bayar** dengan pilihan **Bayar penuh** dan **Bayar DP**.
+- [ ] Bayar DP bisa diisi dengan **Persentase** atau **Nominal**. Di bawah 80% muncul "DP minimal 80% (Rp…)" dan tombol simpan tidak aktif.
+- [ ] Ringkasan "DP Rp… sekarang · Sisa Rp… saat laporan siap" berubah mengikuti isian.
+- [ ] Setelah disimpan, nominal yang harus dibayar di bagian Cara bayar dan di PDF invoice adalah nominal DP. Invoice menampilkan "DP dibayar sekarang" dan "Sisa pelunasan".
+- [ ] Cara bayar bisa diganti selama bukti bayar belum diunggah.
+- [ ] Audit ulang dan konsultasi tambahan tidak punya pilihan DP.
+- [ ] Admin → Proyek → Ringkasan menampilkan **Cara bayar** (penuh, atau DP dan sisanya) dan, setelah laporan terbit, **Pelunasan**.
+
+Pelunasan dan laporan terkunci:
+- [ ] Saat laporan diterbitkan, client DP mendapat tagihan **Pelunasan** tanpa batas waktu. Isinya sisa pesanan, ditambah kelebihan belanja shopper yang disetujui saat QC (tidak ada tagihan kelebihan terpisah).
+- [ ] Notifikasi dan email: "Laporan audit … sudah siap. Ringkasannya bisa Anda lihat sekarang; laporan lengkap terbuka setelah pelunasan Rp… diverifikasi." Tombolnya membuka Tagihan.
+- [ ] Halaman laporan sebelum lunas hanya berisi skor keseluruhan, skor per outlet, dan 3 temuan teratas (yang paling berat lebih dulu). Bagian lain tampil terkunci, dan tidak ada tombol unduh PDF.
+- [ ] Alamat PDF laporan ditolak sebelum lunas. Menu Benchmark outlet dan Benchmark kompetitor juga belum menampilkan laporan ini.
+- [ ] Daftar Laporan menandai laporan itu **Menunggu pelunasan**.
+- [ ] Bukti pelunasan diverifikasi admin seperti biasa (judulnya "Verifikasi pelunasan"), dan masuk email admin bukti bayar.
+- [ ] Setelah diverifikasi, laporan langsung terbuka penuh termasuk PDF. Client mendapat notifikasi dan email "Laporan audit Anda sudah terbuka penuh".
+- [ ] Client bayar penuh: laporan langsung terbuka penuh. Kelebihan belanja tetap ditagih terpisah seperti sebelumnya.
+
+Rincian biaya add-on tanpa harga pasti (Admin → Proyek → Ringkasan → Tinjau pesanan):
+- [ ] Tugas luar kota langsung memakai rincian per outlet, dengan nama kota outlet yang di luar kota dilayani. Isian awalnya Transportasi, Penginapan, Uang makan; ada **+ Tambah rincian** dan pilihan cepat Lain-lain.
+- [ ] Total per outlet dan total semua outlet terhitung otomatis.
+- [ ] Add-on tanpa harga pasti lain bisa diisi harga saja, atau dicentang **Isi rincian biaya**.
+- [ ] Setelah disetujui, invoice client dan PDF-nya menampilkan "Tugas luar kota · Medan Rp700.000" dengan rincian "Transportasi Rp250.000 · Penginapan Rp350.000 · Uang makan Rp100.000".
+
+Checkout dan landing:
+- [ ] **Kelebihan biaya pembelian** tidak muncul lagi di checkout maupun bagian Add-on landing. Di bawah daftar add-on checkout ada keterangan bahwa pembelian di atas batas paket ditagih setelah laporan terbit (bagi yang DP, digabung ke pelunasan).
+- [ ] Add-on **Outlet tambahan** pada paket Essential dan Insight menampilkan "Benchmark antar-outlet tersedia di paket Performance". Di paket Performance keterangan ini tidak muncul.
+- [ ] Bagian Add-on di landing menampilkan label "Benchmark antar-outlet hanya di paket Performance" di Outlet tambahan.
+
+Diuji otomatis: `tests/putaran14.test.ts` (13 tes) dan `tests/e2e/putaran14-dp-pelunasan.mjs`. Tanpa `E2E_TULIS=1` skrip hanya membuka checkout dan landing. Dengan `E2E_TULIS=1` skrip membuat pesanan uji sementara PRJ-E2E14A/B/C untuk client demo, lalu menguji rincian luar kota, pilihan DP, dan laporan terkunci lewat browser. Tidak ada bukti bayar yang diunggah, dan semua pesanan uji dihapus di akhir.

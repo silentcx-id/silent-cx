@@ -12,7 +12,16 @@ const note = z.string().trim().max(500).optional();
 export async function reviewOrder(raw: unknown) {
   await requireRole("admin", "/admin/projects");
   return run(
-    z.object({ projectId: z.uuid(), approve: z.boolean(), note, prices: z.record(z.uuid(), z.coerce.number().int().min(0)).default({}) }),
+    z.object({ projectId: z.uuid(), approve: z.boolean(), note, // Harga: angka, atau rincian per unit { groups: [{ name, items: [{ label, amount }] }] } (diperiksa database).
+      prices: z
+        .record(
+          z.uuid(),
+          z.union([
+            z.coerce.number().int().min(0),
+            z.object({ groups: z.array(z.object({ name: z.string().trim().max(60), items: z.array(z.object({ label: z.string().trim().max(60), amount: z.number().int().min(0) })).max(10) })).max(20) }),
+          ]),
+        )
+        .default({}), }),
     raw,
     async ({ projectId, approve, note, prices }) => {
       const supabase = await createClient();

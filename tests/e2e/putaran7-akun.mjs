@@ -36,7 +36,14 @@ async function context(browser, viewport = { width: 1280, height: 900 }) {
   return { ctx, page, errors };
 }
 async function link(type, email) {
-  const { data, error } = await admin.auth.admin.generateLink({ type, email });
+  // Koneksi ke Supabase kadang putus sesaat: coba sampai 4 kali.
+  let res;
+  for (let i = 0; i < 4; i++) {
+    res = await admin.auth.admin.generateLink({ type, email }).catch((e) => ({ data: null, error: e }));
+    if (!res.error) break;
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+  const { data, error } = res;
   if (error) throw new Error(`${email}: ${error.message}`);
   return `${BASE}/auth/callback?token_hash=${data.properties.hashed_token}&type=${type}`;
 }

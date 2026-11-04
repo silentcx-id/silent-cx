@@ -34,7 +34,7 @@ export default async function PackagesPage({ searchParams }: PageProps<"/app/pak
       ) : (
         <Checkout
           packages={usable}
-          addons={withAddonPromo(addons.filter((a) => a.active && !a.after_report), addonPromo)}
+          addons={withAddonPromo(addons.filter((a) => a.active && !a.after_report && a.key !== "excess_purchase"), addonPromo)}
           cities={cities.filter((c) => c.active)}
           initialKey={typeof params.paket === "string" ? params.paket : undefined}
           lang={lang}
