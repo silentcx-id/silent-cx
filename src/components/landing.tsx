@@ -602,7 +602,7 @@ function FloatingWa({ href, label }: { href: string; label: string }) {
       rel="noreferrer"
       aria-label={label}
       data-testid="wa-melayang"
-      className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-[#25D366] p-3.5 font-bold text-[#06280f] shadow-[0_12px_30px_-8px_rgba(37,211,102,0.65)] transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366] sm:bottom-6 sm:right-6 sm:py-3 sm:pl-3.5 sm:pr-5"
+      className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-accent p-3.5 font-bold text-accent-ink shadow-[0_12px_30px_-8px_rgba(229,169,60,0.65)] transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:bottom-6 sm:right-6 sm:py-3 sm:pl-3.5 sm:pr-5"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true" className="size-6 shrink-0" fill="currentColor">
         <path d={WA_PATH} />

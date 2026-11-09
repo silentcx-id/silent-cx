@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Familjen_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Space_Grotesk, Familjen_Grotesk, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "@/components/toaster";
 import { getLang } from "@/lib/prefs";
 import "./globals.css";
 
-const display = Bricolage_Grotesque({ subsets: ["latin"], weight: ["500", "800"], variable: "--font-bricolage" });
+const display = Space_Grotesk({ subsets: ["latin"], weight: ["500", "700"], variable: "--font-space" });
 const body = Familjen_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-familjen" });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "600"], variable: "--font-jetbrains" });
 

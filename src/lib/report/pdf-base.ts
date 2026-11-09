@@ -14,10 +14,10 @@ Font.register({
   ],
 });
 Font.register({
-  family: "Bricolage",
+  family: "SpaceGrotesk",
   fonts: [
-    { src: path.join(ASSETS, "bricolage-grotesque-latin-500-normal.woff"), fontWeight: 500 },
-    { src: path.join(ASSETS, "bricolage-grotesque-latin-800-normal.woff"), fontWeight: 800 },
+    { src: path.join(ASSETS, "space-grotesk-500.ttf"), fontWeight: 500 },
+    { src: path.join(ASSETS, "space-grotesk-700.ttf"), fontWeight: 700 },
   ],
 });
 // Gambar lokal dibaca sebagai data URI: path Windows (C:\…) dikira alamat web oleh react-pdf.

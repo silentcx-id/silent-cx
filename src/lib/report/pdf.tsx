@@ -21,8 +21,8 @@ const s = StyleSheet.create({
   page: { fontFamily: "Familjen", fontSize: 10, color: C.text, paddingTop: 48, paddingBottom: 56, paddingHorizontal: 48, lineHeight: 1.45 },
   tape: { position: "absolute", top: 0, left: 0, right: 0, height: 8, backgroundColor: C.gold },
   footer: { position: "absolute", bottom: 24, left: 48, right: 48, fontSize: 8, color: C.muted },
-  h1: { fontFamily: "Bricolage", fontWeight: 800, fontSize: 30, color: C.ink, lineHeight: 1.05 },
-  h2: { fontFamily: "Bricolage", fontWeight: 800, fontSize: 16, color: C.ink, marginBottom: 8 },
+  h1: { fontFamily: "SpaceGrotesk", fontWeight: 700, fontSize: 30, color: C.ink, lineHeight: 1.05 },
+  h2: { fontFamily: "SpaceGrotesk", fontWeight: 700, fontSize: 16, color: C.ink, marginBottom: 8 },
   eyebrow: { fontSize: 8, letterSpacing: 1.5, color: C.muted, textTransform: "uppercase", marginBottom: 4 },
   section: { marginBottom: 22 },
   muted: { color: C.muted },
@@ -142,7 +142,7 @@ export function ReportDocument({ data, draft = false }: { data: ReportData; draf
         <View style={[s.row, { marginTop: 48, gap: 16 }]}>
           <View style={[s.card, { width: 190, backgroundColor: C.ink, borderColor: C.ink }]}>
             <Text style={[s.eyebrow, { color: "#9AA0AB" }]}>Skor CX keseluruhan</Text>
-            <Text style={{ fontFamily: "Bricolage", fontWeight: 800, fontSize: 54, color: C.gold, lineHeight: 1 }}>{fmtScore(data.score)}</Text>
+            <Text style={{ fontFamily: "SpaceGrotesk", fontWeight: 700, fontSize: 54, color: C.gold, lineHeight: 1 }}>{fmtScore(data.score)}</Text>
             <Text style={{ color: "#FFFFFF", marginTop: 4, fontWeight: 600 }}>{scoreBand(data.score)}</Text>
           </View>
           <View style={[s.card, { flexGrow: 1 }]}>
@@ -212,7 +212,7 @@ export function ReportDocument({ data, draft = false }: { data: ReportData; draf
               <>
                 <View style={[s.row, { alignItems: "center", marginBottom: 8 }]}>
                   <Bar value={sop.score} />
-                  <Text style={{ width: 70, textAlign: "right", fontFamily: "Bricolage", fontWeight: 800, fontSize: 16, color: tone(sop.score) }}>{fmtScore(sop.score)}%</Text>
+                  <Text style={{ width: 70, textAlign: "right", fontFamily: "SpaceGrotesk", fontWeight: 700, fontSize: 16, color: tone(sop.score) }}>{fmtScore(sop.score)}%</Text>
                 </View>
                 <Text style={[s.muted, { marginBottom: 6 }]}>
                   {sop.yes} patuh · {sop.no} tidak patuh dari {sop.yes + sop.no} pemeriksaan
@@ -367,7 +367,7 @@ export function ReportDocument({ data, draft = false }: { data: ReportData; draf
           items={data.recommendations}
           render={(r, i) => (
             <View key={i} style={[s.row, { marginBottom: 7, gap: 10 }]} wrap={false}>
-              <Text style={{ fontFamily: "Bricolage", fontWeight: 800, color: C.gold, width: 16 }}>{i + 1}</Text>
+              <Text style={{ fontFamily: "SpaceGrotesk", fontWeight: 700, color: C.gold, width: 16 }}>{i + 1}</Text>
               <Text style={{ flexGrow: 1, flexShrink: 1 }}>{r.text}</Text>
               <Text style={[s.chip, { backgroundColor: C.goldSoft, color: C.ink }]}>{PRIORITY_LABEL[r.priority]}</Text>
             </View>

@@ -49,7 +49,7 @@
   --color-good: var(--good);
   --color-warn: var(--warn);
   --color-bad: var(--bad);
-  --font-display: var(--font-bricolage), "Arial Narrow", system-ui, sans-serif;
+  --font-display: var(--font-space), system-ui, sans-serif;
   --font-sans: var(--font-familjen), "Segoe UI", system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, Consolas, monospace;
 }

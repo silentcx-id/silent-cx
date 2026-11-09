@@ -43,7 +43,7 @@ export function InvoiceDocument({ invoice, projectCode, billTo, payment }: Invoi
           {/* eslint-disable-next-line jsx-a11y/alt-text -- Image react-pdf tidak punya prop alt */}
           <Image src={LOGO} style={{ width: 130 }} />
           <View style={{ alignItems: "flex-end" }}>
-            <Text style={{ fontFamily: "Bricolage", fontWeight: 800, fontSize: 26, color: C.ink, lineHeight: 1.1, marginBottom: 2 }}>INVOICE</Text>
+            <Text style={{ fontFamily: "SpaceGrotesk", fontWeight: 700, fontSize: 26, color: C.ink, lineHeight: 1.1, marginBottom: 2 }}>INVOICE</Text>
             <Text style={{ color: C.muted }}>{invoice.code}</Text>
             <Text style={{ marginTop: 4, fontWeight: 600, color: invoice.status === "paid" ? C.good : invoice.status === "unpaid" ? C.warn : C.muted }}>{STATUS[invoice.status]}</Text>
           </View>
@@ -89,7 +89,7 @@ export function InvoiceDocument({ invoice, projectCode, billTo, payment }: Invoi
           ))}
           <View style={[s.row, { justifyContent: "flex-end", marginTop: 12, alignItems: "baseline", gap: 16 }]}>
             <Text style={{ color: C.muted }}>Total</Text>
-            <Text style={{ fontFamily: "Bricolage", fontWeight: 800, fontSize: 20, color: C.ink, lineHeight: 1.1 }}>{rupiah(invoice.total)}</Text>
+            <Text style={{ fontFamily: "SpaceGrotesk", fontWeight: 700, fontSize: 20, color: C.ink, lineHeight: 1.1 }}>{rupiah(invoice.total)}</Text>
           </View>
           {invoice.dp_amount != null && (
             <View style={{ marginTop: 8, alignItems: "flex-end", gap: 2 }}>
