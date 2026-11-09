@@ -13,8 +13,6 @@ export type Package = {
   features: string[];
   visits: number;
   purchase_allowance: number;
-  // Durasi sesi konsultasi gratis yang termasuk paket (menit); 0 = tidak termasuk.
-  consultation_minutes: number;
   entitlements: string[];
   recommended: boolean;
   active: boolean;

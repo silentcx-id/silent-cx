@@ -5,7 +5,7 @@
 export type FeatureCoverage =
   // Bagian laporan: `text` harus muncul di HTML laporan web (PDF memuat bagian yang sama).
   | { kind: "report"; text: string }
-  // Lingkup layanan atau proses: jumlah outlet/kunjungan, konsultasi, biaya pembelian, PDF.
+  // Lingkup layanan atau proses: jumlah outlet/kunjungan, biaya pembelian, PDF.
   | { kind: "service"; where: string };
 
 const report = (text: string): FeatureCoverage => ({ kind: "report", text });
@@ -28,7 +28,6 @@ export const FEATURE_COVERAGE: Record<string, FeatureCoverage> = {
   "3–5 temuan utama": report("Temuan utama"),
   "Rekomendasi cepat": report("Rekomendasi"),
   "Laporan audit PDF": service("Tombol Unduh PDF di halaman laporan"),
-  "Debrief hasil 15 menit": service("Sesi konsultasi gratis setelah laporan terbit"),
   "Biaya pembelian hingga Rp50.000 per kunjungan": service("Batas reimburse pembelian shopper"),
   "Semua area penilaian Essential": report("Skor per area penilaian"),
   "Pemeriksaan kepatuhan SOP": report("Kepatuhan SOP"),
@@ -41,8 +40,6 @@ export const FEATURE_COVERAGE: Record<string, FeatureCoverage> = {
   "Rekomendasi yang bisa dijalankan": report("Rekomendasi"),
   "Ringkasan manajemen": report("Ringkasan manajemen"),
   "Laporan audit lengkap": report("Skor 0–100"),
-  "Konsultasi 30 menit": service("Sesi konsultasi gratis setelah laporan terbit"),
-  "Konsultasi 60 menit": service("Sesi konsultasi gratis setelah laporan terbit; review manajemen dilakukan di sesi ini"),
   "Semua fitur Insight": report("Kepatuhan SOP"),
   "Audit multi-outlet": report("Peringkat outlet"),
   "Perbandingan antar cabang": report("Peringkat outlet"),

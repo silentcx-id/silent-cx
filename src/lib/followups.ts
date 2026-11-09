@@ -89,7 +89,7 @@ export function followupTemplates(stage: ClientStage, c: FollowupContext): Messa
 
   if (stage === "new") {
     add("welcome", "Sapa client baru", `${hi} Terima kasih sudah mendaftar. Ada yang bisa kami bantu untuk memilih paket audit mystery shopping yang pas untuk ${brand}?\n\nDaftar paket: ${c.origin}/app/paket`);
-    add("promo", "Tawarkan konsultasi", `${hi} Kami bisa bantu jelaskan cara kerja audit mystery shopping dan contoh laporannya untuk ${brand}. Kapan waktu yang nyaman untuk ngobrol sebentar?\n\nContoh laporan: ${c.origin}/contoh-laporan`);
+    add("promo", "Tawarkan penjelasan", `${hi} Kami bisa bantu jelaskan cara kerja audit mystery shopping dan contoh laporannya untuk ${brand}. Kapan waktu yang nyaman untuk ngobrol sebentar?\n\nContoh laporan: ${c.origin}/contoh-laporan`);
   }
   if (stage === "review") {
     add("review", "Pesanan sedang ditinjau", `${hi} Pesanan${order} untuk ${brand} sedang kami tinjau. Kami kabari begitu tagihannya siap dibayar. Ada yang ingin ditanyakan?`);
@@ -105,7 +105,7 @@ export function followupTemplates(stage: ClientStage, c: FollowupContext): Messa
     add("running", "Cek data outlet", `${hi} Audit${order} untuk ${brand} sedang berjalan. Mohon pastikan data outlet sudah lengkap di ${c.origin}/app/outlets supaya kunjungan bisa dijadwalkan.`);
   }
   if (stage === "done") {
-    add("done", "Tindak lanjut laporan", `${hi} Laporan audit${order} untuk ${brand} sudah terbit di ${c.origin}/app/reports. Ingin dijadwalkan konsultasi untuk membahas hasilnya, atau audit ulang untuk melihat perkembangannya?`);
+    add("done", "Tindak lanjut laporan", `${hi} Laporan audit${order} untuk ${brand} sudah terbit di ${c.origin}/app/reports. Kalau ada yang ingin ditanyakan tentang hasilnya, balas pesan ini ya. Kami juga bisa jadwalkan audit ulang untuk melihat perkembangannya.`);
   }
   if (stage === "lapsed") {
     add("lapsed", "Ajak pesan ulang", `${hi} Pesanan${order} untuk ${brand} sudah tidak aktif. Kalau masih berminat, kami bantu buatkan pesanan baru: ${c.origin}/app/paket`);

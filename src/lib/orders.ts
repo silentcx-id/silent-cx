@@ -40,7 +40,7 @@ export type Invoice = {
   paid_at: string | null;
   status_note: string | null;
   created_at: string;
-  // order = pesanan paket; excess = tagihan tambahan kelebihan pembelian (Fase 4); consultation = sesi konsultasi tambahan;
+  // order = pesanan paket; excess = tagihan tambahan kelebihan pembelian (Fase 4); consultation = sesi konsultasi tambahan (fitur sudah dihapus, tersisa untuk data lama);
   // settlement = pelunasan setelah DP, ditagih saat laporan siap (Putaran 14).
   kind: "order" | "excess" | "consultation" | "settlement";
   // DP yang dipilih client untuk invoice pesanan; kosong = bayar penuh.

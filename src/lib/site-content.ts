@@ -212,11 +212,6 @@ export const DEFAULT_CONTENT: SiteContent = {
           "chart",
         ),
         item(
-          tx("Konsultasi", "Consultation"),
-          tx("Bahas hasil laporan langsung dengan tim SilentCX: 30 menit di paket Insight, 60 menit di Performance.", "Discuss your report directly with the SilentCX team: 30 minutes with Insight, 60 minutes with Performance."),
-          "users",
-        ),
-        item(
           tx("Live chat Sisca", "Live chat with Sisca"),
           tx("Tanya apa saja seputar pesanan, kunjungan, atau laporan langsung dari dashboard, dibalas oleh Sisca.", "Ask anything about your order, visits, or report right from your dashboard, answered by Sisca."),
           "message",

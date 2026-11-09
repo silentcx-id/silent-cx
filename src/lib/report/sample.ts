@@ -115,7 +115,7 @@ export const insightSample: ReportData = {
   ...essentialSample,
   code: "PRJ-0014",
   packageName: "SilentCX Insight",
-  entitlements: ["report_basic", "report_detailed", "sop", "evidence", "consultation"],
+  entitlements: ["report_basic", "report_detailed", "sop", "evidence"],
   summary:
     "Cafe 123 Cabang A unggul di sapaan dan ketepatan pesanan, tetapi kepatuhan SOP baru 67%: staf tidak mengulang pesanan dan tidak menawarkan menu tambahan. Di customer journey, tahap Menunggu pesanan paling lemah karena waktu saji 19 menit. Gap terbesar ada di Upselling dan closing (29 poin di bawah target) dan Kecepatan pelayanan (27 poin). Prioritas: pembagian peran kasir–barista di jam ramai dan naskah upselling satu kalimat.",
   sop: {
@@ -240,7 +240,7 @@ export const performanceSample: ReportData = {
   ...insightSample,
   code: "PRJ-0013",
   packageName: "SilentCX Performance",
-  entitlements: ["report_basic", "report_detailed", "sop", "evidence", "consultation", "multi_outlet", "benchmarking", "competitor"],
+  entitlements: ["report_basic", "report_detailed", "sop", "evidence", "multi_outlet", "benchmarking", "competitor"],
   outletCount: 3,
   visitCount: 4,
   score: 72.8,

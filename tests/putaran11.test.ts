@@ -38,7 +38,7 @@ beforeAll(async () => {
 
 describe("landing: Fitur platform, Bisnis yang kami layani, Mitra kami", () => {
   it("tiga bagian baru ada dengan isi bawaan; dokumen lama mendapatkannya di posisi bawaan", () => {
-    expect(DEFAULT_CONTENT.sections.features.items.map((x) => x.title.id)).toEqual(["Check-in GPS dan bukti foto", "Benchmark outlet", "Konsultasi", "Live chat Sisca"]);
+    expect(DEFAULT_CONTENT.sections.features.items.map((x) => x.title.id)).toEqual(["Check-in GPS dan bukti foto", "Benchmark outlet", "Live chat Sisca"]);
     expect(DEFAULT_CONTENT.sections.industries.items).toHaveLength(8);
     expect(DEFAULT_CONTENT.sections.partners.items).toHaveLength(0);
     const c = normalizeContent({ order: ["hero", "audited", "why", "testimonials", "faq"], sections: {} });

@@ -1038,3 +1038,34 @@ Tombol WhatsApp:
 - [ ] Tanpa nomor WhatsApp, tombol tidak tampil.
 
 Uji otomatis: `npx vitest run tests/putaran17.test.ts` dan `node --env-file=.env.local tests/e2e/putaran17-harga-wa.mjs` (tambah `E2E_TULIS=1` untuk voucher, instruksi client, dan tugas shopper uji).
+
+## Putaran 18: fitur konsultasi dihapus
+
+Jalankan dulu `npm run db:migrate` (staging), uji, lalu `npm run db:migrate:prod` (produksi) **sebelum** deploy. Migration `20261109000029_remove_consultation.sql`. Tanpa migration ini, paket di landing masih menjanjikan konsultasi padahal menunya sudah tidak ada.
+
+Yang diubah migration:
+- Paket: jatah sesi konsultasi dihapus (Insight 30 menit, Performance 60 menit), begitu juga teks fitur "Konsultasi 30 menit" dan "Konsultasi 60 menit". Paket hanya berisi kunjungan dan laporan.
+- Add-on **Konsultasi tambahan** nonaktif. Client tidak bisa membeli sesi tambahan.
+- Laporan yang terbit tidak lagi memberi jatah sesi.
+- Kartu fitur **Konsultasi** dihapus dari Konten landing (draft dan versi terbit).
+- Artikel promo dan S&K tidak lagi menyebut konsultasi.
+- Tabel konsultasi tidak dihapus. Datanya tetap ada sebagai riwayat, dan fiturnya bisa dipasang lagi kalau diperlukan.
+
+Landing dan artikel:
+- [ ] Bagian **Fitur platform**: tiga kartu (Check-in GPS dan bukti foto, Benchmark outlet, Live chat Sisca), tanpa Konsultasi.
+- [ ] Bagian **Paket**: tidak ada "Konsultasi 30 menit" atau "Konsultasi 60 menit".
+- [ ] Bagian **Add-on**: tidak ada Konsultasi tambahan.
+- [ ] Artikel Promo launching dan S&K: tidak menyebut konsultasi.
+
+Client:
+- [ ] Menu **Konsultasi** tidak ada. Membuka `/app/consultation` menampilkan halaman 404.
+- [ ] **Pilih paket** dan **Tagihan**: tidak ada konsultasi.
+- [ ] Tahap terakhir perjalanan client: "Perbaikan atau audit ulang".
+
+Admin:
+- [ ] Menu **Konsultasi** tidak ada. `/admin/consultations` menampilkan halaman 404.
+- [ ] **Antrian kerja**: enam kartu, tanpa "Konsultasi tanpa link meeting".
+- [ ] **Katalog** → Paket: tidak ada pilihan "Konsultasi gratis setelah laporan terbit". Katalog → Add-on: Konsultasi tambahan berstatus **Nonaktif**.
+- [ ] CS → template WA: "Tawarkan penjelasan" (sebelumnya "Tawarkan konsultasi"). "Tindak lanjut laporan" mengajak bertanya lewat WA atau audit ulang.
+
+Uji otomatis: `npx vitest run tests/putaran18.test.ts` dan `node --env-file=.env.local tests/e2e/putaran18-tanpa-konsultasi.mjs` (hanya membuka halaman, tidak menulis data).

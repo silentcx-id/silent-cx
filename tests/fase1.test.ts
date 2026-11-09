@@ -53,7 +53,8 @@ describe("katalog", () => {
     expect(pk.rows.map((r) => r.key)).toEqual(["essential", "insight", "performance"]);
     const prices = await t.as<{ n: number }>(null, "select count(*)::int as n from public.package_prices");
     expect(prices.rows[0].n).toBe(5);
-    expect((await t.as(null, "select key from public.addons")).rows).toHaveLength(9);
+    // Konsultasi tambahan nonaktif sejak Putaran 18.
+    expect((await t.as(null, "select key from public.addons")).rows).toHaveLength(8);
   });
 
   it("paket nonaktif tersembunyi dari publik tapi terlihat admin", async () => {

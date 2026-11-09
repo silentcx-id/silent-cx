@@ -19,8 +19,17 @@ const check = (name, ok, info = "") => {
 const shot = (page, name) => page.screenshot({ path: new URL(`siap-${name}.png`, OUT).pathname.slice(1), fullPage: true });
 
 async function loginAs(browser, email, viewport) {
-  const { data, error } = await admin.auth.admin.generateLink({ type: "magiclink", email });
-  if (error) throw new Error(`${email}: ${error.message}`);
+  // Koneksi ke Supabase kadang putus sesaat (fetch failed): coba ulang sampai 4 kali.
+  let data;
+  for (let i = 0; ; i++) {
+    const r = await admin.auth.admin.generateLink({ type: "magiclink", email }).catch((e) => ({ error: e }));
+    if (!r.error) {
+      data = r.data;
+      break;
+    }
+    if (i >= 3) throw new Error(`${email}: ${r.error.message}`);
+    await new Promise((res) => setTimeout(res, 3000));
+  }
   const ctx = await browser.newContext({ viewport });
   ctx.setDefaultTimeout(60000);
   const page = await ctx.newPage();
@@ -98,11 +107,11 @@ try {
     await s.ctx.close();
   }
 
-  // 4. Admin: Katalog punya pilihan durasi konsultasi; halaman detail punya judul utama.
+  // 4. Admin: Katalog tanpa pilihan konsultasi (dihapus di Putaran 18); halaman detail punya judul utama.
   {
     const s = await loginAs(browser, "admin@silentcx.demo", { width: 1280, height: 900 });
     await s.page.goto(`${BASE}/admin/catalog?tab=paket`, { waitUntil: "networkidle" });
-    check("form paket punya pilihan konsultasi gratis", (await s.page.getByLabel("Konsultasi gratis setelah laporan terbit").count()) >= 1);
+    check("form paket tanpa pilihan konsultasi", (await s.page.getByLabel("Batas biaya pembelian per kunjungan (Rp)").count()) >= 1 && (await s.page.getByLabel("Konsultasi gratis setelah laporan terbit").count()) === 0);
     await s.page.goto(`${BASE}/admin/questionnaires`, { waitUntil: "networkidle" });
     const q = s.page.locator("main a[href^='/admin/questionnaires/']").first();
     if (await q.count()) {

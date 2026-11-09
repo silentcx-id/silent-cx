@@ -31,10 +31,10 @@ export default async function BillingPage() {
   const voucherLine = invoice?.invoice_lines.find((l) => l.kind === "promo" && l.item_key === "voucher");
   const [voucherCode, ...voucherBrand] = voucherLine ? voucherLine.label.replace(/^Voucher /, "").split(" · ") : [];
   const applied = voucherLine ? { code: voucherCode, brand: voucherBrand.join(" · "), discount: -(voucherLine.amount ?? 0) } : null;
-  // Tagihan tambahan: pelunasan setelah DP dan kelebihan pembelian (terbit bersama laporan), serta konsultasi tambahan yang masih berjalan.
+  // Tagihan tambahan: pelunasan setelah DP dan kelebihan pembelian (terbit bersama laporan).
   const extras = projects.flatMap((p) =>
     p.invoices
-      .filter((i) => ((i.kind === "excess" || i.kind === "settlement") && i.status !== "cancelled") || (i.kind === "consultation" && ["unpaid", "verifying", "paid"].includes(i.status)))
+      .filter((i) => (i.kind === "excess" || i.kind === "settlement") && i.status !== "cancelled")
       .map((i) => ({ invoice: i, code: p.code })),
   );
 
@@ -48,10 +48,10 @@ export default async function BillingPage() {
         <section key={x.id} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,420px)] xl:items-start">
           <div className="card grid gap-3 border-accent p-5">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-xl font-extrabold">{x.kind === "consultation" ? t.consultationTitle : x.kind === "settlement" ? t.settlementTitle : t.excessTitle}</h2>
+              <h2 className="text-xl font-extrabold">{x.kind === "settlement" ? t.settlementTitle : t.excessTitle}</h2>
               <InvoiceStatusChip status={x.status} lang={lang} />
             </div>
-            <p className="text-sm text-muted">{x.kind === "consultation" ? t.consultationLede : x.kind === "settlement" ? t.settlementLede : t.excessLede}</p>
+            <p className="text-sm text-muted">{x.kind === "settlement" ? t.settlementLede : t.excessLede}</p>
             {x.status === "unpaid" && (
               <>
                 {x.status_note && (

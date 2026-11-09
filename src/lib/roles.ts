@@ -36,7 +36,6 @@ export const ROLE_MENU: Record<Role, MenuItem[]> = {
     { slug: "reports", label: { id: "Laporan", en: "Reports" }, icon: "report", phase: 4 },
     { slug: "benchmark", label: { id: "Benchmark outlet", en: "Outlet benchmark" }, icon: "layers", phase: 4, entitlement: "benchmarking" },
     { slug: "competitor", label: { id: "Benchmark kompetitor", en: "Competitor benchmark" }, icon: "eye", phase: 4, entitlement: "competitor" },
-    { slug: "consultation", label: { id: "Konsultasi", en: "Consultation" }, icon: "chat", phase: 5 },
     { slug: "account", label: { id: "Akun saya", en: "My account" }, icon: "settings", phase: 0 },
   ],
   shopper: [
@@ -60,7 +59,6 @@ export const ROLE_MENU: Record<Role, MenuItem[]> = {
     { slug: "payouts", label: { id: "Keuangan", en: "Finance" }, icon: "wallet", phase: 5 },
     { slug: "content", label: { id: "Konten", en: "Content" }, icon: "pen", phase: 6 },
     { slug: "articles", label: { id: "Artikel", en: "Articles" }, icon: "doc", phase: 6 },
-    { slug: "consultations", label: { id: "Konsultasi", en: "Consultations" }, icon: "calendar", phase: 5 },
     { slug: "account", label: { id: "Akun saya", en: "My account" }, icon: "settings", phase: 0 },
   ],
   // Customer service (Putaran 16): akun dibuat admin, melihat client dan mencatat follow-up.
@@ -86,7 +84,7 @@ export const MILESTONES: Record<Role, Milestone[]> = {
     { title: { id: "Lengkapi data", en: "Complete details" }, goal: { id: "Data outlet dan perusahaan lengkap", en: "Outlet and company details complete" } },
     { title: { id: "Audit berjalan", en: "Audits running" }, goal: { id: "Semua kunjungan lolos QC", en: "All visits pass QC" } },
     { title: { id: "Laporan", en: "Report" }, goal: { id: "Laporan terbit", en: "Report published" } },
-    { title: { id: "Tindak lanjut", en: "Follow-up" }, goal: { id: "Konsultasi atau audit ulang", en: "Consultation or re-audit" } },
+    { title: { id: "Tindak lanjut", en: "Follow-up" }, goal: { id: "Perbaikan atau audit ulang", en: "Improvements or a re-audit" } },
   ],
   shopper: [
     { title: { id: "Pendaftaran", en: "Sign-up" }, goal: { id: "Lamaran terkirim", en: "Application sent" } },

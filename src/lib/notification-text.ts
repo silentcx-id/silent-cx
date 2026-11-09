@@ -17,7 +17,6 @@ export type Notification = {
     project?: string;
     payout?: string;
     total?: number;
-    consultation?: string;
     starts_at?: string;
     count?: number;
     application?: string;
@@ -72,18 +71,6 @@ export function notificationText(n: Notification, lang: Lang): string {
       return t.payoutNeedBank(code);
     case "payout.proof_replaced":
       return t.payoutProofReplaced(code, note);
-    case "consultation.link":
-      return t.consultationLink(code, when(d.starts_at));
-    case "consultation.rescheduled":
-      return t.consultationRescheduled(code, when(d.starts_at), note);
-    case "consultation.cancelled":
-      return t.consultationCancelled(code, note);
-    case "consultation.done":
-      return t.consultationDone(code);
-    case "consultation.no_show":
-      return t.consultationNoShow(code);
-    case "consultation.credited":
-      return t.consultationCredited(Number(d.count ?? 0));
     case "order.ready":
       return t.orderReady(code);
     case "order.cancelled":
@@ -120,10 +107,6 @@ export function notificationText(n: Notification, lang: Lang): string {
       return t.adminOfferDeclined(name, code, note);
     case "admin.offer_expired":
       return t.adminOfferExpired(name, code);
-    case "admin.consultation_booked":
-      return t.adminConsultationBooked(name, code, when(d.starts_at));
-    case "admin.consultation_rescheduled":
-      return t.adminConsultationRescheduled(name, code, when(d.starts_at));
     case "admin.chat":
       return t.adminChat(name, d.preview ?? "");
     case "chat.reply":
@@ -143,7 +126,6 @@ export function notificationLink(n: Notification, lang: Lang): { href: string; l
   if (n.kind === "payout.paid" || n.kind === "payout.proof_replaced") return { href: "/shopper/payments", label: t.openPayments };
   if (n.kind === "payout.need_bank") return { href: "/shopper/profile", label: t.openProfile };
   if (n.kind === "application.approved") return { href: "/shopper/profile", label: t.openProfile };
-  if (n.kind.startsWith("consultation.")) return { href: d.consultation ? `/app/consultation/${d.consultation}` : "/app/consultation", label: t.openConsultation };
   if (n.kind.startsWith("order.") || n.kind.startsWith("invoice.")) return { href: "/app/billing", label: t.openBilling };
   if (n.kind.startsWith("questionnaire.") && d.project) return { href: `/app/questionnaire/${d.project}`, label: t.openQuestionnaire };
   if (n.kind.startsWith("admin.questionnaire_") && d.project) return { href: `/admin/projects/${d.project}?tab=jadwal`, label: t.openProject };
@@ -155,6 +137,5 @@ export function notificationLink(n: Notification, lang: Lang): { href: string; l
   // ?chat=1 membuka panel live chat di dashboard pengguna.
   if (n.kind === "chat.reply") return { href: `${d.home === "/shopper" ? "/shopper" : "/app"}?chat=1`, label: t.openChat };
   if (n.kind === "admin.chat" && d.thread) return { href: `/admin/chat?t=${d.thread}`, label: t.replyChat };
-  if (n.kind.startsWith("admin.consultation_") && d.consultation) return { href: `/admin/consultations/${d.consultation}`, label: t.openConsultation };
   return null;
 }

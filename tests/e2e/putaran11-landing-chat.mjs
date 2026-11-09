@@ -51,7 +51,7 @@ try {
     await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
     const features = page.locator("section#features");
     check("landing: Fitur platform tampil", (await features.count()) === 1 && (await features.locator("li").count()) >= 3, `${await features.locator("li").count()} kartu`);
-    for (const title of ["Check-in GPS dan bukti foto", "Benchmark outlet", "Konsultasi"]) check(`landing: kartu ${title}`, (await features.getByText(title, { exact: true }).count()) === 1);
+    for (const title of ["Check-in GPS dan bukti foto", "Benchmark outlet", "Live chat Sisca"]) check(`landing: kartu ${title}`, (await features.getByText(title, { exact: true }).count()) === 1);
     const industries = page.locator("section#industries");
     check("landing: Bisnis yang kami layani tampil dengan 8 jenis", (await industries.count()) === 1 && (await industries.locator("li").count()) === 8);
     const partners = await page.locator("section#partners").count();
@@ -72,7 +72,7 @@ try {
     const body = await text(a.page);
     check("Konten: tiga bagian baru ada di editor", ["Fitur platform", "Bisnis yang kami layani", "Mitra kami"].every((x) => body.includes(x)));
     await a.page.locator("summary", { hasText: "Fitur platform" }).first().click();
-    check("Konten: setiap kartu punya tombol Tampil/Disembunyikan", (await a.page.locator("details[open] li").getByRole("button", { name: /^(Tampil|Disembunyikan)$/ }).count()) >= 4);
+    check("Konten: setiap kartu punya tombol Tampil/Disembunyikan", (await a.page.locator("details[open] li").getByRole("button", { name: /^(Tampil|Disembunyikan)$/ }).count()) >= 3);
 
     await a.page.goto(`${BASE}/admin/accounts?tab=pending`, { waitUntil: "networkidle" });
     check("Lamaran masuk: tanpa daftar Belum mengirim lamaran", !(await text(a.page)).includes("Belum mengirim lamaran"));

@@ -172,7 +172,6 @@ describe("teks notifikasi dan rekening", () => {
       ["admin.payment", { project: "p1", code: "INV-1", name: "Bu Client", total: 500000 }, "/admin/projects/p1"],
       ["admin.visit_submitted", { task: "t1", code: "TSK-1" }, "/admin/qc/t1"],
       ["admin.offer_declined", { project: "p1", code: "TSK-1", name: "Sari", note: "Sakit" }, "/admin/projects/p1"],
-      ["admin.consultation_booked", { consultation: "k1", code: "KNS-1", name: "Bu Client" }, "/admin/consultations/k1"],
       ["invoice.rejected", { code: "INV-1", note: "Nominal kurang" }, "/app/billing"],
       ["invoice.due_soon", { code: "INV-1", total: 250000, due: "2026-10-30T03:00:00Z" }, "/app/billing"],
       ["order.ready", { code: "PRJ-1" }, "/app/billing"],
