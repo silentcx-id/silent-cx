@@ -266,7 +266,6 @@ export function Checkout({ packages, addons, cities, initialKey, lang }: { packa
           <span className="font-semibold">{t.total}</span>
           <span className="font-display text-2xl font-extrabold tabular-nums">{rupiah(total)}</span>
         </div>
-        <p className="-mt-2 text-xs text-muted">{t.totalNote}</p>
         {needsReview && <p className="rounded-lg border border-warn/50 bg-warn/10 p-3 text-sm">{t.reviewNotice}</p>}
         {error && (
           <p role="alert" className="rounded-lg border border-bad/40 bg-bad/10 p-3 text-sm">

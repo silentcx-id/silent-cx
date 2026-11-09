@@ -63,7 +63,7 @@ export function VoucherForm({ packages, initial, onDone }: { packages: PackageOp
     setRows(toRows(packages, LAUNCH_DRAFT.rules));
     setStarts(LAUNCH_DRAFT.starts);
     setEnds(LAUNCH_DRAFT.ends);
-    toast("ok", "Aturan Promo Launching dipasang.");
+    toast("ok", "Aturan voucher 20% dipasang.");
   }
 
   async function upload(file: File) {
@@ -154,7 +154,7 @@ export function VoucherForm({ packages, initial, onDone }: { packages: PackageOp
           <legend className="mb-2 flex w-full flex-wrap items-center justify-between gap-2 text-sm font-semibold">
             Potongan per paket
             <button type="button" className="btn btn-sm" onClick={applyLaunch}>
-              Pakai aturan Promo Launching
+              Pakai aturan voucher 20%
             </button>
           </legend>
           {packages.map((p) => {
@@ -184,7 +184,7 @@ export function VoucherForm({ packages, initial, onDone }: { packages: PackageOp
                       aria-label={`Potongan ${p.name}`}
                       inputMode="numeric"
                       value={r.value}
-                      placeholder={r.kind === "pct" ? "50" : "999000"}
+                      placeholder={r.kind === "pct" ? "20" : "100000"}
                       onChange={(e) => setRow(p.key, { value: e.target.value.replace(/[^\d]/g, "") })}
                     />
                     <span className="w-6 text-sm text-muted">{r.kind === "pct" ? "%" : "Rp"}</span>

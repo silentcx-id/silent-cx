@@ -46,7 +46,7 @@ export type AdminTask = {
   candidates: Candidate[];
 };
 
-export type OutletTasks = { id: string; position: number; name: string; city: string; address: string; maps_url: string; notes?: string; is_competitor: boolean; extra_visits?: number; tasks: AdminTask[] };
+export type OutletTasks = { id: string; position: number; name: string; city: string; address: string; maps_url: string; notes?: string; shopper_note?: string; is_competitor: boolean; extra_visits?: number; tasks: AdminTask[] };
 
 // questionnaireApproved: tawaran ke shopper baru bisa dikirim setelah kuesioner disetujui client.
 // instructions: template instruksi dari kuesioner proyek (draf otomatis di urutan pertama); brand untuk penanda {brand}.
@@ -396,6 +396,12 @@ function BriefForm({
             >
               Sisipkan ke instruksi
             </button>
+          </p>
+        )}
+        {outlet.shopper_note && (
+          <p className="rounded-lg border-l-4 border-mark bg-raise p-3 text-sm" data-testid="instruksi-client-admin">
+            <span className="font-semibold">Instruksi client untuk shopper</span> <span className="text-xs text-muted">(tampil langsung di tugas shopper, tidak perlu disalin)</span>
+            <span className="mt-1 block whitespace-pre-line">{outlet.shopper_note}</span>
           </p>
         )}
         <label className={`${label} content-start`}>

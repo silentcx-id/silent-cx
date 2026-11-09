@@ -42,11 +42,11 @@ export function DetailsForm({
   const t = dict(lang).orders;
   const { pending, status, act } = useAction();
   const [c, setC] = useState(company);
-  const [rows, setRows] = useState(outlets.map(({ id, city, position, name, address, maps_url, notes }) => ({ id, city, position, name, address, maps_url, notes })));
+  const [rows, setRows] = useState(outlets.map(({ id, city, position, name, address, maps_url, notes, shopper_note }) => ({ id, city, position, name, address, maps_url, notes, shopper_note: shopper_note ?? "" })));
   const [goal, setGoal] = useState(objectives);
 
   const setCompany = (k: keyof CompanyInput) => (e: React.ChangeEvent<HTMLInputElement>) => setC({ ...c, [k]: e.target.value });
-  const setRow = (i: number, k: "name" | "address" | "maps_url" | "notes") => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+  const setRow = (i: number, k: "name" | "address" | "maps_url" | "notes" | "shopper_note") => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setRows(rows.map((r, j) => (j === i ? { ...r, [k]: e.target.value } : r)));
 
   const payload = (complete: boolean) => ({
@@ -54,7 +54,7 @@ export function DetailsForm({
     complete,
     objectives: goal,
     company: c,
-    outlets: rows.map(({ id, name, address, maps_url, notes }) => ({ id, name, address, maps_url, notes })),
+    outlets: rows.map(({ id, name, address, maps_url, notes, shopper_note }) => ({ id, name, address, maps_url, notes, shopper_note })),
   });
 
   const field = (id: string, labelText: string, value: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, extra: Partial<React.InputHTMLAttributes<HTMLInputElement>> = {}) => (
@@ -118,6 +118,22 @@ export function DetailsForm({
             <div className="field sm:col-span-2">
               <label htmlFor={`o-notes-${i}`}>{t.outletNotes}</label>
               <textarea id={`o-notes-${i}`} rows={2} maxLength={500} value={r.notes} onChange={setRow(i, "notes")} />
+              <small>{t.outletNotesHint}</small>
+            </div>
+            <div className="field sm:col-span-2">
+              <label htmlFor={`o-shopper-${i}`}>{t.outletShopperNote}</label>
+              <textarea
+                id={`o-shopper-${i}`}
+                rows={3}
+                maxLength={1000}
+                value={r.shopper_note}
+                onChange={setRow(i, "shopper_note")}
+                placeholder={t.outletShopperNotePlaceholder}
+                data-testid={`instruksi-client-${i}`}
+              />
+              <small>
+                {t.outletShopperNoteHint} {r.shopper_note.length}/1000
+              </small>
             </div>
           </div>
         </section>

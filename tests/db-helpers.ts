@@ -27,14 +27,32 @@ alter default privileges in schema public grant all on tables to anon, authentic
 alter default privileges in schema public grant all on sequences to anon, authenticated;
 `;
 
+// Katalog sebelum Putaran 17 (harga 30 Okt 2026, tanpa promo, Performance 3–5 outlet, batas pembelian Rp150.000).
+// Tes lama menguji logika harga, promo, dan voucher dengan angka ini; harga baru diuji di tests/putaran17.test.ts.
+const CATALOG_2026_10 = `
+update public.packages set promo_pct = null, promo_amount = null, promo_free_outlet = false, promo_starts_at = null, promo_ends_at = null,
+  purchase_allowance = 150000;
+insert into public.package_prices (package_id, outlets, price)
+select id, n, 0 from public.packages, unnest(array[4, 5]) n where key = 'performance';
+update public.package_prices pp set price = v.price from public.packages p
+join (values ('essential', 1, 1099000), ('insight', 1, 1399000), ('performance', 3, 3999000), ('performance', 4, 4999000), ('performance', 5, 5999000)) as v(key, outlets, price)
+  on v.key = p.key
+where pp.package_id = p.id and pp.outlets = v.outlets;
+update public.addons a set price = v.price from (values ('additional_outlet', 999000), ('additional_visit', 899000), ('re_audit', 899000),
+  ('competitor_benchmark', 1299000), ('custom_questionnaire', 399000), ('additional_consultation', 399000), ('priority_report', 399000)) as v(key, price)
+where a.key = v.key;
+update public.addons set active = true where key = 'custom_questionnaire';
+`;
+
 export type TestDb = Awaited<ReturnType<typeof createTestDb>>;
 
-export async function createTestDb() {
+export async function createTestDb(opts: { catalog?: "2026-10" } = {}) {
   const db = new PGlite({ extensions: { pgcrypto } });
   await db.exec(SUPABASE_STUB);
   for (const file of readdirSync(new URL("migrations/", root)).sort()) {
     await db.exec(readFileSync(new URL(`migrations/${file}`, root), "utf8"));
   }
+  if (opts.catalog === "2026-10") await db.exec(CATALOG_2026_10);
 
   // Meniru pendaftaran lewat Supabase Auth: metadata user bisa diisi siapa saja dari browser,
   // app_metadata hanya dari server dengan service role.

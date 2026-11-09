@@ -21,7 +21,7 @@ const setGlobal = (who: string, pct: number | null, amount: number | null, start
 const clearGlobal = () => t.as(admin, "select public.admin_set_addon_promo(null, null, null, null)");
 
 beforeAll(async () => {
-  t = await createTestDb();
+  t = await createTestDb({ catalog: "2026-10" });
   admin = await t.createAdmin("admin@silentcx.test");
   client = await t.signUp("client@contoh.test", { full_name: "Client Promo" });
   await t.db.query("update public.profiles set status = 'active' where id = $1", [client]);

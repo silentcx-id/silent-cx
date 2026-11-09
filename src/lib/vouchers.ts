@@ -47,12 +47,12 @@ export function groupedRules(card: { rules: { name: string; pct?: number | null;
 
 export type VoucherDraft = { id?: string; brand: string; logo: string; code: string; rules: VoucherRule[]; starts: string; ends: string; note: string };
 
-// Promo launching: Essential & Insight 50%, Performance hemat Rp999.000, 5 Nov–5 Des 2026.
+// Voucher brand: 20% dari harga normal semua paket, 5 Nov–5 Des 2026.
 export const LAUNCH_DRAFT: Omit<VoucherDraft, "brand" | "logo" | "code" | "note"> = {
   rules: [
-    { package: "essential", pct: 50 },
-    { package: "insight", pct: 50 },
-    { package: "performance", amount: 999000 },
+    { package: "essential", pct: 20 },
+    { package: "insight", pct: 20 },
+    { package: "performance", pct: 20 },
   ],
   starts: "2026-11-05",
   ends: "2026-12-05",

@@ -69,7 +69,7 @@ export function InvoiceView({ invoice, projectCode, lang, pdfHref }: { invoice: 
       </div>
       <div className="flex items-baseline justify-between border-t border-line pt-3">
         <span className="font-semibold">
-          {t.total} <span className="text-xs font-normal text-muted">({t.totalNote})</span>
+          {t.total}
         </span>
         <span className="font-display text-2xl font-extrabold tabular-nums">{rupiah(invoice.total)}</span>
       </div>

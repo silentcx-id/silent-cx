@@ -69,7 +69,7 @@ export const DEFAULT_TERMS = `Syarat & Ketentuan ini berlaku untuk semua penggun
 - Kami dapat menangguhkan akun yang melanggar syarat ini.
 
 ## Untuk pemilik bisnis (client)
-- Paket, add-on, dan harga mengikuti yang tampil saat pesanan dibuat. Semua harga sudah termasuk PPN.
+- Paket, add-on, dan harga mengikuti yang tampil saat pesanan dibuat.
 - Tagihan dibayar paling lambat 2×24 jam setelah dikonfirmasi. Pesanan yang tidak dibayar sampai batas waktu dibatalkan otomatis.
 - Kunjungan dijadwalkan setelah pembayaran diverifikasi dan data outlet lengkap.
 - Laporan berisi penilaian berdasarkan kunjungan yang dilakukan pada waktu tertentu, dan dipakai sebagai bahan perbaikan internal.

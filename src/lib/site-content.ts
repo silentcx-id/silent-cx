@@ -178,7 +178,7 @@ export const DEFAULT_CONTENT: SiteContent = {
     }),
     packages: section({
       title: tx("Paket audit", "Audit packages"),
-      lede: tx("Harga sudah termasuk PPN. Pilih paket, lalu tentukan jumlah outlet dan add-on di langkah berikutnya.", "Prices include VAT. Choose a package, then set outlets and add-ons in the next step."),
+      lede: tx("Pilih paket, lalu tentukan jumlah outlet dan add-on di langkah berikutnya.", "Choose a package, then set outlets and add-ons in the next step."),
     }),
     addons: section({
       title: tx("Add-on", "Add-ons"),

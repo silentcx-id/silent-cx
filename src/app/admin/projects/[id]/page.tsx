@@ -79,7 +79,7 @@ async function Scheduling({ project }: { project: Project }) {
   const settings = (field?.value ?? {}) as { default_fee?: number; default_response_hours?: number };
   const defaults = {
     fee: settings.default_fee ?? 150000,
-    reimburse: project.package_snapshot.purchase_allowance ?? 150000,
+    reimburse: project.package_snapshot.purchase_allowance ?? 50000,
     hours: settings.default_response_hours ?? 24,
     today: wibDate(),
     inAWeek: wibDate(7),

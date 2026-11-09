@@ -132,7 +132,7 @@ export function ArticleEditor({ article, categories, origin, hasWhatsapp }: { ar
               className={`${input} text-base`}
               value={a.title}
               maxLength={140}
-              placeholder="Promo Launching SilentCX: Hemat 50%"
+              placeholder="Promo Launching SilentCX: Diskon 10%"
               onChange={(e) => {
                 set("title", e.target.value);
                 if (!slugTouched) set("slug", toSlug(e.target.value));

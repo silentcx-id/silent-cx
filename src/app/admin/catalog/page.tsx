@@ -142,7 +142,7 @@ export default async function CatalogPage({ searchParams }: PageProps<"/admin/ca
 
       {tab === "pembayaran" && (
         <section className="card grid gap-3 p-5">
-          <p className="text-sm text-muted">Client membayar ke rekening atau QRIS ini, lalu mengunggah bukti. Semua harga sudah termasuk PPN.</p>
+          <p className="text-sm text-muted">Client membayar ke rekening atau QRIS ini, lalu mengunggah bukti.</p>
           <PaymentForm settings={payment} />
         </section>
       )}

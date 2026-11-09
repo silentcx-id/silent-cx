@@ -42,7 +42,7 @@ async function publish(projectId: string) {
 }
 
 beforeAll(async () => {
-  t = await createTestDb();
+  t = await createTestDb({ catalog: "2026-10" });
   admin = await t.createAdmin("admin@silentcx.test");
   client = await t.signUp("client@contoh.test", { full_name: "Client" });
   other = await t.signUp("lain@contoh.test", { full_name: "Client lain" });

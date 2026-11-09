@@ -999,3 +999,42 @@ Konfirmasi WA (admin, halaman proyek):
 Uji otomatis:
 - [ ] `npx vitest run tests/putaran16.test.ts`: 18 tes, meliputi peran CS, daftar dan detail client, log follow-up, hak akses, template instruksi, batas 4000 karakter, draf dari kuesioner, dan isi pesan WA.
 - [ ] `node --env-file=.env.local tests/e2e/putaran16-cs-instruksi.mjs` (baca saja), lalu dengan `E2E_TULIS=1` untuk membuat akun CS, follow-up, template, Konfirmasi WA, dan tugas uji. Semua data uji dihapus di akhir.
+
+## Putaran 17: harga baru, promo 10%, voucher 20%, instruksi client, tombol WhatsApp
+
+Jalankan dulu `npm run db:migrate` (staging), uji, lalu `npm run db:migrate:prod` (produksi) **sebelum** deploy. Migration `20261109000028_pricing_nov.sql` menambah kolom instruksi client di outlet; tanpa migration ini, menyimpan data outlet akan gagal.
+
+Yang diubah migration (tagihan yang sudah terbit tidak berubah):
+- Harga paket: Essential Rp399.000, Insight Rp599.000, Performance Rp1.299.000 (3 outlet). Harga Performance 4 dan 5 outlet dihapus; outlet ke-4 dan seterusnya lewat add-on **Outlet tambahan**.
+- Add-on: Outlet tambahan Rp349.000, Kunjungan tambahan Rp349.000, Audit ulang Rp399.000, Benchmark kompetitor Rp699.000, Konsultasi tambahan Rp199.000, Laporan express Rp349.000. Tugas luar kota dan Kelebihan pembelian tetap "dikonfirmasi admin". Kuesioner khusus nonaktif.
+- Batas pembelian shopper Rp50.000 per kunjungan di paket dan teks fitur; fee shopper bawaan Rp150.000.
+- Promo paket 10% untuk Essential, Insight, Performance, sampai tanggal berakhir yang sudah diatur (kalau belum ada: 5 Des 2026 23.59 WIB). Promo nominal, gratis 1 outlet, dan semua promo add-on dihapus.
+- Semua voucher brand jadi 20% untuk paket yang sama di voucher itu. Kode dan masa berlaku tetap.
+- Konten landing dan halaman legal: kalimat "sudah termasuk PPN" dihapus, "Rp150.000" jadi "Rp50.000".
+- Tiga artikel promo ditulis ulang (promo 10%, voucher 20%, harga baru).
+
+Harga dan promo:
+- [ ] Landing, bagian Paket: Essential Rp~~399.000~~ **Rp359.100**, Insight Rp~~599.000~~ **Rp539.100**, Performance Rp~~1.299.000~~ **Rp1.169.100**, dengan label "Hemat 10%".
+- [ ] Bagian Add-on: harga normal tanpa label hemat. Kuesioner khusus tidak tampil.
+- [ ] Tidak ada tulisan PPN di landing, Pilih paket, Tagihan, invoice PDF, dan Katalog admin.
+- [ ] Pilih paket: Performance 4 outlet = 3 outlet + 1 Outlet tambahan (Rp1.169.100 + Rp349.000).
+- [ ] Catatan kelebihan pembelian menyebut Rp50.000.
+- [ ] **Katalog** admin: Performance hanya punya harga 3 outlet; pilihan promo "Gratis 1 outlet" tidak muncul.
+
+Voucher:
+- [ ] **Voucher** admin: voucher lama (termasuk JAJANSCX26) tertulis "Hemat 20%". Tombol **Pakai aturan voucher 20%** di form voucher baru.
+- [ ] Client memasang voucher di Tagihan Essential: perbandingan "Dengan promo sekarang Rp359.100" dan "Dengan voucher Rp319.200". **Lepas promo & pakai voucher** → total Rp319.200. Insight → Rp479.200, Performance → Rp1.039.200.
+- [ ] Add-on di tagihan yang sama tidak terpotong voucher.
+
+Instruksi khusus client untuk shopper:
+- [ ] Client, menu **Outlet** (proyek aktif): tiap outlet punya **Catatan untuk tim SilentCX** (tidak dilihat shopper) dan **Instruksi khusus untuk shopper** (maksimal 1000 karakter, dengan peringatan agar tidak membuka penyamaran).
+- [ ] Admin, **Jadwal kunjungan** → form tugas outlet itu: kotak **Instruksi client untuk shopper** tampil (tidak perlu disalin).
+- [ ] Shopper, brief tugas: kotak **Instruksi khusus dari client** di bawah **Instruksi kunjungan**.
+
+Tombol WhatsApp:
+- [ ] Isi nomor WhatsApp di **Konten** → info situs, lalu terbitkan.
+- [ ] Landing: tombol hijau **Chat WhatsApp** di pojok kanan bawah, tetap terlihat saat halaman digulir. Di HP hanya ikon bulat.
+- [ ] Klik membuka WhatsApp dengan pesan "Halo SilentCX, saya ingin bertanya tentang mystery shopping."
+- [ ] Tanpa nomor WhatsApp, tombol tidak tampil.
+
+Uji otomatis: `npx vitest run tests/putaran17.test.ts` dan `node --env-file=.env.local tests/e2e/putaran17-harga-wa.mjs` (tambah `E2E_TULIS=1` untuk voucher, instruksi client, dan tugas shopper uji).

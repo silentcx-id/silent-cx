@@ -88,7 +88,7 @@ export function InvoiceDocument({ invoice, projectCode, billTo, payment }: Invoi
             </View>
           ))}
           <View style={[s.row, { justifyContent: "flex-end", marginTop: 12, alignItems: "baseline", gap: 16 }]}>
-            <Text style={{ color: C.muted }}>Total (sudah termasuk PPN)</Text>
+            <Text style={{ color: C.muted }}>Total</Text>
             <Text style={{ fontFamily: "Bricolage", fontWeight: 800, fontSize: 20, color: C.ink, lineHeight: 1.1 }}>{rupiah(invoice.total)}</Text>
           </View>
           {invoice.dp_amount != null && (

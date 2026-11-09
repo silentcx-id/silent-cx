@@ -59,6 +59,8 @@ export type ShopperTaskDetail = {
   fee: number;
   reimburse_cap: number;
   scenario: string;
+  // Instruksi khusus dari client untuk outlet ini.
+  client_note?: string;
   mandatory_purchase: string;
   respond_by: string | null;
   urgent: boolean;

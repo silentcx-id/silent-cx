@@ -36,7 +36,7 @@ const cancelOrder = async (project: string) => {
 const NONE = "promo_pct = null, promo_amount = null, promo_free_outlet = false, promo_starts_at = null, promo_ends_at = null";
 
 beforeAll(async () => {
-  t = await createTestDb();
+  t = await createTestDb({ catalog: "2026-10" });
   admin = await t.createAdmin("admin@silentcx.test");
   client = await t.signUp("client@contoh.test", { full_name: "Kopi Senja" });
   other = await t.signUp("lain@contoh.test", { full_name: "Lain" });

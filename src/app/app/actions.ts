@@ -105,6 +105,7 @@ const detailsSchema = z.object({
         address: z.string().trim().max(300),
         maps_url: z.string().trim().max(500).refine((v) => v === "" || v.startsWith("https://"), "Link Google Maps harus diawali https://"),
         notes: z.string().trim().max(500),
+        shopper_note: z.string().trim().max(1000, "Instruksi untuk shopper maksimal 1000 karakter.").default(""),
       }),
     )
     .max(100),

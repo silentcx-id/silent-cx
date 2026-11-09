@@ -67,6 +67,12 @@ export default async function AssignmentPage({ params }: PageProps<"/shopper/ass
             <p className="whitespace-pre-line leading-relaxed">{task.scenario}</p>
           </div>
         )}
+        {task.client_note && (
+          <div className="grid gap-1 rounded-xl border-l-4 border-mark bg-raise p-4 text-sm" data-testid="instruksi-client">
+            <h3 className="font-semibold">{t.clientNote}</h3>
+            <p className="whitespace-pre-line leading-relaxed">{task.client_note}</p>
+          </div>
+        )}
         <p className="rounded-lg border border-line p-3 text-xs text-muted">{t.excessRule}</p>
         <p className="text-xs text-muted">{t.secrecy}</p>
       </section>

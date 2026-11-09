@@ -57,6 +57,8 @@ export type ProjectOutlet = {
   address: string;
   maps_url: string;
   notes: string;
+  // Instruksi khusus client untuk shopper; tampil langsung di tugas shopper.
+  shopper_note: string;
   is_competitor: boolean;
   paired_outlet_id: string | null;
   extra_visits: number;

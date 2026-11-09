@@ -57,6 +57,15 @@ if (WRITE && saved.addons.some((a) => a.promo_pct || a.promo_amount)) {
   process.exit(1);
 }
 
+// Sejak Putaran 17 (harga 9 Nov 2026) Performance hanya punya harga 3 outlet dan promo add-on dihapus, jadi skenario
+// Gratis 1 outlet tidak bisa dipasang di katalog. Logikanya tetap diuji di tests/putaran12.test.ts (katalog lama).
+const perfPrices = (await admin.from("package_prices").select("outlets, packages!inner(key)").eq("packages.key", "performance")).data ?? [];
+if (perfPrices.length < 2) {
+  console.log("· dilewati: Performance hanya punya satu pilihan jumlah outlet, promo Gratis 1 outlet tidak berlaku di katalog sekarang");
+  console.log("0/0 lolos");
+  process.exit(0);
+}
+
 const browser = await chromium.launch();
 try {
   // 0. Landing: bagian Add-on dari Katalog.

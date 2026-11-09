@@ -149,7 +149,7 @@ try {
   await a.page.screenshot({ path: path("admin-artikel"), fullPage: true });
   await a.page.goto(`${BASE}/artikel/promo/cara-klaim-voucher-silentcx`, { waitUntil: "networkidle" });
   const body = await a.page.getByTestId("article-body").innerText();
-  check("admin: artikel Cara Klaim terbuka dengan langkah bernomor", (await a.page.locator("article ol li").count()) >= 6 && body.includes("Lepas promo & pakai voucher"));
+  check("admin: artikel Cara Klaim terbuka dengan langkah bernomor", (await a.page.locator("article ol li").count()) >= 6 && body.includes("Voucher dan diskon promo 10%") && body.includes("Rp319.200"));
   check("admin: tautan di artikel menjadi link", (await a.page.locator("article a[href='/artikel/promo/syarat-ketentuan-promo-launching']").count()) === 1);
   await a.page.goto(`${BASE}/artikel/promo/syarat-ketentuan-promo-launching`, { waitUntil: "networkidle" });
   const terms = await a.page.getByTestId("article-body").innerText();
@@ -173,17 +173,17 @@ try {
     await a.page.getByTestId("voucher-logo").setInputFiles(LOGO);
     await a.page.locator("form img[alt='Logo brand']").waitFor({ timeout: 30000 });
     await a.page.waitForFunction(() => [...document.querySelectorAll("form img")].every((i) => i.complete && i.naturalWidth > 0));
-    await a.page.getByRole("button", { name: "Pakai aturan Promo Launching" }).click();
+    await a.page.getByRole("button", { name: "Pakai aturan voucher 20%" }).click();
     await a.page.fill("#voucher-starts", wibDay(0));
     await a.page.fill("#voucher-ends", wibDay(30));
     const preview = await a.page.getByTestId("voucher-card").first().innerText();
-    check("admin: pratinjau kartu memuat brand dan potongan", preview.includes(BRAND) && preview.includes("Hemat 50%") && preview.includes("Hemat Rp999.000") && /Essential & Insight/.test(preview));
+    check("admin: pratinjau kartu memuat brand dan potongan", preview.includes(BRAND) && preview.includes("Hemat 20%") && /Essential & Insight & Performance/.test(preview));
     await a.page.locator("details").first().screenshot({ path: path("admin-buat-voucher") });
     await a.page.getByRole("button", { name: "Buat voucher" }).click();
     check("admin: voucher dibuat dan muncul di daftar", await waitText(a.page.getByTestId("voucher-item"), new RegExp(BRAND)));
     const voucher = (await retry(() => admin.from("vouchers").select("*").eq("brand_name", BRAND).single())).data;
     check("admin: kode personal dari nama brand", /^KOPIUJIE2E-[2-9A-Z]{4}$/.test(voucher.code), voucher.code);
-    check("admin: aturan Promo Launching tersimpan", voucher.rules.map((r) => `${r.package}:${r.pct ?? ""}:${r.amount ?? ""}`).join(",") === "essential:50:,insight:50:,performance::999000", JSON.stringify(voucher.rules));
+    check("admin: aturan voucher 20% tersimpan", voucher.rules.map((r) => `${r.package}:${r.pct ?? ""}:${r.amount ?? ""}`).join(",") === "essential:20:,insight:20:,performance:20:", JSON.stringify(voucher.rules));
     check("admin: logo tersimpan di Storage", voucher.brand_logo.includes("/site-assets/vouchers/"));
     const item = a.page.getByTestId("voucher-item").filter({ hasText: BRAND });
     check("admin: tombol kirim voucher lengkap", ["Salin kode", "Salin pesan WA", "Unduh gambar", "Lihat halaman voucher ↗"].every(Boolean) && (await item.getByRole("link", { name: "Unduh gambar" }).getAttribute("href")) === `/voucher/${voucher.code}/gambar?unduh=1`);
@@ -193,7 +193,7 @@ try {
     const p = await context(browser);
     await p.page.goto(`${BASE}/voucher/${voucher.code.toLowerCase()}`, { waitUntil: "networkidle" });
     const card = await p.page.getByTestId("voucher-card").innerText();
-    check("publik: halaman voucher menampilkan brand, kode, potongan", card.includes(BRAND) && card.includes(voucher.code) && card.includes("Hemat 50%"));
+    check("publik: halaman voucher menampilkan brand, kode, potongan", card.includes(BRAND) && card.includes(voucher.code) && card.includes("Hemat 20%"));
     check("publik: halaman voucher tidak diindeks", (await p.page.locator("meta[name='robots']").getAttribute("content"))?.includes("noindex"));
     check("publik: gambar pratinjau tautan (og:image) tersedia", (await p.page.locator("meta[property='og:image']").getAttribute("content"))?.includes(`/voucher/${voucher.code}/gambar?format=og`));
     await p.page.screenshot({ path: path("voucher-publik"), fullPage: true });
@@ -218,7 +218,7 @@ try {
     await p.ctx.close();
 
     // 3. Klaim di Tagihan (Essential tanpa promo).
-    const A = await tempOrder("A", { key: "essential", name: "SilentCX Essential", outlets: 1, visits: 1, purchase_allowance: 150000 }, { item_key: "essential", label: "SilentCX Essential (1 outlet)", unit_price: 1099000, amount: 1099000, list_price: 1099000 });
+    const A = await tempOrder("A", { key: "essential", name: "SilentCX Essential", outlets: 1, visits: 1, purchase_allowance: 50000 }, { item_key: "essential", label: "SilentCX Essential (1 outlet)", unit_price: 399000, amount: 399000, list_price: 399000 });
     c = await loginAs(browser, "client@silentcx.demo");
     await c.page.goto(`${BASE}/voucher/${voucher.code}`, { waitUntil: "networkidle" });
     await c.page.getByRole("link", { name: "Pakai voucher ini →" }).click();
@@ -226,14 +226,14 @@ try {
     await c.page.getByTestId("voucher-panel").waitFor();
     check("client: kode dari halaman voucher terisi otomatis", (await c.page.inputValue("#voucher-code")) === voucher.code && (await c.page.getByTestId("voucher-panel").innerText()).includes("sudah terisi"));
     await c.page.getByRole("button", { name: "Cek voucher" }).click();
-    check("client: hasil cek menampilkan total baru", await waitText(c.page.getByTestId("voucher-quote"), /Total jadi Rp549\.500 \(sebelumnya Rp1\.099\.000\)/));
+    check("client: hasil cek menampilkan total baru", await waitText(c.page.getByTestId("voucher-quote"), /Total jadi Rp319\.200 \(sebelumnya Rp399\.000\)/));
     await c.page.getByTestId("voucher-panel").screenshot({ path: path("tagihan-cek-voucher") });
     await c.page.getByRole("button", { name: "Pakai voucher" }).click();
     check("client: voucher terpasang", await waitText(c.page.getByTestId("voucher-applied"), new RegExp(voucher.code)));
-    check("client: total tagihan Rp549.500", (await invoiceTotal(A.invoice)).total === 549500);
+    check("client: total tagihan Rp319.200", (await invoiceTotal(A.invoice)).total === 319200);
     const invText = await c.page.locator("main").innerText();
-    check("client: baris voucher tampil di invoice", invText.includes(`Voucher ${voucher.code} · ${BRAND}`) && invText.includes("-Rp549.500"));
-    check("client: DP minimal dihitung dari total baru", invText.includes("Rp439.600"));
+    check("client: baris voucher tampil di invoice", invText.includes(`Voucher ${voucher.code} · ${BRAND}`) && invText.includes("-Rp79.800"));
+    check("client: DP minimal dihitung dari total baru", invText.includes("Rp255.360"));
     check("client: kode tersimpan dihapus setelah dipakai", !(await c.ctx.cookies()).some((x) => x.name === "scx_voucher"));
     await c.page.screenshot({ path: path("tagihan-voucher-terpasang"), fullPage: true });
     await c.page.setViewportSize({ width: 390, height: 844 });
@@ -248,30 +248,30 @@ try {
     await c.page.goto(`${BASE}/app/billing`, { waitUntil: "networkidle" });
     await c.page.getByRole("button", { name: "Lepas voucher" }).click();
     check("client: voucher dilepas, kolom kode kembali", await c.page.locator("#voucher-code").waitFor({ timeout: 20000 }).then(() => true, () => false));
-    check("client: total kembali Rp1.099.000", (await invoiceTotal(A.invoice)).total === 1099000);
+    check("client: total kembali Rp399.000", (await invoiceTotal(A.invoice)).total === 399000);
     await c.page.fill("#voucher-code", "SALAH-0000");
     await c.page.getByRole("button", { name: "Cek voucher" }).click();
     check("client: kode salah ditolak dengan pesan jelas", await waitText(c.page.getByRole("alert"), /Kode voucher SALAH-0000 tidak ditemukan/));
     await retry(() => admin.from("projects").delete().eq("id", A.project));
 
     // 4. Paket dengan promo: perbandingan, lalu lepas promo dan pakai voucher.
-    const B = await tempOrder("B", { key: "performance", name: "SilentCX Performance", outlets: 4, visits: 1, purchase_allowance: 150000 }, { item_key: "performance", label: "SilentCX Performance (4 outlet)", unit_price: 3999000, amount: 3999000, list_price: 4999000 });
+    const B = await tempOrder("B", { key: "performance", name: "SilentCX Performance", outlets: 3, visits: 1, purchase_allowance: 50000 }, { item_key: "performance", label: "SilentCX Performance (3 outlet)", unit_price: 1169100, amount: 1169100, list_price: 1299000 });
     await c.page.goto(`${BASE}/app/billing`, { waitUntil: "networkidle" });
     await c.page.fill("#voucher-code", voucher.code.toLowerCase());
     await c.page.getByRole("button", { name: "Cek voucher" }).click();
     await c.page.getByTestId("voucher-quote").waitFor();
     const q = await c.page.getByTestId("voucher-quote").innerText();
-    check("client: perbandingan promo sekarang dan voucher", q.includes("Dengan promo sekarang") && q.includes("Rp3.999.000") && q.includes("Dengan voucher") && q.includes("Rp4.000.000"));
-    check("client: menyebut promo lebih hemat Rp1.000", q.includes("Promo sekarang lebih hemat Rp1.000"));
+    check("client: perbandingan promo sekarang dan voucher", q.includes("Dengan promo sekarang") && q.includes("Rp1.169.100") && q.includes("Dengan voucher") && q.includes("Rp1.039.200"));
+    check("client: menyebut voucher lebih hemat Rp129.900", q.includes("Voucher lebih hemat Rp129.900"));
     await c.page.getByTestId("voucher-quote").screenshot({ path: path("tagihan-promo-vs-voucher") });
     await c.page.getByRole("button", { name: "Tetap pakai promo" }).click();
-    check("client: Tetap pakai promo menutup perbandingan tanpa mengubah tagihan", (await c.page.getByTestId("voucher-quote").count()) === 0 && (await invoiceTotal(B.invoice)).total === 3999000);
+    check("client: Tetap pakai promo menutup perbandingan tanpa mengubah tagihan", (await c.page.getByTestId("voucher-quote").count()) === 0 && (await invoiceTotal(B.invoice)).total === 1169100);
     await c.page.getByRole("button", { name: "Cek voucher" }).click();
     await c.page.getByRole("button", { name: "Lepas promo & pakai voucher" }).click();
-    check("client: promo dilepas dan voucher dipasang (Rp4.999.000 − Rp999.000)", (await waitText(c.page.getByTestId("voucher-applied"), new RegExp(voucher.code))) && (await invoiceTotal(B.invoice)).total === 4000000);
+    check("client: promo dilepas dan voucher dipasang (Rp1.299.000 − 20%)", (await waitText(c.page.getByTestId("voucher-applied"), new RegExp(voucher.code))) && (await invoiceTotal(B.invoice)).total === 1039200);
     await c.page.getByRole("button", { name: "Lepas voucher" }).click();
     await c.page.locator("#voucher-code").waitFor();
-    check("client: lepas voucher memulihkan harga promo Rp3.999.000", (await invoiceTotal(B.invoice)).total === 3999000);
+    check("client: lepas voucher memulihkan harga promo Rp1.169.100", (await invoiceTotal(B.invoice)).total === 1169100);
     await retry(() => admin.from("projects").delete().eq("id", B.project));
     check("client: tanpa error JavaScript", c.errors.length === 0, c.errors.join(" | "));
 

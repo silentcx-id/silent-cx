@@ -207,7 +207,7 @@ export function PackageForm({ pkg }: { pkg: Package }) {
       </div>
 
       <fieldset className="grid gap-2">
-        <legend className="mb-1 text-sm font-semibold">Harga per jumlah outlet (sudah termasuk PPN)</legend>
+        <legend className="mb-1 text-sm font-semibold">Harga per jumlah outlet</legend>
         {prices.map((row, i) => (
           <div key={i} className="flex flex-wrap items-center gap-2">
             <input

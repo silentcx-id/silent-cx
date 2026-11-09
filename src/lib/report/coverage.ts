@@ -13,7 +13,7 @@ const service = (where: string): FeatureCoverage => ({ kind: "service", where })
 
 export const FEATURE_COVERAGE: Record<string, FeatureCoverage> = {
   "1 outlet": service("Jumlah outlet pesanan"),
-  "3–5 outlet": service("Jumlah outlet pesanan (harga per jumlah outlet)"),
+  "3 outlet": service("Jumlah outlet pesanan; outlet ke-4 dan seterusnya lewat add-on Outlet tambahan"),
   "1 kunjungan rahasia": service("Kunjungan per outlet di paket"),
   "1 kunjungan per outlet": service("Kunjungan per outlet di paket"),
   "Sekitar 30 indikator audit": service("Jumlah pertanyaan kuesioner yang ditetapkan admin"),
@@ -29,7 +29,7 @@ export const FEATURE_COVERAGE: Record<string, FeatureCoverage> = {
   "Rekomendasi cepat": report("Rekomendasi"),
   "Laporan audit PDF": service("Tombol Unduh PDF di halaman laporan"),
   "Debrief hasil 15 menit": service("Sesi konsultasi gratis setelah laporan terbit"),
-  "Biaya pembelian hingga Rp150.000 per kunjungan": service("Batas reimburse pembelian shopper"),
+  "Biaya pembelian hingga Rp50.000 per kunjungan": service("Batas reimburse pembelian shopper"),
   "Semua area penilaian Essential": report("Skor per area penilaian"),
   "Pemeriksaan kepatuhan SOP": report("Kepatuhan SOP"),
   "Evaluasi customer journey": report("Customer journey"),

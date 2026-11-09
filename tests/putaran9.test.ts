@@ -58,7 +58,7 @@ const reportData = async (projectId: string) => (await t.as<{ r: Record<string, 
 const blockers = async (projectId: string) => (await t.as<{ b: string[] }>(admin, "select public.report_blockers($1) as b", [projectId])).rows[0].b;
 
 beforeAll(async () => {
-  t = await createTestDb();
+  t = await createTestDb({ catalog: "2026-10" });
   admin = await t.createAdmin("admin@silentcx.test");
   client = await t.signUp("client@contoh.test", { full_name: "Client" });
   await t.db.query("update public.profiles set status = 'active' where id = $1", [client]);
